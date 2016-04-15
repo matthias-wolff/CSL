@@ -1,0 +1,293 @@
+## ARGUMENTS:
+##   $1: Mode, 'gui' or 'nogui'
+##   $2: Session info object file
+##   $3: Recognition result fst file
+##   $4: Reference recognition fst file
+##   $5: Neglog. densities array data file
+
+"ppf: start\n" -echo;                                                           # Notify program start
+
+## Processes a recognition result transducer. The function stips uninteresing
+## components, removes epsilon input symbols and adds phoneme label names.
+##
+## @param itRes fst
+##          The recognition result transducer (consecutive path though the
+##          recognition network).
+## @param idNld data
+##          The neglog likelihood matrix (records: feature vectors, components:
+##          GMMs).
+## @param idPhnTab data
+##          The phoneme table, phoneme labels are expected in component 0.
+## @return A data object containing the processed path. 
+function -RRES_process(itRes,idNld,idPhnTab)
+{
+  data idRes;                                                                   # The stripped recognition result
+  data idAux;                                                                   # An auxiliary data object
+  data idAux2;
+  
+  ## Strip components                                                           # -------------------------------------
+  :itRes.td["~TIS"]: idRes -join;                                               # Keep input symbols (Gaussians)
+  :itRes.td["~PHN"]: idRes -join;                                               # Keep phoneme symbols
+  :itRes.td["~LSR"]: idRes -join;                                               # Keep phoneme symbols
+
+  ## Remove epsilon input symbols                                               # -------------------------------------
+  :idRes["~TIS"].<0: idRes -dmark;                                              # Mark epsilcon records
+  idRes 0 0 idRes /mark -delete;                                                # Delete 'em
+
+  ## Get per-frame neglog likelihoods                                           # -------------------------------------
+  "~RID" -1 idRes -rindex;                                                      # Add record index component
+  :idRes["~RID"]: 0 :idRes["~TIS"]: 0 idNld idAux -lookup_2;                    # Get neglog likelihoods
+  0 "~NLL" idAux -set_cname; idAux idRes -join;                                 # Add to stripped recognition result
+  idRes ( "~RID" idRes -find_comp ) 1 idRes -delete;                            # Delete record index component
+
+  ## Add symbolic labels                                                        # -------------------------------------
+  :idRes["~PHN"]: 0 idPhnTab 0 1 idAux -lookup;                                 # Look up phoneme labels
+  0 "~PLB" idAux -set_cname; idAux idRes -join;                                 # Add to stripped recognition result
+  
+  idRes return;                                                                 # Return result
+}
+
+## Returns the per-frame output labels of the recognition result. 
+##
+## @param itRes fst
+##          The recognition result transducer (consecutive path though the
+##          recognition network).
+## @return A data object containing the frame-wise output labels. 
+function -RRES_out(itRes)
+{
+  data idRes;
+  var  nR;
+  var  nXR;
+  var  sL;
+  
+  :itRes.td["~TOS"]: 0 itRes.os 0 1 idRes -lookup;
+  0 "~OUT" idRes -set_cname;
+  :itRes.td["~TIS"]: idRes -join;
+  :itRes.td["~TOS"]: idRes -join;
+  
+  "" sL =;
+  -1 nXR =;
+  0 nR =; nR idRes.nrec < while
+    :sL+=idRes[nR,0];
+    :idRes[nR,1]<0: if
+      :idRes[nR,0]="";
+    else
+      :idRes[nR,0]=sL;
+      "" sL =;
+      nR nXR =;
+    end
+    nR ++=;
+  end
+  ( sL "" != ) ( nXR 0 >= ) && if
+    :idRes[nXR,0]+=sL;    
+  end
+
+  ## Remove epsilon input symbols                                               # -------------------------------------
+  :idRes["~TIS"].<0: idRes -dmark;                                              # Mark epsilcon records
+  idRes 0 0 idRes /mark -delete;                                                # Delete 'em
+  idRes 0 1 idRes -select;                                                      # Keep only output labels
+  
+  idRes return;
+}
+
+## Returns the recognition result as feature-value relation weighted with
+## confidences.
+##
+## @param idRec data
+##          The post-processed recognition result.
+## @param idRef data
+##          The post-processed reference recognition result.
+## @return A string representation of a weighted feature-value relation.
+function -RRES_wfvr(idRec,idRef)
+{
+  data idTok;                                                                   # Output token sequence
+  data idLvl;                                                                   # Bracket level data
+  data idAux;                                                                   # Auxiliary data
+  var  nTok;                                                                    # Current token index
+  var  nBlvl;                                                                   # Current bracket level
+  var  nBeginFrame;                                                             # Beginning frame for confidence comp.
+  var  nEndFrame;                                                               # Ending frame for confidence comp.
+  var  nLabFrame;                                                               # Label frame to store confidence in
+  var  nConf;                                                                   # Segment confidence
+  var  sWfvr;                                                                   # The result string
+  
+  ## Create output token sequence                                               # -------------------------------------
+  :idRec["~OUT"]: "[]" "splitd" idTok -strop;                                   # Split output preserving brackets
+  ( type long ) idTok.dim idTok.nrec idAux -array; 0 1 idAux -fill;             # Create frame index
+  idTok ' ( idTok.dim idTok.nrec * ) 1 idTok -reshape;                          # Sequence output tokens
+  idAux ' ( idAux.dim idAux.nrec * ) 1 idAux -reshape;                          # Sequence frame index
+  idAux idTok -join;                                                            # Join frame index to token sequence
+  :idTok[0]: "" "len" idAux -strop; :idAux.==0: idTok -dmark;                   # Mark empty tokens...
+  idTok 0 0 idTok /mark -delete;                                                # ... and delete them
+  :-ones(1,idTok.nrec): idTok -join;                                            # Add opening bracket's record index
+  :-ones(1,idTok.nrec): idTok -join;                                            # Add label's record index
+  { "TOK" "FRM" "[@" "LAB@" } ' 0 idTok -set_cnames;                            # Name components
+  #idTok -print; 1 brk;                                                          # Break point
+
+  ## Create bracket level data                                                  # -------------------------------------
+  :idTok[0]: "[" "cmp" idAux -strop;                                            # Count opening brackets
+  :idAux.==0: NULL 0 "sum" idAux /rec -aggregate;                               # ...
+  :idLvl=-ones(2,idAux[0,0]+1);                                                 # Most recent '[' and label on level
+  #idLvl -print; 1 brk;                                                          # Break point
+  
+  ## Loop over tokens                                                           # -------------------------------------
+  0  nBlvl =;                                                                   # Initialize bracket level counter
+  0 nTok =; nTok idTok.nrec < while                                             # Loop over tokens >>
+    :idTok[nTok,0]=="[": if                                                     #   Current token is "[" >>
+      nBlvl ++=;                                                                #     Increase bracket level
+      :idLvl[nBlvl,0]=nTok;                                                     #     Remember bracket token index
+    else :idTok[nTok,0]=="]": if                                                #   << Current token is "]" >>
+      :idTok[nTok,2]=idLvl[nBlvl,0];                                            #     Matching opening bracket
+      :idTok[nTok,3]=idLvl[nBlvl,1];                                            #     (Last) label token
+      :nBeginFrame=idTok[idLvl[nBlvl,0],1];                                     #     Get begin frame
+      :nEndFrame=idTok[nTok,1];                                                 #     Get end frame
+      ( idRec idRef nBeginFrame nEndFrame -RRES_confidence ) nConf =;           #     Compute confidence
+      :nLabFrame=idTok[nTok,3];                                                 #     Get label frame
+      "${idTok[nLabFrame,0]}:${round(nConf*100)/100}" nLabFrame 0 idTok -store; #     Store confidence in token
+      :idLvl[nBlvl,0]=-1;                                                       #     Clear matching opening bracket
+      nBlvl --=;                                                                #     Decrease bracket level
+    else                                                                        #   << Current token is a label >>
+      :idLvl[nBlvl,1]=nTok;                                                     #     Remember label token index
+    end end                                                                     #   <<
+    nTok ++=;                                                                   #   Next token 
+  end                                                                           # <<
+  nBlvl 0 < if "Error: FVR string contains too many ']'" -echo; end             # Syntax error 
+  nBlvl 0 > if "Error: FVR string contains too many '['" -echo; end             # Syntax error 
+  #idTok /list -print; "\n" sWfvr + "\n\n" + -echo; 1 brk;                       # Break point
+
+  ## Collect wFVR string                                                        # -------------------------------------
+  "" sWfvr =;                                                                   # Initialize result string
+  0 nTok =; nTok idTok.nrec < while                                             # Loop over tokens >>
+    "${idTok[nTok,0]}" sWfvr +=;                                                #   Collect output
+    nTok ++=;                                                                   #   Next token 
+  end                                                                           # <<
+  
+  sWfvr return;                                                                 # Return result 
+}
+
+## Computes the confidence of a segment of the speech recognition result.
+##
+## @param idRec data
+##          The post-processed recognition result.
+## @param idRef data
+##          The post-processed reference recognition result.
+## @param nBeginFrame integer
+##          The zero-based first frame index, inclusive.
+## @param nEndFrame integer
+##          The zero-based last frame index, inclusive.
+## @return The confidence.
+## @global iSI     R
+## @global nNadT   R
+## @global nNedT   R
+## @global nLambda R
+function -RRES_confidence(idRec,idRef,nBeginFrame,nEndFrame)
+{
+  data idRes;                                                                   # Copy of recognition result
+  data idAux;                                                                   # Auxiliary data                     
+  data idAux2;                                                                  # Auxiliary data 2
+  var  nNad;                                                                    # Normalized acoustic distance
+  var  nNed;                                                                    # Normalized edit distance
+
+  ## Prepare data                                                               # -------------------------------------
+  :idRec["~PHN"]: idRes =;                                                      # Copy phoneme sequence
+  :idRec["~NLL"]: idRes -join;                                                  # Copy neglog. likelihoods
+  :idRef["~PHN"]: idRes -join;                                                  # Copy reference phoneme sequence
+  :idRef["~NLL"]: idRes -join;                                                  # Copy reference neglog. likelihoods
+  { "PHN" "NLL" "PHNr" "NLLr" } ' 0 idRes -set_cnames;                          # Name components
+  idRes nBeginFrame ( nEndFrame nBeginFrame - ) idRes /rec -select;             # Get segment of recognition result
+  
+   { "." "#" } ' .iSI.itGP.os 0 0 idAux -gen_index;                             # Get pause and garbage phoneme indices
+  :(idRes["PHN"].==idAux[0,0]).||(idRes["PHNr"].==idAux[0,0]): idRes -dmark;    # Mark pauses labels
+  idRes 0 0 idRes /mark -delete;                                                # Delete
+  :(idRes["PHN"].==idAux[1,0]).||(idRes["PHNr"].==idAux[1,0]): idRes -dmark;    # Mark garbage labels
+  idRes 0 0 idRes /mark -delete;                                                # Delete
+
+  idRes.nrec 0 == if 0 return; end                                              # No frames --> conf:=0
+
+  ## Compute normalized acoustic distance (NAD)                                 # -------------------------------------
+  :idRes["NLL"]-idRes["NLLr"]: NULL 0 "sum" idAux  /rec -aggregate;             # Sum NLL differences of frames
+  :idRes["NLL"]:               NULL 0 "sum" idAux2 /rec -aggregate;             # Sum NLLs of speech recognition res. 
+  :nNad = idAux[0,0]/idAux2[0,0];                                               # Compute normalized acoustic distance
+
+  ## Compute normalized edit distance  (NED)                                    # -------------------------------------
+  :idRes["PHN"].!=idRes["PHNr"]: NULL 0 "sum" idAux /rec -aggregate;            # Sum Hamming distance of frame labels
+  :nNed = idAux[0,0]/idRes.nrec;                                                # Compute normalzed edit distance
+
+  ## Compute confidence                                                         # -------------------------------------
+  :.nLambda*max(1-nNed/.nNedT,-1)+(1-.nLambda)*max(1-nNad/.nNadT,-1): return;   # Compute and return confidence
+}
+
+## Prints the post-processed recognition result at the standard output.
+##
+## @param idRec data
+##          The post-processed recognition result.
+## @param idRef data
+##          The post-processed reference recognition result.
+function -RRES_print(idRec,idRef)
+{
+  data idDlsr;                                                                  # Neglog weight difference
+  data idDnll;                                                                  # Neglog likelihood difference
+  var  nR;                                                                      # Current record
+  var  nCPhn; ( "~PLB" idRec -find_comp ) nCPhn =;                              # Index of phoneme label component
+  var  nCOut; ( "~OUT" idRec -find_comp ) nCOut =;                              # Index of output label component
+  
+  :idRec["~LSR"]-idRef["~LSR"]: idDlsr =;                                       # Compute neglog weight difference
+  :idRec["~NLL"]-idRef["~NLL"]: idDnll =;                                       # Compute neglog likelihood difference
+
+  nR idRec.nrec < while                                                         # Loop over records (speech frames) >>
+    "ppf: frm: ${idRec[nR,nCPhn]}\t${idRef[nR,nCPhn]}\t"                        #   |
+    "${idDlsr[nR,0]}\t${idDnll[nR,0]}\t${idRec[nR,nCOut]}\n" + -echo;           #   Print per-frame result
+    nR ++=;                                                                     #   Next record
+  end                                                                           # <<
+}
+
+## == Main ==                                                                   # =====================================
+
+var    sMode;  "$1" sMode =;                                                    # Mode: "gui" or "nogui"
+object iSI;    ( 2 -argv ) iSI   -restore;                                      # The session information object
+fst    itRec;  ( 3 -argv ) itRec -restore;                                      # The recognition result FST
+fst    itRef;  ( 4 -argv ) itRef -restore;                                      # The reference recognition result FST 
+data   idNld;  ( 5 -argv ) idNld -restore;                                      # The neglog likelihood matrix
+data   idRec;                                                                   # The processed recognition result
+data   idRef;                                                                   # The processed referecnce rec. result
+var    sWfvr;                                                                   # Weighted feature-value relation
+var    nNadT;   0.05 nNadT   =;                                                 # NAD threshold
+var    nNedT;   0.5  nNedT   =;                                                 # NED threshold
+var    nLambda; 0.5  nLambda =;                                                 # NAD/NED interpolation weight
+
+## Do the post-processing                                                       # -------------------------------------
+( itRec idNld iSI.itGP.os -RRES_process ) idRec =;                              # Process recognition result 
+( itRec                   -RRES_out     ) idRec -join;                          # Add per-frame output labels
+( itRef idNld iSI.itGP.os -RRES_process ) idRef =;                              # Process reference recognition result
+( idRec idRef             -RRES_wfvr    ) sWfvr =;                              # Make weighted feature-value rel.
+
+## Output result                                                                # -------------------------------------
+sMode "gui" == if                                                               # Gui mode >>
+
+  idRec idRef -RRES_print;                                                      #   Pretty print per-frame result
+  "ppf: res: " sWfvr + "\n" + -echo;                                            #   The weighted feature-value relation
+
+else
+
+  ## Write per-frame result                                                     #   - - - - - - - - - - - - - - - - - -
+  "Writing \"$[sResFile]\"...\n" -echo;                                         #   Protocol
+  data idRes;                                                                   #   Per-frame result
+  idRec idRes =;                                                                #   Copy post-processed rec. result
+  idRef idRes -join;                                                            #   Join post-proc'd. ref. rec. result
+  :idRec["~LSR"]-idRef["~LSR"]: idRes -join;                                    #   Add frame-wise posterior NLL diff.
+  idRes.dim -- "~LSD" idRes -set_cname;                                         #   Name new component
+  :idRec["~NLL"]-idRef["~NLL"]: idRes -join;                                    #   Add frame-wise prior NLL diff.
+  idRes.dim -- "~NLD" idRes -set_cname;                                         #   Name new component
+  10   idRes -set rinc;                                                         #   Set frame increment
+  "ms" idRes -set runit;                                                        #   Set physical unit of frame incr.
+  "_work/tmp/recresult.data" idRes -save;                                       #   Write result details file
+
+  ## Make copies of (temporary) input files                                     #   - - - - - - - - - - - - - - - - - -
+  "_work/tmp/itRec.fst"   itRec -save;                                          #   Recognition result
+  "_work/tmp/itRef.fst"   itRef -save;                                          #   Reference recognition result
+  "_work/tmp/idNld.data"  idNld -save;                                          #   Neglog. density array
+
+end                                                                             # <<
+
+"\nppf: end\n" -echo;                                                           # Notify program end
+quit;                                                                           # Quit dLabPro

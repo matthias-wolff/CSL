@@ -1,0 +1,169 @@
+<html>
+  <head>
+    <title>CogntiveSystemsLab</title>
+    <style type="text/css">
+      BODY,TD,TH
+      {
+        font-family: sans-serif;
+        font-size: 10pt;
+      }
+      TH
+      {
+        background-color: #C0C0C0;
+        text-align: left;
+        text-decoration: none;
+        font-weight: normal;
+      }
+      TD,TH
+      {
+        padding-left: 3pt;
+        padding-right: 3pt;
+      }
+      A.linkplain,A:VISITED.linkplain,A:HOVER.linkplain
+      {
+        text-decoration: none;
+      }
+      HR
+      {
+        height: 1px;
+        border: 1px solid #808080;
+      }
+      .TODO
+      {
+        background-color: yellow;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>CogntiveSystemsLab Project</h1>
+    <hr>
+    <p>
+      <a class="linkplain" href="#1">1 Stable Version</a><br>
+      <a class="linkplain" href="#2">2 SDK Installation</a><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<a class="linkplain" href="#2-1">2.1 CogntiveSystemsLab</a><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<a class="linkplain" href="#2-2">2.2 Microcontroller</a><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<a class="linkplain" href="#2-3">2.3 Speech Dialog</a>
+    </p>
+    <hr>
+  
+    <h2 id="1">1 Stable Version</h2>
+    <p>To start the stable version connect a network drive <code>L:</code> to
+    <code>\\141.43.71.51\Software</code> and execute
+    <code>L:\CogntiveSystemsLab-stable\CogntiveSystemsLab\CogntiveSystemsLab.bat</code>. This will start
+    the CogntiveSystemsLab server on <code>FEHMARN</code> and a client on any other
+    workstation. The server should be started before the clients.</p>
+    <p>To suppress the security warning that occurs when double-clicking the batch
+    script open "Control Panel/Internet Options/Security/Local Intranet/Sites/Advanced"
+    and add "L:" to the list of intranet sites.</p>
+
+    <h2 id="2">2 SDK Installation</h2>
+    <h3 id="2-2">2.1 CogntiveSystemsLab</h3>
+    <p>The CogntiveSystemsLab SDK requires 32 bit versions of the Java&trade; and Eclipse
+    SDKs.</p>
+    <ol>
+      <li>Check out the following SVN repositories:
+        <table style="margin-top: 6pt; margin-bottom: 12pt;">
+          <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>URL</th>
+          </tr>
+          <tr>
+            <td>LCARS</td>
+            <td>LCARS widget toolkit</td>
+            <td><code>svn+ssh://eakss1.et.tu-dresden.de/LCARS</code></td>
+          </tr>
+          <tr>
+            <td>CogntiveSystemsLab</td>
+            <td>BTU Speech Lab software</td>
+            <td><code>http://naxos.kt.tu-cottbus.de:81/svn/CogntiveSystemsLab</code></td>
+          </tr>
+        </table>
+      </li>
+      <li>
+        Add
+        <ul>
+          <li>the binary folder <code>&lt;CogntiveSystemsLab-dir&gt;\bin.x86-32</code> and</li>
+          <li>the library folder <code>&lt;CogntiveSystemsLab-dir&gt;\lib</code></li>
+        </ul>
+        of the CogntiveSystemsLab project to your <code>PATH</code> environment variable.
+        <br>&nbsp;
+      </li>
+      <li>
+        In the LCARS project: Copy <code>lib\bin.x86-32\swt.jar</code> to <code>lib</code>
+        <span class="TODO">[TODO: copy automatically!]</span>
+      </li>
+    </ol>
+  
+    <h3 id="2-2">2.2 Microcontroller</h3>
+    <p><span class="TODO">[TODO: ...]</span></p>
+  
+    <h3 id="2-3">2.3 Speech Dialog</h3>
+    <p>Modifying the voice control dialog requires dLabPro and UASR. Check-out 
+    and build</p>
+    <table style="margin-bottom: 12pt;">
+      <tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>URL</th>
+      </tr>
+      <tr>
+        <td>UASR</td>
+        <td>Unified Approach to Speech Synthesis and Recognition</td>
+        <td><code>svn+ssh://eakss1.et.tu-dresden.de/uasr[/trunk]</code></td>
+      </tr>
+      <tr>
+        <td>dLabPro</td>
+        <td>Signal processing and pattern recognition toolbox</td>
+        <td><code>svn+ssh://eakss1.et.tu-dresden.de/dLabPro[/trunk]</code></td>
+      </tr>
+      <tr>
+        <td>dLabPro-recognizer</td>
+        <td>Speech and acoustic pattern recognizer</td>
+        <td><code>svn+ssh://eakss1.et.tu-dresden.de/dLabPro-recognizer[/trunk]</code></td>
+      </tr>
+    </table>
+    and modify the environment variables as follows:
+        <table style="margin-top: 6pt; margin-bottom: 12pt;">
+          <tr>
+            <th>Variable</th>
+            <th>Modification</th>
+          </tr>
+          <tr>
+            <td><code>UASR_HOME</code></td>
+            <td>Set to: <code>&lt;UASR-dir&gt;</code></td>
+          </tr>
+          <tr>
+            <td><code>MACHINE</code></td>
+            <td>Set to: <code>x86-w32</code></td>
+          </tr>
+          <tr>
+            <td><code>PATH</code></td>
+            <td>Add to path: <code>&lt;dLabPro-dir&gt;\%MACHINE%</code></td>
+          </tr>
+        </table>
+    
+    <p>For further instructions see "Getting started" in the dLabPro
+    documentation.</p>
+
+    <p>The CogntiveSystemsLab voice control dialog is defined in the file
+    <code>src/de/tucottbus/kt/csl/resources/de/csl.dlg.txt</code>.
+    After modifying the dialog file you need to pack the recognizer data files
+    either</p>
+    <ol>
+      <li>by running the Ant script <code>PackRecognizerData.xml</code> or</li>
+      <li>by running the UASR script <pre>
+  cd &lt;CogntiveSystemsLab-dir&gt;
+  REC_PACKDATA.xtp dlg PackRecognizerData.cfg
+</pre></li>
+    </ol>
+    <p>To save compilation time you can add the command line option
+    <code>-DUASR.skip=FG</code> to the Ant script or <code>-Pskip=FG</code> to
+    the UASR script, respectively. This will just re-compile the dialog without
+    re-creating any other recognizer data files.</p>
+    
+    <hr style="text-align: left; width: 100pt">
+    <sup id="fn1">1)</sup> Set the path to <code>&lt;dLabPro-dir&gt;/bin.release.x86-w32</code>
+    if you checked out the dLabPro and dLabPro-recognizer projects.
+  </body>
+</html>

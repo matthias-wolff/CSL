@@ -1,0 +1,30 @@
+<!-- 
+  Note: additional arguments: -DUASR.key=value
+  -DUASR.render=yes    : Render dialog and grammar fsts
+  -DUASR.export=openFST: Export dialog and grammar as openFST files  
+-->
+<project name="RecognizerData" default="pack" basedir=".">
+  <description>
+    Packs dLabPro recognizer data files for the CSL LCARS GUI.
+  </description>
+
+  <property environment="env"/>
+  <property name="UASR.script"   value="uasr/scripts/dlabpro/tools/REC_PACKDATA.xtpx"/>
+  <!--<property name="UASR.script"   value="${env.UASR_HOME}/scripts/dlabpro/tools/REC_PACKDATA.xtp"/>-->
+  <property name="UASR.config"   value="PackRecognizerData.cfg"/>
+  <property name="UASR.dir.data" value="uasr-data"/>
+	
+  <target name="pack">
+    <echo level="info">Packing dLabPro recognizer data files... </echo>
+    <exec executable="${basedir}/src/de/tucottbus/kt/dlabpro/bin/Win32/dlabpro.exe">
+      <arg value="${UASR.script}"/>
+      <arg value="dlg"/>
+      <arg value="${UASR.config}"/>
+    	<arg value="-Pdir.data=${UASR.dir.data}"/>
+    	<arg value="-Pskip=${UASR.skip}"/>
+    	<arg value="-Prender=${UASR.render}"/>
+      <arg value="-v2"/>
+    </exec>
+  </target>
+	
+</project>

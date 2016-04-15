@@ -1,0 +1,1 @@
+java -cp "target/classes/;target/dependency-jars/*" de.tucottbus.kt.csl.CslCorePanel

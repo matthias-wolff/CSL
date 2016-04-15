@@ -1,0 +1,28 @@
+<html>
+<head>
+  <script type="text/javascript">
+    function showStatus()
+    {
+    	var pos = Math.round(viewer.object.currentPosition*10)/10;
+    	window.status = 
+    	  "url=\"" + viewer.object.filename + "\"," +
+    	  "status=" + viewer.object.playstate + "," +
+    	  "position=" + pos + "," +
+        "error=[" + viewer.object.errorcode +",\""+ viewer.object.errordescription +"\"]";
+    }
+  </script>
+</head>
+<body style="margin:0px" onload="window.setInterval('showStatus()',100)">
+  <object
+    id="viewer" width="100%" height="100%"
+    classid="CLSID:22D6f312-B0F6-11D0-94AB-0080C74C7E95"
+    standby="LOADING VIEWER...">
+  <!-- WMP 6.4: "CLSID:22D6f312-B0F6-11D0-94AB-0080C74C7E95" -->
+  <!-- WMP 7+ : "CLSID:6BF52A52-394A-11d3-B153-00C04F79FAA6" -->
+    <param name="filename" value="mms://80.246.121.90/ctv">
+    <param name="AutoStart" value="true">
+    <param name="ShowControls" value="false">
+  </object>
+</body>
+</html>
+

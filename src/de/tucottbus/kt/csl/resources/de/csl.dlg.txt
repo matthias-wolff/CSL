@@ -1,0 +1,375 @@
+## Brandenburgische Technische Universit�t Cottbus
+## Lehrstuhl Kommunikationstechnik
+## CognitiveSystemsLab: Speech dialog definition file
+
+## DIALOG ######################################################################
+
+DLG: (S) __WAKEUP__ (1)
+DLG: (1) __SLEEP__ (S)
+
+## FINITE STATE GRAMMAR OF STATE S (SLEEPING) ##################################
+
+GRM.S: (S) <PAU> (S)
+GRM.S: (F) <PAU> (F)
+GRM.S: S   Computer:__WAKEUP__
+
+## FINITE STATE GRAMMAR OF STATE 1 (AWAKE) #####################################
+
+## Start rules
+
+GRM.1: S   :FVR CMD
+GRM.1: S   ok:__SLEEP__
+GRM.1: (S) <PAU> (S)
+GRM.1: (F) <PAU> (F)
+
+## Experimental: Phony start rules
+## - For local grammars which are referenced multiply but shall not be doubled
+## - Super heavy start and end weights prevent actually using these paths
+## - Pseudo-non-terminals link to local grammar
+## - Stack tokens must be used to enforce the correct exit
+
+GRM.1: S  CN3.PHONY
+GRM.1: S  LDIM.PHONY
+
+## Debug start rules
+
+#GRM.1: S   MACTLACT
+#GRM.1: S   MACTLPOS  
+#GRM.1: S   MAID  
+#GRM.1: S   MCID  
+#GRM.1: S   :FVR LDIM
+#GRM.1: S   :FVR CN3
+#GRM.1: S   :FVR CN2
+#GRM.1: S   :FVR DIG
+
+## Commands
+## Semantics:
+## |- [SWITCH]
+## |- [MOVETOABS]
+## |- [MOVETOREL]
+## |- thx
+## '- nop
+
+GRM.1: CMD           :[MACTL MACTLPOS :]
+GRM.1: CMD           :[MACTL MACTLACT :]
+GRM.1: CMD           THX
+GRM.1: CMD           :[ Computer:(Computer)nop :]
+
+#GRM.1: CMD           :<MOVETOABS>|<MOVETOREL>
+#GRM.1: CMD           :<SWITCH>
+
+## Politeness
+
+GRM.1: PLS           bitte:(bitte)
+GRM.1: PLS
+GRM.1: THX           :[ danke:(danke)thx THX.COMPUTER :]
+GRM.1: THX.COMPUTER  Computer:(Computer)
+GRM.1: THX.COMPUTER  
+
+## Microphone (array) activation/deactivation
+## Semantics:
+## |- [SWITCH[MAID][switch]]
+## '- [SWITCH[MCID][switch]]
+
+GRM.1: MACTLACT    :[SWITCH PLS ONOFF1 PLS (MACA.A) MAID (MACA.B) ONOFF2 PLS :]
+GRM.1: (MACA.A)    MCID (MACA.B)
+GRM.1: ONOFF1      schalte:(schalte):0:+OO
+GRM.1: ONOFF1      :[switch[ aktiviere:(aktiviere) :on]]
+GRM.1: ONOFF1      :[switch[ deaktiviere:(deaktiviere) :off]]
+GRM.1: ONOFF1
+GRM.1: ONOFF2      (OO2.S) :[switch[ ein:(ein) :on]] (OO2.A) schalten:(schalten) (OO2.F)
+GRM.1: (OO2.S)     (OO2.F)
+GRM.1: (OO2.S)     :[switch[ an:(an) :on]] (OO2.A)
+GRM.1: (OO2.S)     :[switch[ aus:(aus) :off]] (OO2.A)
+GRM.1: (OO2.A)     (OO2.F)
+GRM.1: ONOFF2      :[switch[ aktivieren:(aktivieren) :on]]
+GRM.1: ONOFF2      :[switch[ deaktivieren:(deaktivieren) :off]]
+GRM.1: ONOFF2      :[switch[ an:(an):0:-OO :on]]
+GRM.1: ONOFF2      :[switch[ ein:e(ein):0:-OO :on]]
+GRM.1: ONOFF2      :[switch[ aus:(aus):0:-OO :off]]
+
+#GRM.1: MACTLACT    :[SWITCH PLS ONOFF1 PLS (MACA.A) :<MAID> (MACA.B) ONOFF2 PLS :]
+#GRM.1: (MACA.A)    :<MCID> (MACA.B)
+
+## Microphone array positioning
+## Semantics:
+## |- [MOVETOABS[MAID][abspos]]
+## '- [MOVETOREL[MAID][abspos][relpos][dir]]
+##
+## NOTE: Contains named states. Use the MACTLPOS non-terminal only once!
+
+GRM.1: MACTLPOS    :[ PLS MOVE1 PLS MAID (TO) TO MAPOS (MOVE2) MOVE2 PLS :]
+GRM.1: MAPOS       :[abspos[ vor:(vor) :max]]
+GRM.1: MAPOS       :[abspos[ zurueck:(zurueck) :min]]
+GRM.1: MAPOS       TOABS1 (POSID1) POSID1
+GRM.1: TOABS1      :[abspos[ nach:(nach)
+GRM.1: POSID1      vorn:(vorn) :max]]
+GRM.1: POSID1      hinten:(hinten) :min]]
+GRM.1: (TO)        :MOVETOABS[abspos TOABS2 POSID2 (MOVE2)
+GRM.1: TOABS2      
+GRM.1: TOABS2      nach:(nach)
+GRM.1: TOABS2      zur:(zur)
+GRM.1: TOABS2      auf:(auf)
+GRM.1: POSID2      Position:(Position):0:+LDIM.ABS (POSID2.S) LDIM (POSID2.F) :]:0:-LDIM.ABS
+GRM.1: MAPOS       TOABS3 (POSID3) :[abspos[ POSID3 :]]
+GRM.1: TOABS3      zur:(zur)
+GRM.1: TOABS3      in:(in) die:(die)
+GRM.1: POSID3      Mitte:(Mitte)0
+GRM.1: MAPOS       TOABS4 (POSID4) :[abspos[ POSID4 :]]
+GRM.1: TOABS4      zum:(zum)
+GRM.1: POSID4      (POSID4.A) grossen:(grossen) (POSID4.B) Bildschirm:(Bildschirm)max (POSID4.C)
+GRM.1: (POSID4.A)  Haupt-:(Haupt-) (POSID4.B)  
+GRM.1: (POSID4.A)  (POSID4.B)  
+GRM.1: (POSID4.B)  Monitor:(Monitor)max (POSID4.C)
+GRM.1: POSID4      Pult:(Pult)min
+GRM.1: TO          :MOVETOREL (TOREL.S) noch:(noch) (TOREL.A) :[relpos[ ein:(ein) (TOREL.B) kleines:(kleines)- (TOREL.C) Stueck:(Stueck)bit]] (TOREL.D) weiter:(weiter) (TOREL.F1) :[dir[towards]]
+GRM.1: TO          :MOVETOABS
+GRM.1: (TOREL.S)   (TOREL.A)
+GRM.1: (TOREL.A)   :[relpos[ etwas:(etwas) :bit]] (TOREL.D)
+GRM.1: (TOREL.A)   :[relpos um:(um):0:+LDIM.REL (POSID2.S) 
+GRM.1: (TOREL.A)   :[relpos:0:+LDIM.REL (POSID2.S) 
+GRM.1: (TOREL.B)   (TOREL.C)
+GRM.1: (TOREL.C)   bisschen:(bisschen) :bit]] (TOREL.D)
+GRM.1: (TOREL.D)   (TOREL.F1)
+GRM.1: (TOREL.D)   (TOREL.E)
+GRM.1: (TOREL.D)   :[dir[ naeher:(naeher) (TOREL.F2) zur:(zur) :towards]] (POSID3)
+GRM.1: (TOREL.F1)  :[dir[ weg:(weg) (TOREL.F3) von:(von) der:(der) :away]] (POSID3)
+GRM.1: (TOREL.F1)  :[dir[ in:(in) Richtung:(Richtung) :towards]] (POSID4)
+GRM.1: (TOREL.F2)  zum:(zum) :towards]] (POSID4)
+GRM.1: (TOREL.F3)  vom:(vom) :away]] (POSID4)
+GRM.1: (POSID2.F)  :]:0:-LDIM.REL (TOREL.D)
+GRM.1: (POSID2.F)  :]:0:-LDIM.REL (TOREL.E) :[dir[ vor:(vor) :shortof]] (TOREL.F4) der:(der) (POSID3)
+GRM.1: (TOREL.F4)  den/m:(den/m) (POSID4)
+GRM.1: (TOREL.F4)  das:(das) (POSID4)
+GRM.1: MOVE1       bewege:(bewege)
+GRM.1: MOVE1       fahre:(fahre)
+GRM.1: MOVE1       platziere:(platziere)
+GRM.1: MOVE1       positioniere:(positioniere)
+GRM.1: MOVE1       verschiebe:(verschiebe)
+GRM.1: MOVE1
+GRM.1: MOVE2       bewegen:(bewegen)
+GRM.1: MOVE2       fahren:(fahren)
+GRM.1: MOVE2       platzieren:(platzieren)
+GRM.1: MOVE2       positionieren:(positionieren)
+GRM.1: MOVE2       verschieben:(verschieben)
+GRM.1: MOVE2
+
+#GRM.1: LDIM        :<LDIM>
+#GRM.1: MAID        :<MAID>
+
+## Microphone array identifiers
+## Semantics:
+## '- [MAID]
+##
+## NOTE: Does not contain named states, the MAID non-terminal may be used
+##       multiple times
+
+GRM.1: MAID        :[MAID[ Mikrofonfeld:(Mikrofonfeld) MA012
+GRM.1: MAID        :[MAID[ MAUF Mikrofonfeld:(Mikrofonfeld) :]]
+GRM.1: MA012       :ma]]
+GRM.1: MA012       eins:(eins) :ma1]]
+GRM.1: MA012       zwei:(zwei) :ma2]]
+GRM.1: MAUF        vorderes:(vorderes) :ma1
+GRM.1: MAUF        oberes:(oberes) :ma2
+GRM.1: MAUF        das:(das) MAUF2
+GRM.1: MAUF        das:(das) :ma
+GRM.1: MAUF2       vordere:(vordere) :ma1
+GRM.1: MAUF2       obere:(obere) :ma2
+
+## Microphone (group) identifiers
+## Semantics:
+## |- [MCID{[CNG2],[CNG2][-][CNG2]}...]
+## '- [MCID[all]] 
+
+GRM.1: MCID        :[MCID[ alle:(alle) Mikrofon/e:(Mikrofone) :all]] 
+GRM.1: MCID        Mikrofon/e:(Mikrofon/e) (MCID.A) :[MCID:0:+MCID CN2 :]:0:-MCID (MCID.B)
+GRM.1: (MCID.B)    <PAU> MCID.AND1 MCID.AND1 (MCID.A)
+GRM.1: (MCID.B)    :[MCID[ bis:(bis) :-]] (MCID.A)
+GRM.1: MCID.AND1   und:(und), sowie:(sowie), :
+GRM.1: MCID.AND2   ausserdem:(ausserdem), auch:(auch), :
+
+## Length dimensions
+## Semantics:
+## |- [LDIM[frac[1/2]][unit[m]]]
+## |- [LDIM[frac[3/2]][unit[m]]]
+## |- [LDIM[LDIM[int[DIG]][unit[m]]]
+## |- [LDIM[int[DIG]][unit[m]][dec[CN2]]]
+## |- [LDIM[int[DIG]][dec[DIG]...][unit[m]]]
+## '- [LDIM[int[CN3]][unit[cm]]]
+##
+## NOTE: Contains named states. Use the LDIM non-terminal exactly once, then
+##       connect to (LDIM.S) and from (LDIM.F)! 
+
+GRM.1: LDIM         (LDIM.S) ::INF (LDIM.F)
+GRM.1: LDIM.PHONY   ::1E10 (LDIM.S) :[LDIM LDIM.SIGN LDIM.INT :] (LDIM.F) ::1E10
+GRM.1: LDIM.SIGN    :[sign[ minus:(minus) :-]]
+GRM.1: LDIM.SIGN
+GRM.1: LDIM.INT     :[int:0:+LDIM.5 CN3 :][unit[:0:-LDIM.5 cm:(cm) :cm]]
+GRM.1: LDIM.INT     :[int:0:+LDIM.1 (LDIM.A) LDIM.DIG :] (LDIM.B) :[unit[:0:-LDIM.1 m:(m) :m]][dec:0:+LDIM.2 CN2 :]:0:-LDIM.2
+GRM.1: LDIM.INT     :[frac[ LDIM.FRAC :]] (LDIM.C) :[unit[ m:(m) :m]]
+GRM.1: LDIM.FRAC    einen:(einen) halben:(halben)1/2
+GRM.1: LDIM.FRAC    anderthalb:(anderthalb)3/2
+GRM.1: (LDIM.B)     komma:(komma) ::0:-LDIM.1 :[dec:0:+LDIM.3 (LDIM.A) 
+GRM.1: (LDIM.B)     ::0:-LDIM.3 :[dec:0:+LDIM.4 (LDIM.A)
+GRM.1: (LDIM.B)     LDIM.POP134 (LDIM.C)
+GRM.1: LDIM.POP134  ::0:-LDIM.1, ::0:-LDIM.3, ::0:-LDIM.4
+GRM.1: LDIM.DIG     :[DIG[o[ LDIM.DIG2 :]]]
+GRM.1: LDIM.DIG2    null:(null)0, eins:(eins)1, ein:(ein)1, zwei:(zwei)2, drei:(drei)3, vier:(vier)4, fuenf:(fuenf)5, sechs:(sechs)6, sieben:(sieben)7, acht:(acht)8, neun:(neun)9
+
+## Cardinal numbers
+## Semantics:
+## |- [CN3[h][t][o]]
+## |- [CN3[h][t]]
+## |- [CN3[h]]
+## |- [CN3[t][o]]
+## |- [CN3[to]]
+## |- [CN3[t]]
+## |- [CN3[o]]
+## |- [CN2[t][o]]
+## |- [CN2[to]]
+## '- [DIG[o]]
+##
+## NOTE: Contains named states. Incorporate once using the CN3.PHONY rule, then
+##       use the CN3, CN2, and DIG pseudo-non-terminals preceeded and followed
+##       by a matching pair of unique stack tokens. 
+
+#GRM.1: CN3          :<CN3>
+#GRM.1: CN2          :<CN2>
+#GRM.1: DIG          :<DIG>
+GRM.1: CN3          (CN3.S) ::INF (CN3.F)
+GRM.1: DIG          :[DIG (CN3.DIG) ::INF (CN3.F)
+GRM.1: CN2          :[CN2 (CN3.CN2) ::INF (CN3.F)
+GRM.1: CN3.PHONY    ::1E10 (CN3.S) :[CN3 (CN3.A) CN3.H (CN3.B) CN3.AND (CN3.CN2) CN3.TO :] (CN3.F) ::1E10
+GRM.1: CN3.H        :[h[ CN3.HX-- hundert:(hundert) :]]
+GRM.1: CN3.AND      und:(und)
+GRM.1: CN3.AND
+GRM.1: CN3.TO       CN3.O CN3.T
+GRM.1: CN3.TO       CN3.O-1X :[t[ zehn:(zehn)1 :]]
+GRM.1: CN3.TO       (CN3.DIG) :[o[ CN3.O-0- :]]
+GRM.1: CN3.TO       :[to[ elf:(elf)11 :]]
+GRM.1: CN3.TO       :[to[ zwoelf:(zwoelf)12 :]]
+GRM.1: CN3.O        :[o[ CN3.O-X- :]] und:(und)
+GRM.1: CN3.O
+GRM.1: CN3.T        :[t[ CN3.T-3- -ssig:(-ssig) :]]
+GRM.1: CN3.T        :[t[ CN3.T-X- -zig:(-zig) :]]
+GRM.1: CN3.HX--     :1, ein:(ein)1, zwei:(zwei)2, drei:(drei)3, vier:(vier)4, fuenf:(fuenf)5, sechs:(sechs)6, sieben:(sieben)7, acht:(acht)8, neun:(neun)9
+GRM.1: CN3.T-3-     drei:(drei)3
+GRM.1: CN3.T-X-     zwan:(zwan)2, vier/fIr/:(vier)4, fuenf:(fuenf)5, fuenf/fUf/:(fuf)5, sech:(sech)6, sieb:(sieb)7, ach:(ach)8, neun:(neun)9
+GRM.1: CN3.O-0-     eins:(eins)1, ein:(ein)1, zwei:(zwei)2, drei:(drei)3, vier:(vier)4, fuenf:(fuenf)5, sechs:(sechs)6, sieben:(sieben)7, acht:(acht)8, neun:(neun)9
+GRM.1: CN3.O-1X     :[o[ CN3.O-1- :]] 
+GRM.1: CN3.O-1X
+GRM.1: CN3.O-1-     drei:(drei)3, vier:(vier)4, vier/fIr/:(vier)4, fuenf:(fuenf)5, fuenf/fUf/:(fuf)5, sech:(sech)6, sieb:(sieb)7, ach:(ach)8, neun:(neun)9
+GRM.1: CN3.O-X-     ein:(ein)1, zwei:(zwei)2, drei:(drei)3, vier:(vier)4, fuenf:(fuenf)5, fuenf/fYm/:(fuenf)5, sechs:(sechs)6, sieben:(sieben)7, acht:(acht)8, neun:(neun)9
+GRM.1: (CN3.A)      :[o[ null:(null)0 :]]] (CN3.F)
+GRM.1: (CN3.A)      (CN3.CN2)
+GRM.1: (CN3.B)      :] (CN3.F)
+
+#GRM.1: CN3.HX--     :<CN3.HX-->
+#GRM.1: CN3.T-3-     :<CN3.T-3->
+#GRM.1: CN3.T-X-     :<CN3.T-X->
+#GRM.1: CN3.O-0-     :<CN3.O-0->
+#GRM.1: CN3.O-1-     :<CN3.O-1->
+#GRM.1: CN3.O-X-     :<CN3.O-X->
+
+## LEXICON #####################################################################
+LEX: -ssig         sIC
+LEX: -zig          tsIC
+LEX: ach           (Q|)ax
+LEX: acht          (Q|)axt
+LEX: alle          (Q|)al@
+LEX: aktiviere     (Q|)akti:vi:r@
+LEX: aktivieren    (Q|)akti:vi:r(@|)n
+LEX: an            (Q|)an
+LEX: anderthalb    (Q|)and6talb
+LEX: auch          (Q|)aUx
+LEX: auf           (Q|)aUf
+LEX: aus           (Q|)aUs
+LEX: ausserdem     (Q|)aUs6de:m
+LEX: bewege        be:ve:g@
+LEX: bewegen       be:ve:(g@n|N)
+LEX: Bildschirm    bIltSIrm
+LEX: bis           bIs
+LEX: bisschen      bIsC@n
+LEX: bitte         bIt@
+LEX: cm            tsEn(t|d)i:m(e:|i:)(t|d)(6|O|a:)
+LEX: Computer      (k|g|)(O|u:|o:|)(m|n|N|)(p|b|)(C|S)u:(t|d)(a:|)(6|)(x|)
+LEX: danke         daNk@
+LEX: das           das
+LEX: deaktiviere   de:(Q|)akti:vi:r@
+LEX: deaktivieren  de:(Q|)akti:vi:r(@|)n
+LEX: den/m         de:(n|m)
+LEX: der           dE:6
+LEX: die           di:
+LEX: drei          draI
+LEX: ein           (Q|)aIn
+LEX: einen         (Q|)aIn(@n|)
+LEX: eins          (Q|)aIns
+LEX: elf           (Q|)Elf
+LEX: etwas         (Q|)Etvas
+LEX: fahre         fa:r@
+LEX: fahren        fa:(r@n|Um|m)
+LEX: fuenf         fY(n|m)f
+LEX: fuenf/fYm/    fYm
+LEX: fuenf/fUf/    f(U|u:)f
+LEX: grossen       gro:s(@|)n
+LEX: halber/en     hal(b6|b(@|)n|m|)
+LEX: halben        hal(b@n|m)
+LEX: Haupt-        haU(p(t|)|)
+LEX: hinten        hInt@n
+LEX: hundert       hUnd6t
+LEX: in            (Q|)In
+LEX: kleines       klaIn(@|I)(s|)
+LEX: komma         kOma:
+LEX: m             m(e:|i:)(t|d)(6|O|a:)
+LEX: Mikrofon/e    mI(k|g)ro:fo:n(@|)
+LEX: Mikrofonfeld  mI(k|g)ro:fo:nf(E|Y)l(t|C|d)
+LEX: Mikrofonfeld  mI(k|g)ro:fo:n(Q|)Ere:i:
+LEX: minus         mi:nUs
+LEX: Mitte         mIt@
+LEX: Monitor       mOni:to:6
+LEX: nach          na:x
+LEX: naeher        nE:6
+LEX: neun          nOYn
+LEX: noch          nOx
+LEX: null          n(U|u:)l
+LEX: obere         o:b6(r|)@
+LEX: oberes        o:b6(r|)@s
+LEX: ok            o:ke:
+LEX: platziere     platsi:r@
+LEX: platzieren    platsi:r(@|)n
+LEX: Position      po:zi:t(s|)(I|j|)o:n
+LEX: positioniere  po:zi:t(s|)(I|j|)o:ni:r@
+LEX: positionieren po:zi:t(s|)(I|j|)o:ni:r(@|)n
+LEX: Pult          pUlt
+LEX: Richtung      rICtUN
+LEX: schalte       Salt@
+LEX: schalten      Salt(@|)n
+LEX: sech          zEC
+LEX: sechs         zEks
+LEX: sieb          zi:b
+LEX: sieben        zi:(b(@|)n|m)
+LEX: sowie         zo:vi:
+LEX: Stueck        StYk
+LEX: um            Um
+LEX: und           Un(t|)
+LEX: verschiebe    f6Si:b@
+LEX: verschieben   f6Si:(b@n|m)
+LEX: vier          fi:6
+LEX: vier/fIr/     f(I|O)(r|6)
+LEX: von           fOn
+LEX: vom           fOm
+LEX: vor           fo:(6|)
+LEX: vordere       fO6dEr@
+LEX: vorderes      fO6dEr@s
+LEX: vorn          f(O|o:)(6|)(n|N|m)
+LEX: weiter        vaIt6
+LEX: weg           vek
+LEX: zehn          tse:n
+LEX: zum           tsUm
+LEX: zur           tsu:6
+LEX: zurueck       tsu:rYk
+LEX: zwan          tsvan
+LEX: zwei          tsv(aI|o:)
+LEX: zwoelf        tsv9lf
+
+## EOF

@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<class-diagram version="1.1.9" icons="true" automaticImage="PNG" always-add-relationships="false" generalizations="true" 
+  realizations="true" associations="true" dependencies="true" nesting-relationships="true" router="FAN">  
+  <enumeration id="1" language="java" name="de.tucottbus.kt.csl.hardware.micarray3d.beamformer.DoAEstimator.MicArray" 
+    project="CognitiveSystemsLab" 
+    file="/CognitiveSystemsLab/src/de/tucottbus/kt/csl/hardware/micarray3d/beamformer/DoAEstimator.java" binary="false" 
+    corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="453" y="496"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="false" protected="false" private="false" static="true"/>      
+      <operations public="true" package="false" protected="false" private="false" static="true"/>    
+    </display>  
+  </enumeration>  
+  <class id="2" language="java" name="de.tucottbus.kt.csl.hardware.micarray3d.beamformer.DoAEstimator" 
+    project="CognitiveSystemsLab" 
+    file="/CognitiveSystemsLab/src/de/tucottbus/kt/csl/hardware/micarray3d/beamformer/DoAEstimator.java" binary="false" 
+    corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="910" y="497"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="false" protected="false" private="false" static="true"/>      
+      <operations public="true" package="false" protected="false" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="3" language="java" name="de.tucottbus.kt.csl.hardware.audio.utils.FFT" project="CognitiveSystemsLab" 
+    file="/CognitiveSystemsLab/src/de/tucottbus/kt/csl/hardware/audio/utils/FFT.java" binary="false" 
+    corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="909" y="1057"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="false" protected="false" private="false" static="true"/>      
+      <operations public="true" package="false" protected="false" private="false" static="true"/>    
+    </display>  
+  </class>  
+  <class id="4" language="java" name="de.tucottbus.kt.csl.hardware.micarray3d.beamformer.doa.Localizers" 
+    project="CognitiveSystemsLab" 
+    file="/CognitiveSystemsLab/src/de/tucottbus/kt/csl/hardware/micarray3d/beamformer/doa/Localizers.java" 
+    binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="1494" y="952"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="false" protected="false" private="false" static="true"/>      
+      <operations public="true" package="false" protected="false" private="false" static="true"/>    
+    </display>  
+  </class>  
+  <class id="5" language="java" name="de.tucottbus.kt.csl.hardware.micarray3d.beamformer.doa.DelayAnalysis" 
+    project="CognitiveSystemsLab" 
+    file="/CognitiveSystemsLab/src/de/tucottbus/kt/csl/hardware/micarray3d/beamformer/doa/DelayAnalysis.java" 
+    binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="908" y="819"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="false" protected="false" private="false" static="true"/>      
+      <operations public="true" package="false" protected="false" private="false" static="true"/>    
+    </display>  
+  </class>  
+  <class id="6" language="java" name="de.tucottbus.kt.csl.hardware.micarray3d.beamformer.doa.dataobjects.AudioData" 
+    project="CognitiveSystemsLab" 
+    file="/CognitiveSystemsLab/src/de/tucottbus/kt/csl/hardware/micarray3d/beamformer/doa/dataobjects/AudioData.java" 
+    binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="1493" y="266"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="false" protected="false" private="false" static="true"/>      
+      <operations public="true" package="false" protected="false" private="false" static="true"/>    
+    </display>  
+  </class>  
+  <class id="7" language="java" name="de.tucottbus.kt.csl.hardware.micarray3d.beamformer.doa.dataobjects.TauData" 
+    project="CognitiveSystemsLab" 
+    file="/CognitiveSystemsLab/src/de/tucottbus/kt/csl/hardware/micarray3d/beamformer/doa/dataobjects/TauData.java" 
+    binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="1493" y="503"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="false" protected="false" private="false" static="true"/>      
+      <operations public="true" package="false" protected="false" private="false" static="true"/>    
+    </display>  
+  </class>  
+  <class id="8" language="java" name="de.tucottbus.kt.csl.hardware.micarray3d.beamformer.doa.PlausibilityChecker" 
+    project="CognitiveSystemsLab" 
+    file="/CognitiveSystemsLab/src/de/tucottbus/kt/csl/hardware/micarray3d/beamformer/doa/PlausibilityChecker.java" 
+    binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="1493" y="739"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="false" protected="false" private="false" static="true"/>      
+      <operations public="true" package="false" protected="false" private="false" static="true"/>    
+    </display>  
+  </class>  
+  <class id="9" language="java" name="de.tucottbus.kt.csl.hardware.audio.input.HammerfallAudioDevice" 
+    project="CognitiveSystemsLab" 
+    file="/CognitiveSystemsLab/src/de/tucottbus/kt/csl/hardware/audio/input/HammerfallAudioDevice.java" binary="false" 
+    corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="453" y="297"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="false" protected="false" private="false" static="true"/>      
+      <operations public="true" package="false" protected="false" private="false" static="true"/>    
+    </display>  
+  </class>  
+  <class id="10" language="java" name="de.tucottbus.kt.csl.hardware.micarray3d.beamformer.doa.ChannelSelector" 
+    project="CognitiveSystemsLab" 
+    file="/CognitiveSystemsLab/src/de/tucottbus/kt/csl/hardware/micarray3d/beamformer/doa/ChannelSelector.java" 
+    binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="454" y="1046"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="false" protected="false" private="false" static="true"/>      
+      <operations public="true" package="false" protected="false" private="false" static="true"/>    
+    </display>  
+  </class>  
+  <class id="11" language="java" name="de.tucottbus.kt.csl.hardware.micarray3d.beamformer.doa.utils.StaticBandpassFIR" 
+    project="CognitiveSystemsLab" 
+    file="/CognitiveSystemsLab/src/de/tucottbus/kt/csl/hardware/micarray3d/beamformer/doa/utils/StaticBandpassFIR.java" 
+    binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="1498" y="1099"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="false" protected="false" private="false" static="true"/>      
+      <operations public="true" package="false" protected="false" private="false" static="true"/>    
+    </display>  
+  </class>  
+  <association id="12">    
+    <end type="SOURCE" refId="10" navigable="false">      
+      <attribute id="13" name="instance">        
+        <position height="19" width="54" x="662" y="1152"/>      
+      </attribute>      
+      <multiplicity id="14" minimum="0" maximum="1">        
+        <position height="17" width="25" x="702" y="1106"/>      
+      </multiplicity>    
+    </end>    
+    <end type="TARGET" refId="10" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
+  <dependency id="15">    
+    <end type="SOURCE" refId="10"/>    
+    <end type="TARGET" refId="1"/>  
+  </dependency>  
+  <association id="16">    
+    <end type="SOURCE" refId="2" navigable="false">      
+      <attribute id="17" name="delayAnalysis">        
+        <position height="0" width="0" x="-487" y="8"/>      
+      </attribute>      
+      <multiplicity id="18" minimum="0" maximum="1">        
+        <position height="17" width="25" x="911" y="719"/>      
+      </multiplicity>    
+    </end>    
+    <end type="TARGET" refId="5" navigable="true"/>    
+    <display labels="false" multiplicity="true"/>  
+  </association>  
+  <association id="19">    
+    <end type="SOURCE" refId="2" navigable="false">      
+      <attribute id="20" name="instance">        
+        <position height="19" width="54" x="1022" y="683"/>      
+      </attribute>      
+      <multiplicity id="21" minimum="0" maximum="1">        
+        <position height="17" width="25" x="1060" y="667"/>      
+      </multiplicity>    
+    </end>    
+    <end type="TARGET" refId="2" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
+  <association id="22">    
+    <end type="SOURCE" refId="9" navigable="false">      
+      <attribute id="23" name="singleton">        
+        <position height="19" width="58" x="592" y="397"/>      
+      </attribute>      
+      <multiplicity id="24" minimum="0" maximum="1">        
+        <position height="17" width="25" x="593" y="415"/>      
+      </multiplicity>    
+    </end>    
+    <end type="TARGET" refId="9" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
+  <dependency id="25">    
+    <bendpoint x="1159" y="947"/>    
+    <bendpoint x="1264" y="1097"/>    
+    <end type="SOURCE" refId="5"/>    
+    <end type="TARGET" refId="11"/>  
+  </dependency>  
+  <association id="26">    
+    <end type="SOURCE" refId="2" navigable="false">      
+      <attribute id="27" name="localizers">        
+        <position height="0" width="0" x="-422" y="142"/>      
+      </attribute>      
+      <multiplicity id="28" minimum="0" maximum="1">        
+        <position height="17" width="25" x="1375" y="875"/>      
+      </multiplicity>    
+    </end>    
+    <end type="TARGET" refId="4" navigable="true"/>    
+    <display labels="false" multiplicity="true"/>  
+  </association>  
+  <association id="29">    
+    <end type="SOURCE" refId="2" navigable="false">      
+      <attribute id="30" name="hashMapTauDataArray2">        
+        <position height="0" width="0" x="-809" y="5"/>      
+      </attribute>      
+      <multiplicity id="31" minimum="0" maximum="2147483647">        
+        <position height="17" width="23" x="1305" y="509"/>      
+      </multiplicity>    
+    </end>    
+    <end type="TARGET" refId="7" navigable="true"/>    
+    <display labels="false" multiplicity="true"/>  
+  </association>  
+  <association id="32">    
+    <bendpoint x="1262" y="267"/>    
+    <end type="SOURCE" refId="2" navigable="false">      
+      <attribute id="33" name="hashMapAudioDataArray2">        
+        <position height="0" width="0" x="-801" y="47"/>      
+      </attribute>      
+      <multiplicity id="34" minimum="0" maximum="2147483647">        
+        <position height="17" width="23" x="1303" y="272"/>      
+      </multiplicity>    
+    </end>    
+    <end type="TARGET" refId="6" navigable="true"/>    
+    <display labels="false" multiplicity="true"/>  
+  </association>  
+  <nesting id="35">    
+    <end type="SOURCE" refId="2"/>    
+    <end type="TARGET" refId="1"/>  
+  </nesting>  
+  <association id="36">    
+    <bendpoint x="1257" y="733"/>    
+    <end type="SOURCE" refId="2" navigable="false">      
+      <attribute id="37" name="plausibilityChecker">        
+        <position height="0" width="0" x="-831" y="-74"/>      
+      </attribute>      
+      <multiplicity id="38" minimum="0" maximum="1">        
+        <position height="17" width="25" x="1330" y="740"/>      
+      </multiplicity>    
+    </end>    
+    <end type="TARGET" refId="8" navigable="true"/>    
+    <display labels="false" multiplicity="true"/>  
+  </association>  
+  <association id="39">    
+    <end type="SOURCE" refId="5" navigable="false">      
+      <attribute id="40" name="fft">        
+        <position height="0" width="0" x="-425" y="12"/>      
+      </attribute>      
+      <multiplicity id="41" minimum="0" maximum="1">        
+        <position height="17" width="25" x="915" y="924"/>      
+      </multiplicity>    
+    </end>    
+    <end type="TARGET" refId="3" navigable="true"/>    
+    <display labels="false" multiplicity="true"/>  
+  </association>  
+  <association id="42">    
+    <bendpoint x="706" y="703"/>    
+    <bendpoint x="604" y="703"/>    
+    <end type="SOURCE" refId="2" navigable="false">      
+      <attribute id="43" name="channelSelector">        
+        <position height="0" width="0" x="-237" y="217"/>      
+      </attribute>      
+      <multiplicity id="44" minimum="0" maximum="1">        
+        <position height="17" width="25" x="510" y="930"/>      
+      </multiplicity>    
+    </end>    
+    <end type="TARGET" refId="10" navigable="true"/>    
+    <display labels="false" multiplicity="true"/>  
+  </association>  
+  <dependency id="45">    
+    <end type="SOURCE" refId="9"/>    
+    <end type="TARGET" refId="2"/>  
+  </dependency>  
+  <classifier-display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+    sort-features="false" accessors="true" visibility="true">    
+    <attributes public="true" package="false" protected="false" private="false" static="true"/>    
+    <operations public="true" package="false" protected="false" private="false" static="true"/>  
+  </classifier-display>  
+  <association-display labels="false" multiplicity="true"/>
+</class-diagram>
