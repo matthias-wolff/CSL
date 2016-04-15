@@ -1,14 +1,11 @@
 package de.tucottbus.kt.csl.hardware.audio.input.audiodevices;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import com.github.rjeschke.jpa.PaBuffer;
 
 import de.tucottbus.kt.csl.hardware.audio.input.AHammerfallAudioDevice;
 import de.tucottbus.kt.csl.hardware.audio.input.AudioInputConstants;
-import de.tucottbus.kt.csl.hardware.audio.input.IAudioListener;
 
 public class RmeHdspAes32 extends AHammerfallAudioDevice {
 

@@ -3,17 +3,16 @@ package de.tucottbus.kt.csl.hardware.audio.output;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.Mixer;
 import javax.sound.sampled.Mixer.Info;
 import javax.sound.sampled.SourceDataLine;
 
 import de.tucottbus.kt.csl.hardware.AAtomicHardware;
 import de.tucottbus.kt.csl.hardware.audio.utils.SampleTypeConverter;
 import de.tucottbus.kt.lcars.contributors.ElementContributor;
-import de.tucottbus.kt.lcars.logging.Log;
 
 /**
  * Abstract class for audio output devices running on the Java Sound API.
+ * 
  * @author Martin Birth
  * @author Peter Geßler
  *
@@ -71,15 +70,10 @@ public abstract class AAudioOutputDevice extends AAtomicHardware implements
    * Boolean to control the thread loops
    */
   private boolean runGuard = false;
-  
-  /**
-   * show device list only one time
-   */
-  private static boolean displayDeviceList = true;
 
   /**
-   * Constructor.
-   * <br><br>
+   * Constructor. <br>
+   * <br>
    * Please do <b>NOT</b> use the constructor direct. Use it only as singleton.
    * 
    * @param deviceName
@@ -163,6 +157,7 @@ public abstract class AAudioOutputDevice extends AAtomicHardware implements
    * @return
    * @throws LineUnavailableException
    */
+  @SuppressWarnings("null")
   protected SourceDataLine getOutputSourceDataLine(String deviceName)
       throws LineUnavailableException {
 
@@ -177,26 +172,17 @@ public abstract class AAudioOutputDevice extends AAtomicHardware implements
         break;
       }
     }
-    
-    if ((sourceDataLine == null) && displayDeviceList) {
-      
-      displayDeviceList = false;
-      
-      Log.err("Audio device with name " + deviceName + " wasn't founded. Please check device list!");
+
+    if ((sourceDataLine == null)) {
       
       try {
-        // Get and display a list of
-        // available mixers.
-        Mixer.Info[] mixerInfo = AudioSystem.getMixerInfo();
-        Log.err("Audio device list:");
-        for (int cnt = 0; cnt < mixerInfo.length; cnt++) {
-          Log.err(mixerInfo[cnt].getName());
-        }// end for loop
-      } catch (Exception e) {
-
+        sourceDataLine.start();
+      } catch (NullPointerException nullEx) {
+        logErr("Audio device with name " + deviceName
+            + " wasn't founded. Please check device list!", nullEx);
       }
     }
-      
+
     return sourceDataLine;
   }
 
@@ -217,10 +203,9 @@ public abstract class AAudioOutputDevice extends AAtomicHardware implements
   }
 
   /**
-   * Sending float audio data to the audio device.
-   * <br>
-   * The float values will be converted to byte values and give it
-   * the the output. 
+   * Sending float audio data to the audio device. <br>
+   * The float values will be converted to byte values and give it the the
+   * output.
    * 
    * @param inBuffer
    *          byte[] of audio samples
@@ -233,12 +218,12 @@ public abstract class AAudioOutputDevice extends AAtomicHardware implements
       dataline.write(outBuffer, 0, outBuffer.length);
     }
   }
-  
+
   /**
-   * Sending audio data in byte[] format to the audio device.
-   * <br><br>
-   * ATTENTION: please note note that the {@link #SAMPLE_BIT_SIZE} 
-   * is {@value #SAMPLE_BIT_SIZE} bit long <br>
+   * Sending audio data in byte[] format to the audio device. <br>
+   * <br>
+   * ATTENTION: please note note that the {@link #SAMPLE_BIT_SIZE} is
+   * {@value #SAMPLE_BIT_SIZE} bit long <br>
    * and the byte order {@link #BIG_ENDIAN} is set to {@value #BIG_ENDIAN}
    * 
    * @param outBuffer
@@ -277,7 +262,7 @@ public abstract class AAudioOutputDevice extends AAtomicHardware implements
   public void setOutputGain(float outputGain) {
     gain = (outputGain < 0) ? 0 : ((outputGain > 1) ? 1 : outputGain);
   }
-  
+
   public float getOutputGain() {
     return gain;
   }
@@ -287,11 +272,12 @@ public abstract class AAudioOutputDevice extends AAtomicHardware implements
    */
   @Override
   public void dispose() {
-    if (guard!=null)
-    {
+    if (guard != null) {
       runGuard = false;
       guard.interrupt();
-      try { guard.join(); } catch (Exception e) {}
+      try {
+        guard.join();
+      } catch (Exception e) {}
     }
     super.dispose();
   }
