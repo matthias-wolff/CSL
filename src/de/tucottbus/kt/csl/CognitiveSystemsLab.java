@@ -53,11 +53,6 @@ public class CognitiveSystemsLab {
         LedControllerCeiling.getInstance().setAmbientColor(ColorMeta.BLUE);
       } catch (IllegalStateException illStateAmbiLight) {
 
-        try {
-          Motor.getInstance();
-        } catch (IllegalStateException illStateTrolly) {
-
-        }
       }
       
       Runtime.getRuntime().addShutdownHook(new Thread() {
