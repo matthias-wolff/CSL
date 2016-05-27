@@ -1,9 +1,13 @@
 ## ARGUMENTS:
 ##   $1: Mode, 'gui' or 'nogui'
-##   $2: Session info object file
-##   $3: Recognition result fst file
-##   $4: Reference recognition fst file
-##   $5: Neglog. densities array data file
+##   $2: Main recognition result
+##   $3: Reference recognition result
+##   $4: Neglog. density array
+##   $5: Speech signal
+##   $6: Recognized semantics
+##   $7: Session info
+
+## TODO: Use functions from <UASR_HOME>/scripts/util/rres.itp!
 
 "ppf: start\n" -echo;                                                           # Notify program start
 
@@ -244,10 +248,10 @@ function -RRES_print(idRec,idRef)
 ## == Main ==                                                                   # =====================================
 
 var    sMode;  "$1" sMode =;                                                    # Mode: "gui" or "nogui"
-object iSI;    ( 2 -argv ) iSI   -restore;                                      # The session information object
-fst    itRec;  ( 3 -argv ) itRec -restore;                                      # The recognition result FST
-fst    itRef;  ( 4 -argv ) itRef -restore;                                      # The reference recognition result FST 
-data   idNld;  ( 5 -argv ) idNld -restore;                                      # The neglog likelihood matrix
+object iSI;    ( 7 -argv ) iSI   -restore;                                      # The session information object
+fst    itRec;  ( 2 -argv ) itRec -restore;                                      # The main recognition result FST
+fst    itRef;  ( 3 -argv ) itRef -restore;                                      # The reference recognition result FST 
+data   idNld;  ( 4 -argv ) idNld -restore;                                      # The neglog likelihood matrix
 data   idRec;                                                                   # The processed recognition result
 data   idRef;                                                                   # The processed referecnce rec. result
 var    sWfvr;                                                                   # Weighted feature-value relation

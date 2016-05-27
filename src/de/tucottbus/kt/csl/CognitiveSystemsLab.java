@@ -13,7 +13,6 @@ import de.tucottbus.kt.csl.hardware.CslHardware;
 import de.tucottbus.kt.csl.hardware.led.LedControllerCeiling;
 import de.tucottbus.kt.csl.hardware.led.LedControllerViewer;
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayViewer;
-import de.tucottbus.kt.csl.hardware.micarray3d.trolley.Motor;
 import de.tucottbus.kt.csl.speech.UasrSpeechEngine;
 import de.tucottbus.kt.dlabpro.recognizer.Recognizer;
 import de.tucottbus.kt.lcars.LCARS;
@@ -93,7 +92,7 @@ public class CognitiveSystemsLab {
         Log.info("recognizer is: " + recognizerExe);
         Log.info("dLabPro is   : " + dLabProExe);
         config.setProperty("postproc.cmd", dLabProExe + " \"" + script
-            + "\" gui \"" + sesinf + "\" ");
+            + "\" gui ");
 
         // TODO This takes very long! -->
         Log.info("Seeking audio device \"MADI (29+30)\" ...");
