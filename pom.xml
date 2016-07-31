@@ -375,9 +375,9 @@
 			<version>bits1</version>
 		</dependency>
 		<dependency>
-			<groupId>jpa</groupId>
-			<artifactId>snapshot</artifactId>
-			<version>0.1</version>
+			<groupId>rjeschke</groupId>
+			<artifactId>jpa</artifactId>
+			<version>0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 
