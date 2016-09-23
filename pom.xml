@@ -377,7 +377,22 @@
 		<dependency>
 			<groupId>rjeschke</groupId>
 			<artifactId>jpa</artifactId>
-			<version>0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>rjeschke</groupId>
+			<artifactId>jpa-linux32</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>rjeschke</groupId>
+			<artifactId>jpa-linux64</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>rjeschke</groupId>
+			<artifactId>jpa-win32</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>rjeschke</groupId>
+			<artifactId>jpa-win64</artifactId>
 		</dependency>
 	</dependencies>
 
@@ -409,6 +424,31 @@
 				<artifactId>commons-io</artifactId>
 				<version>2.4</version>
 			</dependency>
+			<dependency>
+			<groupId>rjeschke</groupId>
+			<artifactId>jpa</artifactId>
+			<version>0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>rjeschke</groupId>
+			<artifactId>jpa-linux32</artifactId>
+			<version>0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>rjeschke</groupId>
+			<artifactId>jpa-linux64</artifactId>
+			<version>0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>rjeschke</groupId>
+			<artifactId>jpa-win32</artifactId>
+			<version>0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>rjeschke</groupId>
+			<artifactId>jpa-win64</artifactId>
+			<version>0.1-SNAPSHOT</version>
+		</dependency>
 		</dependencies>
 	</dependencyManagement>
 </project>
