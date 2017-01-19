@@ -499,6 +499,7 @@ public class BeamformerPanel extends MainPanel implements IObservable {
     eRectLcars.addEEventListener(new EEventListenerAdapter() {
       @Override
       public void touchDown(EEvent ee) {
+        canvas.setVisible(false);
         panelSelectionDialog();
       }
     });
@@ -969,6 +970,10 @@ public class BeamformerPanel extends MainPanel implements IObservable {
   
   @Override
   public void stop() {
+    
+    if (canvas.isDisplayed())
+      canvas.removeFromPanel();
+    
     super.stop();
   }
   
@@ -1221,7 +1226,7 @@ public class BeamformerPanel extends MainPanel implements IObservable {
   @Override
   public void notifyObservers(Object arg) {
     Object[] arrLocal;
-
+    
     synchronized (this) {
 
       if (!changed)

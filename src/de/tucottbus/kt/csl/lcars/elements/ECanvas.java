@@ -18,6 +18,10 @@ public class ECanvas extends ElementContributor {
   
   private Canvas3D canvas;
   
+  private boolean isVisible;
+  
+  private Panel panel = null;
+  
   /**
    * The bounds of this World Wind wrapper in LCARS panel coordinates.
    */
@@ -28,6 +32,7 @@ public class ECanvas extends ElementContributor {
     super(x, y);
     this.bounds = new Rectangle(x,y,w,h);
     this.canvas=canvas;
+    this.isVisible = true;
   }
   
   // FIXME: works really slow
@@ -39,11 +44,11 @@ public class ECanvas extends ElementContributor {
     
     super.addToPanel(panel);
     
-    final Panel __panel = panel;
+    this.panel = panel;
     
     try
     {
-      screen = Screen.getLocal(__panel.getScreen());
+      screen = Screen.getLocal(panel.getScreen());
       Point tl = screen.panelToScreen(new Point(bounds.x,bounds.y));
       Point br = screen.panelToScreen(new Point(bounds.x+bounds.width,bounds.y+bounds.height));
       canvas.setBounds(tl.x,tl.y,br.x-tl.x,br.y-tl.y);
@@ -65,6 +70,24 @@ public class ECanvas extends ElementContributor {
       screen.remove(canvas);
     }
     super.removeFromPanel();
+  }
+  
+  public boolean setVisible(boolean mode) {
+    
+    if (mode == isVisible)
+      return true;
+    
+    if (mode == false) {
+      
+      isVisible = false;
+      removeFromPanel();
+      return false;
+    } else {
+      
+      isVisible = true;
+      addToPanel(this.panel);
+      return true;
+    }
   }
 
 }
