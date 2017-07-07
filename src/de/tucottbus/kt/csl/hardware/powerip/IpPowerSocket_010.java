@@ -16,7 +16,7 @@ public final class IpPowerSocket_010 extends AIpPowerSocket
   private IpPowerSocket_010()
   {
     super("141.43.71.10", new String[]
-      { "MAIN VIEWER", "ILLUMINAION", "SPEAKERS", "HD CAM" }
+      { "MAIN VIEWER", "ILLUMINAITON", "SPEAKERS", "KINECT" }
     );
   }
 
