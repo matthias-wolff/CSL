@@ -795,7 +795,7 @@ public abstract class AHardware extends Observable
       createSubPanels();
 
       // Do later... (field hardwareClass not set set during init)
-      invokeLater(new Runnable() 
+      LCARS.invokeLater(new Runnable() 
       {
         @Override
         public void run() 
