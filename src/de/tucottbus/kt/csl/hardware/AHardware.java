@@ -35,6 +35,7 @@ import de.tucottbus.kt.lcars.elements.modify.EGeometryModifier;
 import de.tucottbus.kt.lcars.geometry.AGeometry;
 import de.tucottbus.kt.lcars.geometry.GArea;
 import de.tucottbus.kt.lcars.logging.Log;
+import de.tucottbus.kt.lcars.net.NetUtils;
 import de.tucottbus.kt.lcars.swt.ColorMeta;
 
 /**
@@ -708,7 +709,7 @@ public abstract class AHardware extends Observable
 
       eHardwareClass = new EValue(this,136,21,471,49,LCARS.EC_ELBOUP|LCARS.ES_VALUE_W|LCARS.ES_LABEL_NW|LCARS.ES_STATIC,null);
       eHardwareClass.setValueMargin(0);
-      eHardwareClass.setLabel(LCARS.getHostName().toUpperCase());
+      eHardwareClass.setLabel(NetUtils.getHostName().toUpperCase());
       add(eHardwareClass);
 
       EElbo elbo = new EElbo(this,607,21,595,100,LCARS.EC_ELBOUP|LCARS.ES_SHAPE_NE|LCARS.ES_STATIC,null);

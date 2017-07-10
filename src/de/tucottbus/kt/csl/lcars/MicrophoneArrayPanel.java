@@ -37,6 +37,7 @@ import de.tucottbus.kt.lcars.elements.ELabel;
 import de.tucottbus.kt.lcars.elements.ERect;
 import de.tucottbus.kt.lcars.elements.EValue;
 import de.tucottbus.kt.lcars.logging.Log;
+import de.tucottbus.kt.lcars.net.NetUtils;
 import de.tucottbus.kt.lcars.swt.ColorMeta;
 import de.tucottbus.kt.lcars.swt.ImageMeta;
 import de.tucottbus.kt.lcars.util.LoadStatistics;
@@ -165,7 +166,7 @@ public class MicrophoneArrayPanel extends MainPanel
           ePanelHost.setLabel("PNL: LOCAL");
           return;
         }
-        ePanelHost.setLabel("PNL: "+LCARS.getHostName().toUpperCase());
+        ePanelHost.setLabel("PNL: "+NetUtils.getHostName().toUpperCase());
       }
     }).start();
     
