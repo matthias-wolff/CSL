@@ -208,7 +208,7 @@ public class CslDemoPanel extends SpeechEnginePanel
       else
         cSpeechFvr.addToPanel(CslDemoPanel.this);
       // HACK: Re-display last FVR HTML
-      Screen.getLocal(getScreen()).getSwtDisplay().asyncExec(new Runnable()
+      Screen.getLocal(getScreen()).getSwtShell().getDisplay().asyncExec(new Runnable()
       {
         public void run()
         {
