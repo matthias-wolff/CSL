@@ -205,7 +205,7 @@
 				<updatePolicy>daily</updatePolicy>
 			</snapshots>
 		</repository>
-		<repository>
+		<!--  repository>
 			<id>root1-releases</id>
 			<name>root1.de Releases Repository</name>
 			<layout>default</layout>
@@ -214,7 +214,7 @@
 				<enabled>false</enabled>
 				<updatePolicy>daily</updatePolicy>
 			</snapshots>
-		</repository>
+		</repository>-->
 		<repository>
 			<id>LcarswtGithub</id>
 			<url>https://raw.githubusercontent.com/matthias-wolff/LCARSWT/mvn-repo/</url>
@@ -277,6 +277,13 @@
 
 	<!-- PROJECT DEPENDENCIES -->
 	<dependencies>
+      <dependency>
+        <groupId>local.lib</groupId>
+        <artifactId>ImageJ_3D_Viewer</artifactId>
+        <version>fake</version>
+        <scope>system</scope>
+        <systemPath>${basedir}/lib/ImageJ_3D_Viewer.jar</systemPath>
+      </dependency>
 		<dependency>
 			<groupId>de.tucottbus.kt.jlab</groupId>
 			<artifactId>jLab</artifactId>
@@ -324,7 +331,7 @@
 		<dependency>
 			<groupId>org.jfree</groupId>
 			<artifactId>jfreechart</artifactId>
-			<version>LATEST</version>
+			<version>1.0.19</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imagej</groupId>
