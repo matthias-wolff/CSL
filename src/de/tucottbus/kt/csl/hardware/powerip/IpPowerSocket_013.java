@@ -55,7 +55,7 @@ public final class IpPowerSocket_013 extends AIpPowerSocket
         }
       }
     }, 2500, 2500);
-    System.out.println("hit a key...");
+    System.out.println("hit a enter to quit...");
     try
     {
       System.in.read();

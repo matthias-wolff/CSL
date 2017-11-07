@@ -46,6 +46,7 @@ import de.tucottbus.kt.lcars.elements.ELabel;
 import de.tucottbus.kt.lcars.elements.ERect;
 import de.tucottbus.kt.lcars.elements.EValue;
 import de.tucottbus.kt.lcars.logging.Log;
+import de.tucottbus.kt.lcars.net.NetUtils;
 import de.tucottbus.kt.lcars.swt.ColorMeta;
 import de.tucottbus.kt.lcars.swt.ImageMeta;
 
@@ -433,7 +434,7 @@ public class BeamformerPanel extends MainPanel implements IObservable {
     add(elbLeft2);
 
     EValue eValue = new EValue(this,dx+w,dyl+h-elbH,300,elbH,LCARS.EC_ELBOUP|LCARS.ES_STATIC|LCARS.ES_RECT_RND_E|LCARS.ES_VALUE_W,null);
-    eValue.setValue(LCARS.getHostName().toUpperCase());
+    eValue.setValue(NetUtils.getHostName().toUpperCase());
     eValue.setValueMargin(160);
     add(eValue); 
     
@@ -531,7 +532,7 @@ public class BeamformerPanel extends MainPanel implements IObservable {
           elbRight3.setLabel("PNL: LOCAL");
           return;
         }
-        elbRight3.setLabel("PNL: "+LCARS.getHostName().toUpperCase());
+        elbRight3.setLabel("PNL: "+NetUtils.getHostName().toUpperCase());
       }
     }).start();
     

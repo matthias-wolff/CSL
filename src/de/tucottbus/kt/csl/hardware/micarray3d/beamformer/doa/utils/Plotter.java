@@ -209,7 +209,7 @@ public class Plotter implements Runnable {
     }
     
     if(series.getKey().toString().contains("IFFT")){
-      yAxis.setAttributedLabel("Ammplitude");
+      yAxis.setAttributedLabel("Amplitude");
       xAxis.setAttributedLabel("Samples");
     }
 
