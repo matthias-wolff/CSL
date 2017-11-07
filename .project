@@ -3,6 +3,7 @@
 	<name>CognitiveSystemsLab</name>
 	<comment></comment>
 	<projects>
+		<project>lcarswt</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
