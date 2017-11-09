@@ -5,12 +5,11 @@
   <artifactId>csl</artifactId>
   <version>2.0.0-rc.1</version>
   <name>CognitiveSystemsLab project</name>
-  <url>https://www.tu-cottbus.de/kommunikationstechnik/wiki/index.php/CognitiveSystemsLab</url>
   <description>The CognitiveSystemsLab project comprises hardware controller programs, speech and audio components, and LCARS control panels for BTU's CogntiveSystemsLab.</description>
   <inceptionYear>2013</inceptionYear>
   <organization>
     <name>Chair of Communications Engineering, BTU Cottbus-Senftenberg</name>
-    <url>https://www.tu-cottbus.de/fakultaet3/en/communications-engineering.html</url>
+    <url>https://www.b-tu.de/en/fg-kommunikationstechnik</url>
   </organization>
   <packaging>jar</packaging>
 
