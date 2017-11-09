@@ -156,34 +156,31 @@
           </execution>
         </executions>
       </plugin>
+      
+      <!--  Copy DLLs/SOs to target (FIXME: copied DLLs are not loadable - WHY?)
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <outputDirectory>
-            ${project.build.directory}/dependency-jars
-          </outputDirectory>
-          <artifactItems>
-            <artifactItem>
-              <groupId>org.jdesktop</groupId>
-              <artifactId>jdic-native</artifactId>
-              <version>20061102</version>
-              <classifier>win32</classifier>
-              <type>jar</type>
-              <overWrite>true</overWrite>
-              <outputDirectory>${project.build.directory}/lib</outputDirectory>
-            </artifactItem>
-          </artifactItems>
-        </configuration>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.0.2</version>
         <executions>
           <execution>
-            <phase>package</phase> <!-- bind to the packaging phase -->
+            <id>copy-resources</id>
+            <phase>validate</phase>
             <goals>
-              <goal>copy-dependencies</goal>
+              <goal>copy-resources</goal>
             </goals>
+            <configuration>
+              <outputDirectory>${basedir}/target/natives</outputDirectory>
+              <resources>          
+                <resource>
+                  <directory>natives/${profile.id}</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>              
+            </configuration>            
           </execution>
         </executions>
       </plugin>
+      -->
 
       <!-- Generate the API website related to this project -->
       <plugin>
@@ -267,6 +264,7 @@
 
   <!-- PROJECT DEPENDENCIES -->
   <dependencies>
+    <!-- DELETEME: Moved to local repo  
     <dependency>
       <groupId>local.lib</groupId>
       <artifactId>ImageJ_3D_Viewer</artifactId>
@@ -274,6 +272,7 @@
       <scope>system</scope>
       <systemPath>${basedir}/lib/ImageJ_3D_Viewer.jar</systemPath>
     </dependency>
+     -->
     <dependency>
       <groupId>de.tucottbus.kt.jlab</groupId>
       <artifactId>jLab</artifactId>
@@ -351,6 +350,11 @@
       <artifactId>javacl</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>ImageJ_3D_Viewer</groupId>
+      <artifactId>ij3d</artifactId>
+      <version>1.0</version>
+    </dependency>
     <dependency>
       <groupId>kinect</groupId>
       <artifactId>ufdw</artifactId>

@@ -163,9 +163,21 @@ public class BeamformerPanel extends MainPanel implements IObservable {
     setColorScheme(COLOR_SCHEME);
     
     obs = new Vector<IObserver>();
-    cube = new Cube3d(this);
-    viewer3d = new Viewer3d();
-    addObserver(cube);
+    try
+    {
+      cube = new Cube3d(this);
+      viewer3d = new Viewer3d();
+      addObserver(cube);
+    }
+    catch (UnsatisfiedLinkError e)
+    {
+      Log.err("j3dcore*.dll's not found. Add <CSL-project-dir>/natives/<machinetype> to java.library.path!");
+      Log.err("In Eclipse:");
+      Log.err("- Right-click <CSL-project-dir>/src and select \"Build Path|Configure Build Path...\"");
+      Log.err("- Select \"Native library location\" and press [Edit...]");
+      Log.err("- Press [Workspace...] and select folder <CSL-project-dir>/natives/<machinetype>");
+      Log.err("Error details:", e);
+    }
     
     freq = 1000;
     sensitivity = SensitivityPlot.getInstance();
