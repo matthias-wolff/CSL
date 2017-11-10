@@ -649,6 +649,7 @@ public class BeamformerPanel extends MainPanel implements IObservable {
     freqPoser.addPositionListener(new IPositionListener() {
       @Override
       public void positionChanging(java.awt.geom.Point2D.Float position) {
+        positionChanged(position);
       }
 
       @Override

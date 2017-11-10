@@ -201,6 +201,10 @@ public class CognitiveSystemsLab {
         Log.err("Failed to shut down CSL hardware. Reason:", e);
       }
     }
+    
+    // FIXME: Some threads still lingering...
+    Log.warn("Forcibly terminating program");
+    System.exit(0);
   }
 
 }

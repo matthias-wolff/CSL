@@ -101,7 +101,7 @@ public class ECanvas3D extends ElementContributor
     {
       try
       {
-        Screen screen = Screen.getLocal(panel.getScreen());
+        Screen screen = Screen.getLocal(getPanel().getScreen());
         screen.remove(canvas);
       }
       catch (ClassCastException e)
@@ -123,7 +123,7 @@ public class ECanvas3D extends ElementContributor
 
     try
     {
-      Screen screen = Screen.getLocal(panel.getScreen());
+      Screen screen = Screen.getLocal(getPanel().getScreen());
       Point tl = screen.panelToScreen(new Point(bounds.x,bounds.y));
       Point br = screen.panelToScreen(new Point(bounds.x+bounds.width,bounds.y+bounds.height));
       canvas.setBounds(tl.x,tl.y,br.x-tl.x,br.y-tl.y);

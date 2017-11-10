@@ -413,7 +413,7 @@ public class ETopographyFreq extends ElementContributor {
    * @see #hasCursor()
    */
   public synchronized void slideCursor(double x, double y, long time, String label) {
-    if (panel == null) {
+    if (getPanel() == null) {
       setCursorPos(x, y, label);
       return;
     }
@@ -524,7 +524,7 @@ public class ETopographyFreq extends ElementContributor {
    * Layout.
    */
   protected void layout() {
-    if (panel == null || pTx == null)
+    if (getPanel() == null || pTx == null)
       return;
     
 //  while (getElements().size() > 0)
@@ -569,7 +569,7 @@ public class ETopographyFreq extends ElementContributor {
     if (this.gridStyle != -1)
       gs = this.gridStyle & (LCARS.ES_COLOR | LCARS.ES_FONT);
 
-    ColorMeta color = LCARS.getColor(panel.getColorScheme(), gs);
+    ColorMeta color = LCARS.getColor(getPanel().getColorScheme(), gs);
     int alpha = (int) (255 * gridMajorAlpha);
     color = new ColorMeta(color.getRed(), color.getGreen(), color.getBlue(), alpha);
     ERect e = null;
@@ -619,8 +619,8 @@ public class ETopographyFreq extends ElementContributor {
       setCursorPos(x, y, label);
     }
 
-    if (panel != null)
-      panel.invalidate();
+    if (getPanel() != null)
+      getPanel().invalidate();
   }
 
   /**
