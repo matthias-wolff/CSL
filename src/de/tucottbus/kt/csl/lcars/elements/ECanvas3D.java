@@ -1,13 +1,8 @@
 package de.tucottbus.kt.csl.lcars.elements;
 
-import java.awt.Point;
 import java.awt.Rectangle;
 
 import javax.media.j3d.Canvas3D;
-
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Listener;
 
 import de.tucottbus.kt.lcars.LCARS;
 import de.tucottbus.kt.lcars.Panel;
@@ -51,7 +46,7 @@ public class ECanvas3D extends ElementContributor
   public ECanvas3D(int x, int y, int w, int h, Canvas3D canvas)
   {
     super(x, y);
-    this.bounds = new Rectangle(x, y, w, h);
+    this.bounds = new Rectangle(x, y, x+w, y+h);
     this.canvas = canvas;
   }
 
@@ -64,25 +59,9 @@ public class ECanvas3D extends ElementContributor
     super.addToPanel(panel);
     try
     {
-      reposition();
       Screen screen = Screen.getLocal(panel.getScreen());
       canvas.repaint(10);
-      screen.add(canvas);
-      
-      screen.getSwtShell().getDisplay().syncExec(()->
-      {
-        screen.getSwtShell().addListener(SWT.Resize, new Listener () 
-        {
-          public void handleEvent (Event e) 
-          {
-            screen.getSwtShell().getDisplay().asyncExec(()->
-            {
-              // Async. to give SWT a little time to compute the (new) shell size
-              reposition();
-            });
-          }
-        });
-      });
+      screen.addAwtComponent(canvas,bounds.x,bounds.y,bounds.width-bounds.x,bounds.height-bounds.y);
     }
     catch (ClassCastException e)
     {
@@ -102,7 +81,7 @@ public class ECanvas3D extends ElementContributor
       try
       {
         Screen screen = Screen.getLocal(getPanel().getScreen());
-        screen.remove(canvas);
+        screen.removeAwtComponent(canvas);
       }
       catch (ClassCastException e)
       {
@@ -111,27 +90,6 @@ public class ECanvas3D extends ElementContributor
     });
 
     super.removeFromPanel();
-  }
-
-  /**
-   * Repositions the 3D canvas wrapper on the (local) screen.
-   */
-  protected void reposition()
-  {
-    if (canvas==null)
-      return;
-
-    try
-    {
-      Screen screen = Screen.getLocal(getPanel().getScreen());
-      Point tl = screen.panelToScreen(new Point(bounds.x,bounds.y));
-      Point br = screen.panelToScreen(new Point(bounds.x+bounds.width,bounds.y+bounds.height));
-      canvas.setBounds(tl.x,tl.y,br.x-tl.x,br.y-tl.y);
-    }
-    catch (ClassCastException e)
-    {
-      Log.err("LCARS: 3D canvas wrappers not supported on remote screens.", e);
-    }
   }
   
 }

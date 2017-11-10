@@ -10,7 +10,6 @@ import java.util.Vector;
 import javax.vecmath.Point3d;
 
 import de.tucottbus.kt.csl.CognitiveSystemsLab;
-import de.tucottbus.kt.csl.hardware.CslHardware;
 import de.tucottbus.kt.csl.hardware.HardwareException;
 import de.tucottbus.kt.csl.hardware.micarray3d.AMicArray3DPart;
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArray3D;
