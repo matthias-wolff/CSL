@@ -1,13 +1,5 @@
 package de.tucottbus.kt.csl.lcars.components.threeDim;
 
-import ij.IJ;
-import ij.ImageJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.plugin.PlugIn;
-import ij3d.Content;
-import ij3d.Image3DUniverse;
-
 import java.awt.BorderLayout;
 import java.io.File;
 import java.io.FilenameFilter;
@@ -23,6 +15,13 @@ import de.tucottbus.kt.csl.lcars.components.twoDim.SensitivityPlot.CLState;
 import de.tucottbus.kt.csl.lcars.components.twoDim.sensitivity.SensitivityEntity;
 import de.tucottbus.kt.csl.lcars.components.twoDim.sensitivity.SensitivityKernels;
 import de.tucottbus.kt.lcars.logging.Log;
+import ij.IJ;
+import ij.ImageJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.plugin.PlugIn;
+import ij3d.Content;
+import ij3d.Image3DUniverse;
 
 /**
  * This class shows a 3d object of all sensitivity slices in the CSL.
@@ -33,9 +32,9 @@ public class Viewer3d implements PlugIn {
 
   // ############ static fields #################
 
-  private final String PATH = "D:\\SensitivityCubeObjects";
+  private final String PATH = "C:/Users/wolff/Downloads/CSL_SensitivityCubeData/";
 
-  private final String FILE = "\\CSL_SensitivityCube";
+  private final String FILE = "CSL_SensitivityCube";
 
   private final String EXT = ".zip";
 
@@ -59,6 +58,8 @@ public class Viewer3d implements PlugIn {
   // ############ non-static fields #################
 
   private static Image3DUniverse univ;
+
+  private SensitivityKernels kernels = null;
 
   private Content content;
 
@@ -95,17 +96,18 @@ public class Viewer3d implements PlugIn {
    */
   private ImagePlus generate3dImageData(float frequency) {
     MicArrayState state = MicArrayState.getCurrentState();
-    SensitivityKernels kernels = null;
-    try {
-      kernels = new SensitivityKernels(JavaCL.createBestContext()
-          .createDefaultQueue().getContext());
-    } catch (IOException e) {
-      Log.err(e.getMessage(), e);
+    if (kernels==null)
+    {
+      try {
+        kernels = new SensitivityKernels(JavaCL.createBestContext().createDefaultQueue().getContext());
+      } catch (IOException e) {
+        Log.err(e.getMessage(), e);
+      }
     }
 
     ImageStack stack = new ImageStack(WIDTH, HEIGTH);
+    SensitivityEntity sens = new SensitivityEntity(kernels, CLState.CL_BUFFER);
     for (int i = LENGTH; i > 0; i--) {
-      SensitivityEntity sens = new SensitivityEntity(kernels, CLState.CL_BUFFER);
       int[] slice = sens.getHorizontalSliceIntArray(state, i, frequency, WIDTH,
           HEIGTH);
       convertBGRAtoARGB(slice);

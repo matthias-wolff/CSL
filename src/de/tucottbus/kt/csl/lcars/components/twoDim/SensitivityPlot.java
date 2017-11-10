@@ -42,35 +42,46 @@ public class SensitivityPlot {
   /**
    * Constructor method
    */
-  private SensitivityPlot(){
-    if(_clstate==CLState.NO_CL)
+  private SensitivityPlot()
+  {
+    if (_clstate == CLState.NO_CL)
       return;
-    
-    boolean doubleSupport = JavaCL.createBestContext().createDefaultQueue().getContext().getDevices()[0].isDoubleSupported();
-    
-    if(!doubleSupport){
-      if(_clstate!=CLState.NO_CL)
-        _clstate=CLState.NO_CL;
-    } else {
-      boolean imgSupport = JavaCL.createBestContext().createDefaultQueue().getContext().getDevices()[0].hasImageSupport();
-      if(!imgSupport)
-        _clstate=CLState.CL_BUFFER;
-        
-      try {
-        kernels = new SensitivityKernels(JavaCL.createBestContext().createDefaultQueue().getContext());
-      } catch (IOException e) {
-        // TODO Auto-generated catch block
+
+    boolean doubleSupport = JavaCL.createBestContext().createDefaultQueue()
+        .getContext().getDevices()[0].isDoubleSupported();
+
+    if (!doubleSupport)
+    {
+      if (_clstate != CLState.NO_CL)
+        _clstate = CLState.NO_CL;
+    } 
+    else
+    {
+      boolean imgSupport = JavaCL.createBestContext().createDefaultQueue()
+          .getContext().getDevices()[0].hasImageSupport();
+      if (!imgSupport)
+        _clstate = CLState.CL_BUFFER;
+
+      try
+      {
+        kernels = new SensitivityKernels(
+            JavaCL.createBestContext().createDefaultQueue().getContext());
+      } 
+      catch (IOException e)
+      {
         e.printStackTrace();
       }
+      
+      // TODO: Create SensitivityEntity only once (leaks memory!)
     }
   }
     
   /**
    * Default singleton method to get a instance with the {@link CLState#CL_IMAGE_2D} support.
    * 
-   * @return
-   * @see #getInstance(CLState)
+   * @deprecated Use {@link #getInstance()} instead!
    */
+  @Deprecated
   public static synchronized SensitivityPlot getInstance(CLState clstate){
     _clstate=clstate;
     if (instance == null) {
