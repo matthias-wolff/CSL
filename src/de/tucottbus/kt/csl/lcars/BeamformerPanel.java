@@ -10,6 +10,7 @@ import java.util.Vector;
 import javax.vecmath.Point3d;
 
 import de.tucottbus.kt.csl.CognitiveSystemsLab;
+import de.tucottbus.kt.csl.hardware.CslHardware;
 import de.tucottbus.kt.csl.hardware.HardwareException;
 import de.tucottbus.kt.csl.hardware.micarray3d.AMicArray3DPart;
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArray3D;
@@ -21,7 +22,7 @@ import de.tucottbus.kt.csl.lcars.components.threeDim.Cube3d;
 import de.tucottbus.kt.csl.lcars.components.threeDim.Viewer3d;
 import de.tucottbus.kt.csl.lcars.components.twoDim.SensitivityPlot;
 import de.tucottbus.kt.csl.lcars.elements.EBufferedImage;
-import de.tucottbus.kt.csl.lcars.elements.ECanvas;
+import de.tucottbus.kt.csl.lcars.elements.ECanvas3D;
 import de.tucottbus.kt.csl.lcars.elements.EMicrophoneArraySelector;
 import de.tucottbus.kt.csl.lcars.elements.EPositionerFreq;
 import de.tucottbus.kt.csl.lcars.elements.ESensitivityPlot;
@@ -132,8 +133,8 @@ public class BeamformerPanel extends MainPanel implements IObservable {
   private ELabel[] eLabelsScale;
   
   private EBufferedImage imgScale;
-  private ECanvas canvas;
-  private ECanvas canvasViewer;
+  private ECanvas3D canvas;
+  private ECanvas3D canvasViewer;
   
   private ESensitivityPlot sensitivityPlotHo;
   private ESensitivityPlot sensitivityPlotVertSi;
@@ -413,7 +414,7 @@ public class BeamformerPanel extends MainPanel implements IObservable {
           for (EElbo elb : thFrame) {
             elb.setVisible(true);
           }
-          canvasViewer = new ECanvas(0, 100, 950, 950, viewer3d.getCanvas());
+          canvasViewer = new ECanvas3D(0, 100, 950, 950, viewer3d.getCanvas());
           canvasViewer.addToPanel(beamformerPanel);
           viewer3d.setFrequency(freq);
         } else {
@@ -512,8 +513,14 @@ public class BeamformerPanel extends MainPanel implements IObservable {
     eRectLcars.addEEventListener(new EEventListenerAdapter() {
       @Override
       public void touchDown(EEvent ee) {
-        canvas.setVisible(false);
-        panelSelectionDialog();
+        try
+        {
+          getScreen().setPanel(null);
+        } 
+        catch (Exception e)
+        {
+          Log.err("Failed to remove panel from screen.", e);
+        }
       }
     });
     add(eRectLcars);
@@ -716,7 +723,7 @@ public class BeamformerPanel extends MainPanel implements IObservable {
     }
     
     // cube
-    canvas = new ECanvas(posX+530, posY-50, 520, 520, cube.getCanvas3d());
+    canvas = new ECanvas3D(posX+530, posY-50, 520, 520, cube.getCanvas3d());
     canvas.addToPanel(this);
         
     // ########################################################################
@@ -915,7 +922,7 @@ public class BeamformerPanel extends MainPanel implements IObservable {
     add(eRectReset);
     eRectReset.setVisible(false);
   }
-  
+
   /**
    * Set position of the motor slider for the ceiling array.
    * @param position - float value
@@ -986,7 +993,7 @@ public class BeamformerPanel extends MainPanel implements IObservable {
     
     if (canvas.isDisplayed())
       canvas.removeFromPanel();
-    
+
     super.stop();
   }
   
@@ -1284,13 +1291,8 @@ public class BeamformerPanel extends MainPanel implements IObservable {
    */
   public static void main(String[] args)
   {
-    MicArray3D ma3d = MicArray3D.getInstance();
-    ma3d.printTree("");
     args = LCARS.setArg(args,"--panel=",BeamformerPanel.class.getName());
     CognitiveSystemsLab.main(args);
-    BeamformerPanel.dispose();
-    ma3d.dispose();
   }
-
 
 }

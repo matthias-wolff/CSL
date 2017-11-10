@@ -944,17 +944,8 @@ public class MicrophoneArrayPanel extends MainPanel
    */
   public static void main(String[] args)
   {
-    MicArray3D ma3d = MicArray3D.getInstance(); // Instantiate minimal hardware
-    Collection<AHardware> children = ma3d.getChildren();
-    for (AHardware hardware : children) {
-      hardware.setVerbose(1);
-    }
-    ma3d.printTree("");
-    
     args = LCARS.setArg(args,"--panel=",MicrophoneArrayPanel.class.getName());
 	  CognitiveSystemsLab.main(args);
-	  
-	  ma3d.dispose();
   }
   
 }

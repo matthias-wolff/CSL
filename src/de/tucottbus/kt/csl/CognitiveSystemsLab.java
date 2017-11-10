@@ -57,9 +57,7 @@ public class CognitiveSystemsLab {
       Runtime.getRuntime().addShutdownHook(new Thread() {
         @Override
         public void run() {
-          System.out.println("CSL hardware shut-down ...");
-          CslHardware.getInstance().dispose();
-          System.out.println("... CSL hardware shut-down");
+          // Intentionally left blank
         }
       });
     }
@@ -189,6 +187,20 @@ public class CognitiveSystemsLab {
     if (LCARS.getArg(args, "--clientof=") == null)
       args = LCARS.setArg(args, "--server", null);
     LCARS.main(args);
+    
+    if (CognitiveSystemsLab.instance!=null)
+    {
+      Log.info("CSL hardware shut-down ...");
+      try
+      {
+        CslHardware.getInstance().dispose();
+        Log.info("... CSL hardware shut-down");
+      }
+      catch (Exception e) 
+      {
+        Log.err("Failed to shut down CSL hardware. Reason:", e);
+      }
+    }
   }
 
 }

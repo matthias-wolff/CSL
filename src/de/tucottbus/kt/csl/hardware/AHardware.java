@@ -186,7 +186,7 @@ public abstract class AHardware extends Observable
   {
     if (disposed)
       throw new IllegalStateException("Already disposed");
-    System.out.println("Disposing "+getClass().getName());
+    Log.info("Disposing "+getClass().getName());
     disposed = true;
     notifyObserversService.shutdownNow();
   }
