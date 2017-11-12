@@ -1,6 +1,8 @@
 package incubator.csl.lcars.micarr.elements;
 
 import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.geom.Area;
 import java.util.ArrayList;
 
 import javax.vecmath.Point3d;
@@ -68,6 +70,23 @@ public class ESensitivityPlot extends EElement implements ISensitivityRendererCo
   }
 
   // -- Getters and setters --
+  
+  @Override
+  public Area getArea()
+  {
+    return gsp.getArea();
+  }
+
+  @Override
+  public Rectangle getBounds()
+  {
+    return gsp.getBounds();
+  }  
+
+  public boolean usesCL()
+  {
+    return gsp.usesCL();
+  }
   
   public MicArrayState getMicArrayState() 
   {
@@ -148,6 +167,28 @@ public class ESensitivityPlot extends EElement implements ISensitivityRendererCo
       break;
     }
     return new Point3d(x,y,z);
+  }
+  
+  public Point cslToElement(Point3d point)
+  {
+    int x = 0;
+    int y = 0;
+    switch (gsp.getSliceType())
+    {
+    case SLICE_XY:
+      x = (int)Math.round(point.x+(CSL_DIM_X/2));
+      y = (int)Math.round(CSL_DIM_Y/2-point.y);
+      break;
+    case SLICE_XZ:
+      x = (int)Math.round(point.x+(CSL_DIM_X/2));
+      y = (int)Math.round(CSL_DIM_Z-point.z);
+      break;
+    case SLICE_YZ:
+      x = (int)Math.round(CSL_DIM_Y/2+point.y);
+      y = (int)Math.round(CSL_DIM_Z-point.z);
+      break;
+    }
+    return new Point(x,y);
   }
   
   // -- Implementation of abstract methods --

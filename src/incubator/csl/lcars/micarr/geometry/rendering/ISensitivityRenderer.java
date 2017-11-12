@@ -14,6 +14,11 @@ public interface ISensitivityRenderer extends ISensitivityRendererConstants
 {
   
   /**
+   * Determines if this sensitivity renderer uses openCL, i.e. if it is fast.
+   */
+  public boolean usesCL();
+  
+  /**
    * Renders a 2D sensitivity plot to a buffered image.
    * 
    * @param state

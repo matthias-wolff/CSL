@@ -22,6 +22,12 @@ public class CpuSensitivityRenderer implements ISensitivityRenderer
   // -- Implementation of the ISensitivityRenderer interface --
   
   @Override
+  public boolean usesCL()
+  {
+    return false;
+  }
+  
+  @Override
   public BufferedImage renderImage
   (
     MicArrayState state, 

@@ -20,6 +20,11 @@ import incubator.csl.lcars.micarr.geometry.rendering.ISensitivityRendererConstan
 /**
  * Geometry of a 2D spatial sensitivity plot of the CSL microphone array.
  * 
+ * <h3>TODO:</h3>
+ * <ul>
+ *   <li>Make sensitivity image scalable.</li>
+ * </ul>
+ * 
  * @author Martin Birth, BTU Cottbus-Senftenberg
  * @author Matthias Wolff, BTU Cottbus-Senftenberg (revision)
  */
@@ -31,6 +36,11 @@ public class GSensitivityPlot extends AGeometry implements ISensitivityRendererC
    * Renderer supplying the sensitivity images.
    */
   private ISensitivityRenderer renderer;
+  
+  /**
+   * Rendering cache.
+   */
+  private Image image;
   
   /**
    * Type of slice to display: {@link ISensitivityRendererConstants#SLICE_XY
@@ -54,6 +64,8 @@ public class GSensitivityPlot extends AGeometry implements ISensitivityRendererC
   
   private ImageData imageData;
 
+  // -- Life cycle
+  
   /**
    * Creates a new 2D sensitivity plot geometry.
    * 
@@ -96,7 +108,26 @@ public class GSensitivityPlot extends AGeometry implements ISensitivityRendererC
     }
   }
 
+  @Override
+  public void finalize()
+  {
+    clearCache();
+  }
+  
+  protected void clearCache()
+  {
+    if (image==null)
+      return;
+    image.dispose();
+    image = null;
+  }
+  
   // -- Getters and setters --
+
+  public boolean usesCL()
+  {
+    return renderer.usesCL();
+  }
   
   @Override
   public Area getArea() 
@@ -138,7 +169,11 @@ public class GSensitivityPlot extends AGeometry implements ISensitivityRendererC
   
   public void setSlicePos(double slicePos) 
   {
-    this.slicePos = (int)Math.round(slicePos);
+    int slicePosNew = (int)Math.round(slicePos);
+    if (this.slicePos==slicePosNew)
+      return;
+    this.slicePos = slicePosNew;
+    clearCache();
   }
   
   public double getSlicePos()
@@ -148,7 +183,10 @@ public class GSensitivityPlot extends AGeometry implements ISensitivityRendererC
   
   public void setFrequency(float freq) 
   {
+    if (this.freq==freq)
+      return;
     this.freq = freq;
+    clearCache();
   }
   
   public float getFrequency()
@@ -158,7 +196,10 @@ public class GSensitivityPlot extends AGeometry implements ISensitivityRendererC
   
   public void setMicArrayState(MicArrayState state)
   {
+    if (state==null || state.equals(this.state))
+      return;
     this.state = state;
+    clearCache();
   }
   
   public MicArrayState getMicArrayState()
@@ -171,30 +212,33 @@ public class GSensitivityPlot extends AGeometry implements ISensitivityRendererC
   @Override
   public void paint2D(GC gc) 
   {
-    int imgW = getDefaultSize().width;
-    int imgH = getDefaultSize().height;
-    if (imageData == null)
+    // Render sensitivity plot if image cache is empty
+    if (image==null)
     {
-      Image img = new Image(gc.getDevice(),imgW,imgH);
-      imageData = img.getImageData();
-      img.dispose();
+      System.err.println("RENDER");
+
+      int imgW = getDefaultSize().width;
+      int imgH = getDefaultSize().height;
+      if (imageData == null)
+      {
+        Image img = new Image(gc.getDevice(),imgW,imgH);
+        imageData = img.getImageData();
+        img.dispose();
+      }
+  
+      int[] pixels = renderer.renderIntArray(state,freq,sliceType,slicePos,imgW,imgH);
+      imageData.setPixels(0,0,imgW*imgH,pixels,0);
+      image = new Image(gc.getDevice(),imageData);
     }
-
-    int[] pixels 
-      = renderer.renderIntArray(state,freq,sliceType,slicePos,imgW,imgH);
-
-    imageData.setPixels(0,0,imgW*imgH,pixels,0);
     
-    Image image = new Image(gc.getDevice(),imageData);
-//    Rectangle b = this.bounds;      
-//    double scale = Math.max(b.width / bi.getWidth(), b.height / bi.getHeight());
-    
-//    gc.drawImage(image, 0,0,imageData.width, imageData.height,
-//                        b.x,b.y,(int)(imageData.width*scale),(int)(imageData.height*scale));
-
+    // Draw sensitivity plot
     gc.drawImage(image,pos.x,pos.y);
-
-    image.dispose();
+    /* -- Draw scaled plot
+     * Rectangle b = this.bounds;      
+     * double scale = Math.max(b.width / bi.getWidth(), b.height / bi.getHeight());
+     * gc.drawImage(image, 0,0,imageData.width, imageData.height,
+     *            b.x,b.y,(int)(imageData.width*scale),(int)(imageData.height*scale)); 
+     */
   }
 
 }

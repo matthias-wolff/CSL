@@ -86,7 +86,13 @@ public class CLSensitivityRenderer implements ISensitivityRenderer
   }
   
   // -- Implementation of the ISensitivityRenderer interface --
-  
+
+  @Override
+  public boolean usesCL()
+  {
+    return true;
+  }
+
   @Override
   public BufferedImage renderImage
   (
