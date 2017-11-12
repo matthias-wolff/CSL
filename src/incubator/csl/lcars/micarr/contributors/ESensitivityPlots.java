@@ -54,6 +54,9 @@ public class ESensitivityPlots extends ElementContributor
   private final EValue           eXPos;
   private final EValue           eYPos;
   private final EValue           eZPos;
+  private final EElbo            eXyYz;
+  private final EElbo            eXyXz1;
+  private final EElbo            eXyXz2;
 
   // -- Life cycle --
   
@@ -260,13 +263,28 @@ public class ESensitivityPlots extends ElementContributor
     add(eZPos);
     add(new ERect(null,ex+285,ey-3,39,GCursor.handleSize+3,LCARS.ES_STATIC|LCARS.ES_LABEL_W|LCARS.ES_SELECTED,"cm"));
     
-    // Connect elements
+    // Connecting lines
+    eXyYz = new EElbo(null,0,0,0,0,LCARS.ES_STATIC|LCARS.ES_SHAPE_SW,null);
+    eXyYz.setArmWidths(GCursor.cursorWidth,GCursor.cursorWidth);
+    eXyYz.setArcWidths(30,27);
+    add(eXyYz);
+    eXyXz1 = new EElbo(null,0,0,0,0,LCARS.ES_STATIC|LCARS.ES_SHAPE_SE,null);
+    eXyXz1.setArmWidths(GCursor.cursorWidth,GCursor.cursorWidth);
+    eXyXz1.setArcWidths(30,27);
+    add(eXyXz1);
+    eXyXz2 = new EElbo(null,0,0,0,0,LCARS.ES_STATIC|LCARS.ES_SHAPE_NW,null);
+    eXyXz2.setArmWidths(GCursor.cursorWidth,GCursor.cursorWidth);
+    eXyXz2.setArcWidths(30,27);
+    add(eXyXz2);
+
+    // Initialization
     gSpxyCursorH.setAlterEgo(gSpyzCursorV);
     gSpxyCursorV.setAlterEgo(gSpxzCursorV);
     gSpyzCursorH.setAlterEgo(gSpxzCursorH);
     gSpyzCursorV.setAlterEgo(gSpxyCursorH);
     gSpxzCursorH.setAlterEgo(gSpyzCursorH);
     gSpxzCursorV.setAlterEgo(gSpxyCursorV);
+    repositionConnectingLines();
   }
   
   // -- Getters and setters --
@@ -300,6 +318,8 @@ public class ESensitivityPlots extends ElementContributor
     eSpxz.setSlicePos(point.y);
     gSpxzCursorH.setPos(eSpxz.cslToElement(point).y,point.z);
     gSpxzCursorV.setPos(eSpxz.cslToElement(point).x,point.x);
+    
+    repositionConnectingLines();
   }
 
   /**
@@ -335,6 +355,48 @@ public class ESensitivityPlots extends ElementContributor
       point = eSpxz.elementToCsl(new Point(pos,gSpxzCursorH.getPos()));
     
     setSlicePositions(point);
+  }
+  
+  protected void repositionConnectingLines()
+  {
+    Rectangle b1;
+    Rectangle b2;
+    Point     p1;
+    Point     p2;
+    Point     pm;
+
+    // Reposition line from XY to YZ plot
+    b1 = eSpxy.getBounds();
+    b2 = eSpyz.getBounds();
+    p1 = new Point(b1.x+gSpxyCursorV.getPos()-GCursor.cursorWidth/2,b1.y+b1.height);
+    p2 = new Point(b2.x-13,p1.y+30);
+    eXyYz.setBounds(new Rectangle(p1.x,p1.y,p2.x-p1.x,p2.y-p1.y));
+    
+    // Reposition line from XY to XZ plot
+    b2 = eSpxz.getBounds();
+    p1 = new Point(b1.x+b1.width,b1.y+gSpxyCursorH.getPos()-GCursor.cursorWidth/2);
+    p2 = new Point(b2.x-13,b2.y+b2.height/2-GCursor.cursorWidth/2);
+    pm = new Point(p1.x+(p2.x-p1.x)/2,p1.y+(p2.y-p1.y)/2);
+    b1 = new Rectangle(p1.x,p1.y,pm.x-p1.x+GCursor.cursorWidth/2,pm.y-p1.y);
+    int s1 = LCARS.ES_SHAPE_NE;
+    if (b1.height<0)
+    {
+      b1 = new Rectangle(b1.x,b1.y+b1.height+GCursor.cursorWidth/2-1,b1.width,-b1.height+GCursor.cursorWidth);
+      s1 = LCARS.ES_SHAPE_SE;
+    }
+    int s2 = LCARS.ES_SHAPE_SW;
+    b2 = new Rectangle(b1.x+b1.width-GCursor.cursorWidth,pm.y,p2.x-pm.x+GCursor.cursorWidth,p2.y-pm.y);
+    if (b2.height<0)
+    {
+      b2 = new Rectangle(b2.x,b2.y+b2.height,b2.width,-b2.height);
+      s2 = LCARS.ES_SHAPE_NW;
+    }
+    b1.height = Math.max(b1.height,GCursor.cursorWidth);
+    b2.height = Math.max(b2.height,GCursor.cursorWidth);
+    eXyXz1.setBounds(b1); eXyXz1.setStyle(s1); 
+    eXyXz1.setArcWidths(Math.min(b1.height,30),Math.min(b1.height-3,27));
+    eXyXz2.setBounds(b2); eXyXz2.setStyle(s2);
+    eXyXz2.setArcWidths(Math.min(b2.height,30),Math.min(b2.height-3,27));
   }
   
   // -- Nested classes --
@@ -492,7 +554,7 @@ public class ESensitivityPlots extends ElementContributor
       if (horz)
         return b.y - sp.getBounds().y + b.height/2;
       else
-        return b.x - sp.getBounds().x +b.width/2;
+        return b.x - sp.getBounds().x + b.width/2;
     }
     
     protected ArrayList<EElement> getElements()

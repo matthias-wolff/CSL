@@ -215,8 +215,6 @@ public class GSensitivityPlot extends AGeometry implements ISensitivityRendererC
     // Render sensitivity plot if image cache is empty
     if (image==null)
     {
-      System.err.println("RENDER");
-
       int imgW = getDefaultSize().width;
       int imgH = getDefaultSize().height;
       if (imageData == null)
