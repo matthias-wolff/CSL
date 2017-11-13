@@ -7,13 +7,11 @@ import java.awt.geom.Point2D.Float;
 import java.awt.geom.Rectangle2D;
 import java.lang.reflect.Field;
 import java.rmi.RemoteException;
-import java.util.Collection;
 import java.util.Vector;
 
 import javax.vecmath.Point3d;
 
 import de.tucottbus.kt.csl.CognitiveSystemsLab;
-import de.tucottbus.kt.csl.hardware.AHardware;
 import de.tucottbus.kt.csl.hardware.HardwareException;
 import de.tucottbus.kt.csl.hardware.micarray3d.AMicArray3DPart;
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArray3D;
@@ -40,7 +38,6 @@ import de.tucottbus.kt.lcars.logging.Log;
 import de.tucottbus.kt.lcars.net.NetUtils;
 import de.tucottbus.kt.lcars.swt.ColorMeta;
 import de.tucottbus.kt.lcars.swt.ImageMeta;
-import de.tucottbus.kt.lcars.util.LoadStatistics;
 import de.tucottbus.kt.lcars.util.Range;
 
 /**
@@ -306,7 +303,7 @@ public class MicrophoneArrayPanel extends MainPanel
 
     eGuiLd = new ELabel(this,23,890,208,38,LCARS.ES_STATIC|LCARS.ES_LABEL_W,"000-00/000-00");
     eGuiLd.setColor(cOutline);
-    add(eGuiLd);
+    setLoadStatControl(add(eGuiLd));
 
     e = new ERect(this,1374,120,523-1,131-1,LCARS.ES_STATIC|LCARS.ES_OUTLINE,null);
     ((ERect)e).setColor(cOutline);
@@ -916,22 +913,6 @@ public class MicrophoneArrayPanel extends MainPanel
     }
     
     // TODO: Feed lamp test button
-
-    // Display screen and panel load
-    LoadStatistics lds;
-    String s = "--- --";
-    try
-    {
-      lds = getScreen().getLoadStatistics();
-      s = String.format("SCR %03d-%02d",lds.getLoad(),lds.getEventsPerPeriod());
-    }
-    catch (RemoteException e)
-    {
-      Log.err(e.getMessage(), e);
-    }
-    lds = getLoadStatistics();
-    String t = String.format("PNL %03d-%02d",lds.getLoad(),lds.getEventsPerPeriod());
-    eGuiLd.setLabel(s+"/"+t);
   }
 
   // -- Main method (debugging and testing only!) --

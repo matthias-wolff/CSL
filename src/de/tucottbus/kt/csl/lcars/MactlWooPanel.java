@@ -37,7 +37,6 @@ import de.tucottbus.kt.lcars.geometry.AGeometry;
 import de.tucottbus.kt.lcars.geometry.GArea;
 import de.tucottbus.kt.lcars.logging.Log;
 import de.tucottbus.kt.lcars.swt.ColorMeta;
-import de.tucottbus.kt.lcars.util.LoadStatistics;
 
 public class MactlWooPanel extends Panel
 {
@@ -152,7 +151,7 @@ public class MactlWooPanel extends Panel
 
     eGuiLd = new ELabel(this,988,82,224,38,LCARS.ES_STATIC|LCARS.ES_LABEL_W,"000-00/000-00");
     eGuiLd.setColor(ColorMeta.GRAY);
-    add(eGuiLd);
+    setLoadStatControl(add(eGuiLd));
     
     // WIZARD    
     x = 33;
@@ -702,22 +701,7 @@ public class MactlWooPanel extends Panel
     {
       eAmbiLightMonitor.setColor((ColorMeta)null);
       Log.err(e2.toString(),e2);
-    }
-    
-    // Display screen and panel load
-    LoadStatistics lds;
-    String s = "--- --";
-    try
-    {
-      lds = getScreen().getLoadStatistics();
-      s = String.format("SCR %03d-%02d",lds.getLoad(),lds.getEventsPerPeriod());
-    }
-    catch (RemoteException e)
-    {
-    }
-    lds = getLoadStatistics();
-    String t = String.format("PNL %03d-%02d",lds.getLoad(),lds.getEventsPerPeriod());
-    eGuiLd.setLabel(s+"/"+t);    
+    }  
   }  
   
   // -- Wizard Helpers --

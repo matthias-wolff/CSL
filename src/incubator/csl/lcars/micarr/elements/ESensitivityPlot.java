@@ -121,11 +121,20 @@ public class ESensitivityPlot extends EElement implements ISensitivityRendererCo
     invalidate(true);
   }
 
+  /**
+   * Returns the frequency for the spatial sensitivity is plotted. 
+   */
   public float getFrequency() 
   {
     return gsp.getFrequency();
   }
 
+  /**
+   * Sets the frequency for which the spatial sensitivity is plotted.
+   * 
+   * @param freq
+   *          The frequency in Hz, must be positive.
+   */
   public void setFrequency(float freq) 
   {
     if (gsp.getFrequency()==freq)

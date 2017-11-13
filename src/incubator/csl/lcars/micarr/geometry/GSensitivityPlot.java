@@ -181,14 +181,24 @@ public class GSensitivityPlot extends AGeometry implements ISensitivityRendererC
     return this.slicePos;
   }
   
+  /**
+   * Sets the frequency for which the spatial sensitivity is plotted.
+   * 
+   * @param freq
+   *          The frequency in Hz, must be positive.
+   */
   public void setFrequency(float freq) 
   {
     if (this.freq==freq)
       return;
-    this.freq = freq;
+
+    this.freq = Math.max(freq, 0.1f);
     clearCache();
   }
   
+  /**
+   * Returns the frequency for the spatial sensitivity is plotted. 
+   */
   public float getFrequency()
   {
     return this.freq;
