@@ -11,7 +11,7 @@ import java.util.HashSet;
 
 import javax.vecmath.Point3d;
 
-import de.tucottbus.kt.csl.CognitiveSystemsLab;
+import de.tucottbus.kt.csl.CSL;
 import de.tucottbus.kt.csl.hardware.HardwareException;
 import de.tucottbus.kt.csl.hardware.led.ALedController;
 import de.tucottbus.kt.csl.hardware.micarray3d.AMicArray3DPart;
@@ -891,7 +891,7 @@ public class MactlWooPanel extends Panel
   {
     args = LCARS.setArg(args,"--panel=",MactlWooPanel.class.getName());
     args = LCARS.setArg(args,"--nospeech",null);
-    CognitiveSystemsLab.main(args);
+    CSL.main(args);
   }
 
 }

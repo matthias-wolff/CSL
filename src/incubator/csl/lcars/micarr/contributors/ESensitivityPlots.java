@@ -8,6 +8,7 @@ import java.util.ArrayList;
 
 import javax.vecmath.Point3d;
 
+import de.tucottbus.kt.csl.CSL;
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayState;
 import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.DoAEstimator;
 import de.tucottbus.kt.lcars.LCARS;
@@ -334,9 +335,9 @@ public class ESensitivityPlots extends ElementContributor
    */
   public void setSlicePositions(Point3d point)
   {
-    point.x = Math.max(-220,Math.min(220,point.x));
-    point.y = Math.max(-220,Math.min(220,point.y));
-    point.z = Math.max(   0,Math.min(250,point.z));
+    point.x = Math.max(CSL.ROOM.MIN_X,Math.min(CSL.ROOM.MAX_X,point.x));
+    point.y = Math.max(CSL.ROOM.MIN_Y,Math.min(CSL.ROOM.MAX_Y,point.y));
+    point.z = Math.max(CSL.ROOM.MIN_Z,Math.min(CSL.ROOM.MAX_Z,point.z));
     
     DoAEstimator.getInstance().setTargetSource(point);
     MicArrayState state = MicArrayState.getCurrentState();

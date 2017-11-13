@@ -18,7 +18,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
-import de.tucottbus.kt.csl.CognitiveSystemsLab;
+import de.tucottbus.kt.csl.CSL;
 import de.tucottbus.kt.lcars.IScreen;
 import de.tucottbus.kt.lcars.LCARS;
 import de.tucottbus.kt.lcars.Panel;
@@ -297,7 +297,7 @@ public abstract class AHardware extends Observable
   {
     ArrayList<Class<? extends AHardware>> l 
       = new ArrayList<Class<? extends AHardware>>();
-    String pckg = CognitiveSystemsLab.class.getPackage().getName();
+    String pckg = CSL.class.getPackage().getName();
     if (superclazz==null) superclazz = AHardware.class;
     
     for (Class<?> c : LCARS.getClassesInPackage(pckg,null))
@@ -329,7 +329,7 @@ public abstract class AHardware extends Observable
   public static AbstractList<Class<? extends Panel>> getHardwareAccessPanelClasses()
   {
     ArrayList<Class<? extends Panel>> l = new ArrayList<Class<? extends Panel>>();
-    String pckg = CognitiveSystemsLab.class.getPackage().getName();
+    String pckg = CSL.class.getPackage().getName();
     
     for (Class<?> c : LCARS.getClassesInPackage(pckg,null))
       try

@@ -9,7 +9,7 @@ import java.util.Vector;
 
 import javax.vecmath.Point3d;
 
-import de.tucottbus.kt.csl.CognitiveSystemsLab;
+import de.tucottbus.kt.csl.CSL;
 import de.tucottbus.kt.csl.hardware.HardwareException;
 import de.tucottbus.kt.csl.hardware.micarray3d.AMicArray3DPart;
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArray3D;
@@ -1292,7 +1292,7 @@ public class BeamformerPanel extends MainPanel implements IObservable {
   public static void main(String[] args)
   {
     args = LCARS.setArg(args,"--panel=",BeamformerPanel.class.getName());
-    CognitiveSystemsLab.main(args);
+    CSL.main(args);
   }
 
 }

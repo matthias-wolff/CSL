@@ -236,7 +236,7 @@ public class CslDemoPanel extends SpeechEnginePanel
   public static void main(String[] args)
   {
     args = LCARS.setArg(args,"--panel=",CslDemoPanel.class.getName());
-    CognitiveSystemsLab.main(args);
+    CSL.main(args);
   }
   
 }
