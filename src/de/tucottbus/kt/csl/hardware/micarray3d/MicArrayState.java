@@ -9,6 +9,7 @@ import java.util.Arrays;
 
 import javax.vecmath.Point3d;
 
+import de.tucottbus.kt.csl.CSL;
 import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.DoAEstimator;
 import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.dsb.Steering;
 import de.tucottbus.kt.lcars.logging.Log;
@@ -89,8 +90,32 @@ public class MicArrayState implements Serializable
   
   private static MicArrayState memoryState;
   
+  @Override
+  public boolean equals(Object obj)
+  {
+    if (obj==null)
+      return false;
+
+    MicArrayState other = (MicArrayState)obj;
+    
+    if (!target.equals(other.target)                ) return false;
+    if (trolleyPos!=other.trolleyPos                ) return false;
+    if (numberOfActiveMics!=other.numberOfActiveMics) return false;
+    
+    for (int i=0; i<CH_NUM; i++)
+    {
+      if (!positions[i].equals(other.positions[i])) return false;
+      if (delays[i]    !=other.delays[i]          ) return false;
+      if (steerVec[i]  !=other.steerVec[i]        ) return false;
+      if (gains[i]     !=other.gains[i]           ) return false;
+      if (activeMics[i]!=other.activeMics[i]      ) return false;
+    }
+    
+    return true;
+  }
+  
   /**
-   * Get the current MicArrayState of the 3D microphone array.
+   * Get the current microphone array state.
    * 
    * @param target
    *          The target point, {@code null} for the {@linkplain 
@@ -99,23 +124,70 @@ public class MicArrayState implements Serializable
    * @see MicArray3D
    */
   // TODO: is a review necessary?
-  public static synchronized MicArrayState getCurrentState()
+  public static synchronized MicArrayState getCurrent()
   {
-    if(memoryState!=null && memoryState.target.equals(DoAEstimator.getInstance().getTargetSource())
-        && memoryState.trolleyPos==MicArrayCeiling.getInstance().getPosition().y
-        && memoryState.activeMics.equals(MicArray3D.getInstance().getActiveMics())){
+    if
+    (
+      memoryState!=null 
+      && memoryState.target.equals(DoAEstimator.getInstance().getTargetSource())
+      && memoryState.trolleyPos==MicArrayCeiling.getInstance().getPosition().y
+      && memoryState.activeMics.equals(MicArray3D.getInstance().getActiveMics())
+    )
+    {
       return memoryState;
-    } else {
-      memoryState=getState();
+    } 
+    else 
+    {
+      memoryState=getStateInt();
       return memoryState;
     }
   }
   
   /**
-   * 
-   * @return MicArrayState
+   * Returns a dummy microphone array state without accessing the underlying
+   * hardware.
    */
-  private static MicArrayState getState(){
+  public static MicArrayState getDummy()
+  {
+    MicArrayState mas = new MicArrayState();
+    
+    // Get absolute positions
+    Point3d offset = MicArrayViewer.POS_OFFSET;
+    for (int i=0; i<32; i++)
+    {
+      mas.positions[i] = new Point3d(MicArrayViewer.micPos[i]);
+      mas.positions[i].add(offset);
+    }
+    offset = MicArrayCeiling.POS_OFFSET;
+    mas.trolleyPos = offset.y;
+    for (int i=0; i<32; i++)
+    {
+      mas.positions[i+32] = new Point3d(MicArrayCeiling.micPos[i]);
+      mas.positions[i+32].add(offset);
+    }
+    
+    // Get steering info
+    mas.target.set(CSL.ROOM.DEFAULT_POS);
+    float[] tempDelays = Steering.getDelays(mas.positions, mas.target);
+    float[] tempSteerVec = Steering.getSteeringVectorFromDelays(tempDelays);
+    mas.delays = Arrays.copyOf(tempDelays, tempDelays.length);
+    mas.steerVec =  Arrays.copyOf(tempSteerVec, tempSteerVec.length);
+    
+    // gain factors
+    Arrays.fill(mas.gains,1f);
+    
+    // active channels/mics
+    Arrays.fill(mas.activeMics,true);
+    mas.numberOfActiveMics = getNumberOfActiveMics(mas.activeMics);
+    
+    return mas;
+  }
+  
+  /**
+   * Determines the microphone array state.
+   */
+  private static MicArrayState getStateInt()
+  {
     DoAEstimator doAEstimator = DoAEstimator.getInstance();
     MicArrayViewer micArrayViewer = MicArrayViewer.getInstance();
     MicArrayCeiling micArrayCeiling = MicArrayCeiling.getInstance();
@@ -172,7 +244,7 @@ public class MicArrayState implements Serializable
    * @param state MicArrayState
    * @param filePath String
    */
-  public static void setStateToFile(MicArrayState state, String filePath) {
+  public static void toFile(MicArrayState state, String filePath) {
     try {
       FileOutputStream fout = new FileOutputStream(filePath);
       ObjectOutputStream oos = new ObjectOutputStream(fout);
@@ -188,7 +260,7 @@ public class MicArrayState implements Serializable
    * @param filePath String
    * @return MicArrayState
    */
-  public static MicArrayState getStateFromFile(String filePath) {
+  public static MicArrayState fromFile(String filePath) {
     MicArrayState state = null;
     try {
       FileInputStream fin = new FileInputStream(filePath);

@@ -15,7 +15,6 @@ import org.eclipse.swt.graphics.Image;
 
 import de.tucottbus.kt.csl.CSL;
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayState;
-import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.DoAEstimator;
 import de.tucottbus.kt.lcars.LCARS;
 import de.tucottbus.kt.lcars.contributors.ElementContributor;
 import de.tucottbus.kt.lcars.elements.EElbo;
@@ -50,6 +49,7 @@ public class ESensitivityPlots extends ElementContributor
 {
   // -- Fields --
   
+  private       MicArrayState     mas;
   private final ESensitivityPlot  eSpxy;
   private final CCursor           gSpxyCursorH;
   private final CCursor           gSpxyCursorV;
@@ -69,22 +69,21 @@ public class ESensitivityPlots extends ElementContributor
   private final EElbo             eXyXz2;
   private final EElement          eXyXzArrow;
   private final CSensitivityScale gSensScale;
-  
+
   // -- Life cycle --
   
   /**
    * Creates a new 2D sensitivity plots contributors.
    * 
-   * @param state
-   *          The initial microphone array state.
    * @param x
    *          The x-coordinate of the top-left corner (in LCARS panel pixels).
    * @param y
    *          The y-coordinate of the top-left corner (in LCARS panel pixels).
    */
-  public ESensitivityPlots(MicArrayState state, int x, int y)
+  public ESensitivityPlots(int x, int y)
   {
     super(x, y);
+    this.mas = MicArrayState.getDummy();
     
     EElbo eElbo;
     EValue eValue;
@@ -102,12 +101,14 @@ public class ESensitivityPlots extends ElementContributor
       @Override
       public void touchDown(EEvent ee)
       {
-        setSelecion(((ESensitivityPlot)ee.el).elementToCsl(ee.pt));
+        Point3d point = ((ESensitivityPlot)ee.el).elementToCsl(ee.pt);
+        setSelecion(point);
+        fireSelectionChanged(point);
       }
     };
     
     // XY-plot
-    eSpxy = new ESensitivityPlot(null,this.x,this.y,-1,-1,ESensitivityPlot.SLICE_XY,state);
+    eSpxy = new ESensitivityPlot(null,this.x,this.y,-1,-1,ESensitivityPlot.SLICE_XY,this.mas);
     eSpxy.addEEventListener(plotTouchedEvent);
     add(eSpxy);
     
@@ -137,7 +138,7 @@ public class ESensitivityPlots extends ElementContributor
     // XZ-plot
     int ex = 500;
     int ey = 0;
-    eSpxz = new ESensitivityPlot(null,this.x+ex,this.y+ey,-1,-1,ESensitivityPlot.SLICE_XZ,state);
+    eSpxz = new ESensitivityPlot(null,this.x+ex,this.y+ey,-1,-1,ESensitivityPlot.SLICE_XZ,this.mas);
     eSpxz.addEEventListener(plotTouchedEvent);
     add(eSpxz);
 
@@ -185,7 +186,7 @@ public class ESensitivityPlots extends ElementContributor
     // YZ-plot
     ex = eSpxz.getBounds().x - this.x;
     ey = 303;
-    eSpyz = new ESensitivityPlot(null,this.x+ex,this.y+ey,-1,-1,ESensitivityPlot.SLICE_YZ,state);
+    eSpyz = new ESensitivityPlot(null,this.x+ex,this.y+ey,-1,-1,ESensitivityPlot.SLICE_YZ,this.mas);
     eSpyz.addEEventListener(plotTouchedEvent);
     add(eSpyz);
 
@@ -243,6 +244,7 @@ public class ESensitivityPlots extends ElementContributor
         Point3d point = getSelection();
         point.x = 0;
         setSelecion(point);
+        fireSelectionChanged(point);
       }
     });
     add(eXPos);
@@ -256,6 +258,7 @@ public class ESensitivityPlots extends ElementContributor
         Point3d point = getSelection();
         point.y = 0;
         setSelecion(point);
+        fireSelectionChanged(point);
       }
     });
     add(eYPos);
@@ -269,6 +272,7 @@ public class ESensitivityPlots extends ElementContributor
         Point3d point = getSelection();
         point.z = 160;
         setSelecion(point);
+        fireSelectionChanged(point);
       }
     });
     add(eZPos);
@@ -340,6 +344,35 @@ public class ESensitivityPlots extends ElementContributor
   // -- Getters and setters --
   
   /**
+   * Sets the microphone array state to display.
+   * 
+   * @param state
+   *          The state. If <code>null</code>, a dummy state will be displayed.
+   */
+  public void setMicArrayState(MicArrayState state)
+  {
+    if (state==null)
+      state = MicArrayState.getDummy();
+    if (state.equals(this.mas))
+      return;
+    this.mas = state;
+    eSpxy.setMicArrayState(this.mas);
+    eSpyz.setMicArrayState(this.mas);
+    eSpxz.setMicArrayState(this.mas);
+    
+    updateInt();
+  }
+  
+  /**
+   * Returns the microphone array state currently displayed. Note that this is
+   * not necessarily the current state of the hardware.
+   */
+  public MicArrayState getMicArrayState()
+  {
+    return this.mas;
+  }
+  
+  /**
    * Repositions the 2D sensitivity plot slices (CSL room coordinates in cm).
    * 
    * @param point
@@ -350,38 +383,24 @@ public class ESensitivityPlots extends ElementContributor
     point.x = Math.max(CSL.ROOM.MIN_X,Math.min(CSL.ROOM.MAX_X,point.x));
     point.y = Math.max(CSL.ROOM.MIN_Y,Math.min(CSL.ROOM.MAX_Y,point.y));
     point.z = Math.max(CSL.ROOM.MIN_Z,Math.min(CSL.ROOM.MAX_Z,point.z));
-    
-    // TODO: Do not do this! -->
-    DoAEstimator.getInstance().setTargetSource(point);
-    MicArrayState state = MicArrayState.getCurrentState();
-    // <--
    
     eXPos.setValue(String.format("% 04.0f",point.x));
     eYPos.setValue(String.format("% 04.0f",point.y));
     eZPos.setValue(String.format("% 04.0f",point.z));
     
-    eSpxy.setMicArrayState(state);
     eSpxy.setSlicePos(point.z);
     gSpxyCursorH.setSelection(eSpxy.cslToElement(point).y,point.y);
     gSpxyCursorV.setSelection(eSpxy.cslToElement(point).x,point.x);
 
-    eSpyz.setMicArrayState(state);
     eSpyz.setSlicePos(point.x);
     gSpyzCursorH.setSelection(eSpyz.cslToElement(point).y,point.z);
     gSpyzCursorV.setSelection(eSpyz.cslToElement(point).x,point.y);
     
-    eSpxz.setMicArrayState(state);
     eSpxz.setSlicePos(point.y);
     gSpxzCursorH.setSelection(eSpxz.cslToElement(point).y,point.z);
     gSpxzCursorV.setSelection(eSpxz.cslToElement(point).x,point.x);
     
-    repositionConnectingLines();
-    
-    // Set value on sensitivity scale
-    float freq = getFrequency();
-    float db = CpuSensitivityRenderer.getDB(state,freq,point.x,point.y,point.z);
-    gSensScale.setSelection(db);
-
+    updateInt();
   }
 
   /**
@@ -418,6 +437,41 @@ public class ESensitivityPlots extends ElementContributor
     return eSpxy.getFrequency();
   }
   
+  // -- Listener implementation --
+  
+  private ArrayList<ESensitivityPlotsListener> listeners;
+  
+  public void addSelectionListener(ESensitivityPlotsListener listener)
+  {
+    if (listener==null)
+      return;
+    if (listeners==null)
+      listeners = new ArrayList<ESensitivityPlotsListener>();
+    if (listeners.contains(listener))
+      return;
+    listeners.add(listener);
+  }
+  
+  public void removeListener(ESensitivityPlotsListener listener)
+  {
+    if (listener==null || listeners==null)
+      return;
+    listeners.remove(listener);
+  }
+  
+  public void removeAllListeners()
+  {
+    listeners.clear();
+  }
+  
+  protected void fireSelectionChanged(Point3d point)
+  {
+    if (listeners==null)
+      return;
+    for (ESensitivityPlotsListener listener : listeners)
+      listener.selectionChanged(point);
+  }
+  
   // -- Workers and event handlers --
   
   protected void cursorDragged(CCursor cur, int pos)
@@ -438,6 +492,19 @@ public class ESensitivityPlots extends ElementContributor
       point = eSpxz.elementToCsl(new Point(pos,gSpxzCursorH.getSelection()));
     
     setSelecion(point);
+    fireSelectionChanged(point);
+  }
+  
+  protected void updateInt()
+  {
+    // Reposition connection lines between XY and XZ/YZ plots
+    repositionConnectingLines();
+    
+    // Set value on sensitivity scale
+    float   freq  = getFrequency();
+    Point3d point = getSelection();
+    float   db    = CpuSensitivityRenderer.getDB(this.mas,freq,point.x,point.y,point.z);
+    gSensScale.setSelection(db);
   }
   
   protected void repositionConnectingLines()
@@ -491,7 +558,7 @@ public class ESensitivityPlots extends ElementContributor
     b.x = p1.x+CCursor.handleGap;
     b.y = p1.y+CCursor.cursorWidth+CCursor.handleGap;
     eXyXzArrow.setBounds(b);
-}
+  }
   
   // -- Nested classes --
   
@@ -730,6 +797,8 @@ public class ESensitivityPlots extends ElementContributor
       this.h = h;
       this.w = w;
 
+      boolean alternativeLayout = false;
+      
       ERect  eRect;
       EElbo  eElbo;
       EValue eValue;
@@ -739,11 +808,24 @@ public class ESensitivityPlots extends ElementContributor
       int    eh;
       
       // Frame
+      if (!alternativeLayout)
+      {
+        ex = x-CCursor.handleGap-CCursor.handleSize*7/8;
+        ey = y-70;
+        eh = y-ey-CCursor.handleGap;
+        eElbo = new EElbo(null,ex,ey,411,eh,LCARS.ES_SHAPE_SW,null);
+        eElbo.setArmWidths(CCursor.handleSize*3/4,CCursor.handleSize/2);
+        eElbo.setArcWidths(Math.round(CCursor.handleSize*1.5f),CCursor.handleSize/2);
+        add(eElbo);
+      }
       ey = y-CCursor.handleSize/2-CCursor.handleGap;
       eh = h/2+CCursor.handleSize/2+CCursor.handleGap;
-      eElbo = new EElbo(null,x-10,ey,10,eh,LCARS.ES_SHAPE_NW,null);
-      eElbo.setArmWidths(4,CCursor.handleSize/2);
-      add(eElbo);
+      if (alternativeLayout)
+      {
+        eElbo = new EElbo(null,x-10,ey,10,eh,LCARS.ES_SHAPE_NW,null);
+        eElbo.setArmWidths(4,CCursor.handleSize/2);
+        add(eElbo);
+      }
       eElbo = new EElbo(null,x+w+CCursor.handleGap,ey,10,eh,LCARS.ES_SHAPE_NE,null);
       eElbo.setArmWidths(4,CCursor.handleSize/2);
       add(eElbo);
@@ -752,9 +834,12 @@ public class ESensitivityPlots extends ElementContributor
       eValue.setValue("SENSITIVTY");
       add(eValue);
       ey += h+CCursor.handleGap;
-      eElbo = new EElbo(null,x-10,ey,10,eh,LCARS.ES_SHAPE_SW,null);
-      eElbo.setArmWidths(4,CCursor.handleSize/2);
-      add(eElbo);
+      if (alternativeLayout)
+      {
+        eElbo = new EElbo(null,x-10,ey,10,eh,LCARS.ES_SHAPE_SW,null);
+        eElbo.setArmWidths(4,CCursor.handleSize/2);
+        add(eElbo);
+      }
       eElbo = new EElbo(null,x+w+CCursor.handleGap,ey,10,eh,LCARS.ES_SHAPE_SE,null);
       eElbo.setArmWidths(4,CCursor.handleSize/2);
       add(eElbo);
@@ -791,6 +876,7 @@ public class ESensitivityPlots extends ElementContributor
       add(eImage);
       
       // Scale ticks and unit
+      addScaleTick(-36);
       addScaleTick(-30);
       addScaleTick(-24);
       addScaleTick(-18);

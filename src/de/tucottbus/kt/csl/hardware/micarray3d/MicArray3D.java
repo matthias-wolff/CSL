@@ -143,7 +143,7 @@ public final class MicArray3D extends ACompositeHardware
    */
   public MicArrayState getState()
   {
-    state = MicArrayState.getCurrentState();
+    state = MicArrayState.getCurrent();
     return state;
   }
   

@@ -19,6 +19,7 @@ import de.tucottbus.kt.lcars.elements.ELabel;
 import de.tucottbus.kt.lcars.elements.ERect;
 import de.tucottbus.kt.lcars.swt.ColorMeta;
 import incubator.csl.lcars.micarr.contributors.ESensitivityPlots;
+import incubator.csl.lcars.micarr.contributors.ESensitivityPlotsListener;
 
 /**
  * -- <i>for testing only</i> --
@@ -144,15 +145,24 @@ public class SensitivityPlotTestPanel extends Panel
 
   protected void fatInit()
   {
-    MicArrayState state = MicArrayState.getCurrentState();
-    eSensPlts = new ESensitivityPlots(state,150,150);
-    eSensPlts.setSelecion(new Point3d(0,0,160));
+    eSensPlts = new ESensitivityPlots(150,150);
+    eSensPlts.addSelectionListener(new ESensitivityPlotsListener()
+    {
+      @Override
+      public void selectionChanged(Point3d point)
+      {
+        //DoAEstimator.getInstance().setTargetSource(point);
+      }
+    });
     eSensPlts.addToPanel(this);
   }
   
   @Override
   protected void fps10()
   {
+    if (eSensPlts!=null)
+      eSensPlts.setMicArrayState(MicArrayState.getCurrent());
+    
     for (EElement ee : aeButtons)
     {
       ElementContributor ec = contributorForName((String)ee.getData());

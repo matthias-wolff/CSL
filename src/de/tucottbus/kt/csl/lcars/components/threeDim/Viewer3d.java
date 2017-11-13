@@ -95,7 +95,7 @@ public class Viewer3d implements PlugIn {
    * @see SensitivityPlot.getInstance(CLState.CL_BUFFER);
    */
   private ImagePlus generate3dImageData(float frequency) {
-    MicArrayState state = MicArrayState.getCurrentState();
+    MicArrayState state = MicArrayState.getCurrent();
     if (kernels==null)
     {
       try {

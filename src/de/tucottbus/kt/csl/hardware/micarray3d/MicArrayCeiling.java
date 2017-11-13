@@ -20,19 +20,19 @@ import de.tucottbus.kt.lcars.contributors.ElementContributor;
 public final class MicArrayCeiling extends AMicArray3DPart 
 { 
   /**
-   * angle of inclination (in degree).
+   * angle of inclination (in degrees).
    */
-  private final float ANGLE = -8.47f;
+  final float ANGLE = -8.47f;
   
   /**
    * CSL coordinates of the center point of the microphone array (in cm).
    */
-  private static final Point3d POS_OFFSET = new Point3d(+5.3, 0, +235.0);
+  static final Point3d POS_OFFSET = new Point3d(+5.3, 0, +235.0);
 
   /**
    * Positions of the microphones relative to {@link #POS_OFFSET}, in cm.
    */
-  private static final Point3d[] micPos = new Point3d[] 
+  static final Point3d[] micPos = new Point3d[] 
   {
     new Point3d( +2.3,   1.9, 0.0), // 32
     new Point3d(+11.8,  -2.7, 0.0), // 33

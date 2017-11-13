@@ -307,7 +307,7 @@ public final class DoAEstimator extends AAtomicHardware implements Runnable{
     }
     frameCounter.set(0);
     
-    state = MicArrayState.getCurrentState();
+    state = MicArrayState.getCurrent();
     
     // 3. Fill hashmaps with audio data
     channelSelector.fillAudioHM(audioInputData2x, hashMapAudioDataArray1, state.positions, MicArray.ARRAY1);

@@ -19,13 +19,13 @@ public final class MicArrayViewer extends AMicArray3DPart
   /**
    * CSL coordinates of the center point of the microphone array in cm
    */
-  private static final Point3d POS_OFFSET = new Point3d(0,220,152.5);
+  static final Point3d POS_OFFSET = new Point3d(0,220,152.5);
   
   /**
    * Positions of the microphones relative to {@link #POS_OFFSET}, in cm.
    */
-  private static final Point3d[] micPos = new Point3d[] 
-    {
+  static final Point3d[] micPos = new Point3d[] 
+  {
     new Point3d(-85.6, -2.5, +52.6), // 00
     new Point3d(-38.3, -1.8, +52.7), // 01
     new Point3d(-16.7, -2.0, +52.8), // 02
