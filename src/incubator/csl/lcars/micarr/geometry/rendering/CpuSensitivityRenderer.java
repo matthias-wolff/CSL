@@ -82,7 +82,7 @@ public class CpuSensitivityRenderer implements ISensitivityRenderer
    *          z position in the CSL room coordinate system (in cm).
    * @return The sensitivity (in dB)
    */
-  private static float getDB
+  public static float getDB
   (
     MicArrayState state, 
     float         freq, 

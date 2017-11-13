@@ -33,6 +33,8 @@ public class CognitiveSystemsLab extends CSL
   
   public static void main(String[] args)
   {
+    System.err.println("Class de.tucottbus.kt.csl.CognitiveSystemsLab "
+        + "is deprecated. Use de.tucottbus.kt.csl.CSL instead!");
     CSL.main(args);
   }
 

@@ -28,6 +28,7 @@ import incubator.csl.lcars.micarr.contributors.ESensitivityPlots;
 public class SensitivityPlotTestPanel extends Panel
 {
   private ELabel              eGuiLd;
+  private ELabel              eColorScheme;
   private ESensitivityPlots   eSensPlts;
   private ElementContributor  eFreqSlider;
   private ElementContributor  eTrolleySlider;
@@ -79,7 +80,7 @@ public class SensitivityPlotTestPanel extends Panel
     });
     add(eRect);
 
-    ey += getElements().get(getElements().size()-1).getBounds().height +3;
+    ey += getElements().get(getElements().size()-1).getBounds().height +23;
     eRect = new ERect(this,1720,ey,177,60,LCARS.ES_RECT_RND|LCARS.ES_LABEL_E,"SENSITIVITY PLOTS");
     eRect.addEEventListener(buttonListerner);
     eRect.setData("eSensPlts");
@@ -97,12 +98,43 @@ public class SensitivityPlotTestPanel extends Panel
     eRect.addEEventListener(buttonListerner);
     eRect.setData("eTrolleySlider");
     add(eRect); aeButtons.add(eRect);
-    
+
     ey += getElements().get(getElements().size()-1).getBounds().height +3;
-    eGuiLd = new ELabel(this,1720,ey,170,20,LCARS.ES_STATIC|LCARS.ES_LABEL_E,"000/000");
+    eGuiLd = new ELabel(this,1720,ey,170,26,LCARS.ES_STATIC|LCARS.ES_LABEL_E,"000/000");
     eGuiLd.setColor(new ColorMeta(1f,1f,1f,0.25f));
     add(eGuiLd);
     setLoadStatControl(eGuiLd);
+
+    ey += getElements().get(getElements().size()-1).getBounds().height +23;
+    eRect = new ERect(this,ex,ey,177,60,LCARS.ES_RECT_RND|LCARS.EC_SECONDARY|LCARS.ES_LABEL_SE,"COLOR SCHEME");
+    eRect.addEEventListener(new EEventListenerAdapter()
+    {
+      @Override
+      public void touchUp(EEvent ee)
+      {
+        int cs = getColorScheme() +1;
+        if (cs>LCARS.CS_MAX)
+          cs = 0;
+        setColorScheme(cs);
+        switch (cs)
+        {
+        case LCARS.CS_KT       : eColorScheme.setLabel("CS_KT"       ); break;
+        case LCARS.CS_PRIMARY  : eColorScheme.setLabel("CS_PRIMARY"  ); break;
+        case LCARS.CS_SECONDARY: eColorScheme.setLabel("CS_SECONDARY"); break;
+        case LCARS.CS_ANCILLARY: eColorScheme.setLabel("CS_ANCILLARY"); break;
+        case LCARS.CS_DATABASE : eColorScheme.setLabel("CS_DATABASE" ); break;
+        case LCARS.CS_MULTIDISP: eColorScheme.setLabel("CS_MULTIDISP"); break;
+        case LCARS.CS_REDALERT : eColorScheme.setLabel("CS_REDALERT" ); break;
+        default                : eColorScheme.setLabel("CS_???"      ); break;
+        }
+      }
+    });
+    add(eRect);
+
+    ey += getElements().get(getElements().size()-1).getBounds().height +3;
+    eColorScheme = new ELabel(this,1720,ey,170,26,LCARS.ES_STATIC|LCARS.ES_LABEL_E,"CS_MULIDISP");
+    eColorScheme.setColor(new ColorMeta(1f,1f,1f,0.25f));
+    add(eColorScheme);
     
     LCARS.invokeLater(()->
     {
@@ -114,7 +146,7 @@ public class SensitivityPlotTestPanel extends Panel
   {
     MicArrayState state = MicArrayState.getCurrentState();
     eSensPlts = new ESensitivityPlots(state,150,150);
-    eSensPlts.setSlicePositions(new Point3d(0,0,160));
+    eSensPlts.setSelecion(new Point3d(0,0,160));
     eSensPlts.addToPanel(this);
   }
   

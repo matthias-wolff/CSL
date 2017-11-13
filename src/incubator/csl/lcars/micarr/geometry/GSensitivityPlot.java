@@ -10,6 +10,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayState;
+import de.tucottbus.kt.lcars.elements.ERenderedImage;
 import de.tucottbus.kt.lcars.geometry.AGeometry;
 import de.tucottbus.kt.lcars.logging.Log;
 import incubator.csl.lcars.micarr.geometry.rendering.CLSensitivityRenderer;
@@ -27,7 +28,9 @@ import incubator.csl.lcars.micarr.geometry.rendering.ISensitivityRendererConstan
  * 
  * @author Martin Birth, BTU Cottbus-Senftenberg
  * @author Matthias Wolff, BTU Cottbus-Senftenberg (revision)
+ * @deprecated -- Use {@link ERenderedImage}! --
  */
+@Deprecated
 public class GSensitivityPlot extends AGeometry implements ISensitivityRendererConstants
 {
   private static final long serialVersionUID = 1L;
