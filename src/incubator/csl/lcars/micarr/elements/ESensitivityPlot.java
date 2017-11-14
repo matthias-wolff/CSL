@@ -12,7 +12,6 @@ import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayState;
 import de.tucottbus.kt.lcars.LCARS;
 import de.tucottbus.kt.lcars.Panel;
 import de.tucottbus.kt.lcars.elements.EElement;
-import de.tucottbus.kt.lcars.elements.ERenderedImage;
 import de.tucottbus.kt.lcars.geometry.AGeometry;
 import incubator.csl.lcars.micarr.geometry.GSensitivityPlot;
 import incubator.csl.lcars.micarr.geometry.rendering.ISensitivityRendererConstants;

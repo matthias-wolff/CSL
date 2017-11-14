@@ -15,11 +15,12 @@ import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayState;
 import de.tucottbus.kt.lcars.geometry.AGeometry;
 import incubator.csl.lcars.micarr.geometry.rendering.CLSensitivityRenderer;
 import incubator.csl.lcars.micarr.geometry.rendering.CpuSensitivityRenderer;
-import incubator.csl.lcars.micarr.geometry.rendering.ISensitivityRendererConstants;
 import incubator.csl.lcars.micarr.geometry.rendering.ISensitivityRenderer;
+import incubator.csl.lcars.micarr.geometry.rendering.ISensitivityRendererConstants;
 
 /**
- * Geometry of a 2D spatial sensitivity plot of the CSL microphone array.
+ * Geometry of a 2D spatial sensitivity plot of the CSL microphone array. The
+ * images are rendered on the LCARS screen side.
  * 
  * <h3>Remarks</h3>
  * <ul>
@@ -293,8 +294,8 @@ public class GSensitivityPlot extends AGeometry implements ISensitivityRendererC
   /**
    * Returns a key for the global rendered image cache.
    * 
-   * @see #putImage(Object, Image)
-   * @see #getImage(Object)
+   * @see GeometryImageCache#putImage(Object, Image)
+   * @see GeometryImageCache#getImage(Object)
    */
   protected Object getImageCacheKey()
   {

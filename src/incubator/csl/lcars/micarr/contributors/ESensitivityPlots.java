@@ -6,12 +6,7 @@ import java.awt.Rectangle;
 import java.awt.geom.Area;
 import java.util.ArrayList;
 
-import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
-
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.GC;
-import org.eclipse.swt.graphics.Image;
 
 import de.tucottbus.kt.csl.CSL;
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayState;
@@ -24,13 +19,12 @@ import de.tucottbus.kt.lcars.elements.EEventListener;
 import de.tucottbus.kt.lcars.elements.EEventListenerAdapter;
 import de.tucottbus.kt.lcars.elements.ELabel;
 import de.tucottbus.kt.lcars.elements.ERect;
-import de.tucottbus.kt.lcars.elements.ERenderedImage;
 import de.tucottbus.kt.lcars.elements.EValue;
 import de.tucottbus.kt.lcars.geometry.AGeometry;
 import de.tucottbus.kt.lcars.geometry.GArea;
 import incubator.csl.lcars.micarr.elements.ESensitivityPlot;
+import incubator.csl.lcars.micarr.geometry.GSensitivityScale;
 import incubator.csl.lcars.micarr.geometry.rendering.CpuSensitivityRenderer;
-import incubator.csl.lcars.micarr.geometry.rendering.SensitivityColorScheme;
 
 /**
  * This class contributes 2D sensitivity plots of CLS's microphone array to an
@@ -850,27 +844,15 @@ public class ESensitivityPlots extends ElementContributor
       add(eRect);
       
       // Scale image
-      this.eImage = new ERenderedImage(null,x,y,w,h,LCARS.ES_NONE)
+      this.eImage = new EElement(null,x,y,w,h,LCARS.ES_NONE,null)
       {
         @Override
-        protected Image renderImage(GC gc, int w, int h)
+        protected ArrayList<AGeometry> createGeometriesInt()
         {
-          Image img = new Image(gc.getDevice(),w,h);
-          GC gci = new GC(img);
-          for (int x=0; x<w; x++)
-          {
-            float db = posToDb(x);
-            Color3f c = SensitivityColorScheme.dbToColor3f(db);
-            int r = Math.round(c.x*255);
-            int g = Math.round(c.y*255);
-            int b = Math.round(c.z*255);
-            Color c2 = new Color(gci.getDevice(),r,g,b);
-            gci.setBackground(c2);
-            gci.fillRectangle(x,0,1,getBounds().height);
-            c2.dispose();
-          }
-          gci.dispose();
-          return img;
+          ArrayList<AGeometry> geos = new ArrayList<AGeometry>();
+          Rectangle b = getBounds();
+          geos.add(new GSensitivityScale(b.x,b.y,b.width,b.height));    
+          return geos;
         }
       };
       add(eImage);
