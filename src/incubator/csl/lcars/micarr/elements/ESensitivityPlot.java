@@ -7,6 +7,7 @@ import java.util.ArrayList;
 
 import javax.vecmath.Point3d;
 
+import de.tucottbus.kt.csl.CSL;
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayState;
 import de.tucottbus.kt.lcars.LCARS;
 import de.tucottbus.kt.lcars.Panel;
@@ -166,19 +167,19 @@ public class ESensitivityPlot extends EElement implements ISensitivityRendererCo
     switch (gsp.getSliceType())
     {
     case SLICE_XY:
-      x = -(CSL_DIM_X/2)+point.getX();
-      y = CSL_DIM_Y-((CSL_DIM_Y/2)+point.getY());
+      x = -(CSL.ROOM.DIM_X/2)+point.getX();
+      y = CSL.ROOM.DIM_Y-((CSL.ROOM.DIM_Y/2)+point.getY());
       z = getSlicePos();
       break;
     case SLICE_XZ:
-      x = -(CSL_DIM_X/2)+point.getX();
+      x = -(CSL.ROOM.DIM_X/2)+point.getX();
       y = getSlicePos();
-      z = CSL_DIM_Z-point.getY();
+      z = CSL.ROOM.DIM_Z-point.getY();
       break;
     case SLICE_YZ:
       x = getSlicePos();
-      y = point.getX()-(CSL_DIM_Y/2);
-      z = CSL_DIM_Z-point.getY();
+      y = point.getX()-(CSL.ROOM.DIM_Y/2);
+      z = CSL.ROOM.DIM_Z-point.getY();
       break;
     }
     return new Point3d(x,y,z);
@@ -191,16 +192,16 @@ public class ESensitivityPlot extends EElement implements ISensitivityRendererCo
     switch (gsp.getSliceType())
     {
     case SLICE_XY:
-      x = (int)Math.round(point.x+(CSL_DIM_X/2));
-      y = (int)Math.round(CSL_DIM_Y/2-point.y);
+      x = (int)Math.round(point.x+(CSL.ROOM.DIM_X/2));
+      y = (int)Math.round(CSL.ROOM.DIM_Y/2-point.y);
       break;
     case SLICE_XZ:
-      x = (int)Math.round(point.x+(CSL_DIM_X/2));
-      y = (int)Math.round(CSL_DIM_Z-point.z);
+      x = (int)Math.round(point.x+(CSL.ROOM.DIM_X/2));
+      y = (int)Math.round(CSL.ROOM.DIM_Z-point.z);
       break;
     case SLICE_YZ:
-      x = (int)Math.round(CSL_DIM_Y/2+point.y);
-      y = (int)Math.round(CSL_DIM_Z-point.z);
+      x = (int)Math.round(CSL.ROOM.DIM_Y/2+point.y);
+      y = (int)Math.round(CSL.ROOM.DIM_Z-point.z);
       break;
     }
     return new Point(x,y);

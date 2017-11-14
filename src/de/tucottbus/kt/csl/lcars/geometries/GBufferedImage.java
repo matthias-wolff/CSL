@@ -10,12 +10,14 @@ import org.eclipse.swt.graphics.ImageData;
 import org.jfree.experimental.swt.SWTUtils;
 
 import de.tucottbus.kt.lcars.geometry.AGeometry;
+import de.tucottbus.kt.lcars.geometry.GRenderedImage;
 
 /**
  * A buffered image geometry.
  * @author Christian Borck
- *
+ * @deprecated -- use {@link GRenderedImage} instead --
  */
+@Deprecated
 public class GBufferedImage extends AGeometry{
   private static final long serialVersionUID = 1L;
   

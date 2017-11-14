@@ -6,6 +6,7 @@ import javax.vecmath.Point3d;
 
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayState;
 import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.dsb.Steering;
+import de.tucottbus.kt.lcars.logging.Log;
 
 /**
  * Renderer for 2D spatial sensitivity plots of the CSL microphone array. This
@@ -17,8 +18,37 @@ import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.dsb.Steering;
  */
 public class CpuSensitivityRenderer implements ISensitivityRenderer
 {
+  // -- Constants --
+  
   private final static double PI_DOUBLE = 2 * Math.PI;
 
+  // -- Life cycle --
+  
+  /**
+   * The singleton instance.
+   */
+  private volatile static CpuSensitivityRenderer singleton;
+  
+  /**
+   * Returns the CPU-based renderer for 2D spatial sensitivity plots of the CSL
+   * microphone array.
+   */
+  public synchronized static CpuSensitivityRenderer getInstance() 
+  {
+    if (singleton==null)
+      singleton = new CpuSensitivityRenderer();
+    return singleton;
+  }
+  
+  /**
+   * Creates a new CPU-based renderer for 2D spatial sensitivity plots of the CSL
+   * microphone array.
+   */
+  private CpuSensitivityRenderer()
+  {
+    Log.info("Created CPU sensitivity plot renderer");
+  } 
+  
   // -- Implementation of the ISensitivityRenderer interface --
   
   @Override
@@ -30,39 +60,39 @@ public class CpuSensitivityRenderer implements ISensitivityRenderer
   @Override
   public BufferedImage renderImage
   (
-    MicArrayState state, 
+    MicArrayState mas, 
     float         freq,
     int           sliceType, 
     int           slicePos, 
-    int           imgW, 
-    int           imgH
+    int           width, 
+    int           height
   )
   {
-    int[] pixels = renderIntArray(state,freq,sliceType,slicePos,imgW,imgH);
-    return CLUtils.pixelsToBufferedImage(pixels,imgW,imgH);
+    int[] pixels = renderIntArray(mas,freq,sliceType,slicePos,width,height);
+    return CLUtils.pixelsToBufferedImage(pixels,width,height);
   }
   
   @Override
   public int[] renderIntArray
   (
-    MicArrayState state, 
+    MicArrayState mas, 
     float         freq, 
     int           sliceType,
     int           slicePos, 
-    int           imgW, 
-    int           imgH
+    int           width, 
+    int           height
   )
   {
     switch (sliceType)
     {
     case SLICE_XY:
-      return renderIntArray_XY(state,slicePos,freq,imgW,imgH);
+      return renderIntArray_XY(mas,slicePos,freq,width,height);
       
     case SLICE_XZ:
-      return renderIntArray_XZ(state,slicePos,freq,imgW,imgH);
+      return renderIntArray_XZ(mas,slicePos,freq,width,height);
       
     case SLICE_YZ:
-      return renderIntArray_YZ(state,slicePos,freq,imgW,imgH);
+      return renderIntArray_YZ(mas,slicePos,freq,width,height);
       
     default:
       throw new IllegalArgumentException("Invalid value of sliceType");
@@ -141,7 +171,7 @@ public class CpuSensitivityRenderer implements ISensitivityRenderer
     return pixels;
   }
     
-  private int[] renderIntArray_XZ
+  private static int[] renderIntArray_XZ
   (
     MicArrayState state, 
     int           y, 
@@ -162,7 +192,7 @@ public class CpuSensitivityRenderer implements ISensitivityRenderer
     return pixels;
   }
 
-  private int[] renderIntArray_YZ
+  private static int[] renderIntArray_YZ
   (
     MicArrayState state, 
     int           x, 

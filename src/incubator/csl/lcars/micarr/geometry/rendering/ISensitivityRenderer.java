@@ -17,11 +17,11 @@ public interface ISensitivityRenderer extends ISensitivityRendererConstants
    * Determines if this sensitivity renderer uses openCL, i.e. if it is fast.
    */
   public boolean usesCL();
-  
+
   /**
    * Renders a 2D sensitivity plot to a buffered image.
    * 
-   * @param state
+   * @param mas
    *          The microphone array state.
    * @param freq
    *          The frequency to render the spatial sensitivity for (in Hz).
@@ -41,7 +41,7 @@ public interface ISensitivityRenderer extends ISensitivityRendererConstants
    */
   public BufferedImage renderImage
   (
-    MicArrayState state, 
+    MicArrayState mas, 
     float         freq,
     int           sliceType, 
     int           slicePos, 
@@ -52,7 +52,7 @@ public interface ISensitivityRenderer extends ISensitivityRendererConstants
   /**
    * Renders a 2D sensitivity plot to an integer array of RGBA values.
    * 
-   * @param state
+   * @param mas
    *          The microphone array state.
    * @param freq
    *          The frequency to render the spatial sensitivity for (in Hz).
@@ -63,21 +63,21 @@ public interface ISensitivityRenderer extends ISensitivityRendererConstants
    *          The position of the slice in the remaining direction of the CSL
    *          coordinate system, i.e. the z-coordinate of <code>sliceType</code>
    *          is {@link #SLICE_XY}.
-   * @param imgW
+   * @param width
    *          The width of the image to render (in pixels).
-   * @param imgH
+   * @param height
    *          The height of the image to render (in pixels).
    * @return An array of RGBA-pixels arranged by scan-lines.
    * @throws IllegalStateException If the renderer is disposed.
    */
   public int[] renderIntArray
   (
-    MicArrayState state, 
+    MicArrayState mas, 
     float         freq,
     int           sliceType, 
     int           slicePos, 
-    int           imgW, 
-    int           imgH
+    int           width, 
+    int           height
   ) throws IllegalStateException;
 
 }

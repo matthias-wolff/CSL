@@ -23,19 +23,4 @@ public interface ISensitivityRendererConstants
    */
   public static final int SLICE_YZ = 3;
 
-  /**
-   * Width (door to window) of CSL experimenting field in cm.
-   */
-  public static final int CSL_DIM_X = 440;
-
-  /**
-   * Length (rear to front) of CSL experimenting field in cm.
-   */
-  public static final int CSL_DIM_Y = 440;
-
-  /**
-   * Height (floor to ceiling) of CSL experimenting field in cm.
-   */
-  public static final int CSL_DIM_Z = 250;
-
 }

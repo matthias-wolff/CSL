@@ -46,6 +46,11 @@ public class CSL
     public static final int MAX_X = 220;
 
     /**
+     * x-dimension of CSL room coordinate system (door to window, in cm).
+     */
+    public static final int DIM_X = MAX_X-MIN_X;
+    
+    /**
      * Smallest value of y coordinates in the CSL room coordinate system
      * (front&mdash;i.e. main viewer&mdash;direction, in cm).
      */
@@ -58,6 +63,11 @@ public class CSL
     public static final int MAX_Y = 220;
 
     /**
+     * y-dimension of CSL room coordinate system (rear to front, in cm).
+     */
+    public static final int DIM_Y = MAX_Y-MIN_Y;
+
+    /**
      * Smallest value of z coordinates in the CSL room coordinate system
      * (floor, in cm).
      */
@@ -68,7 +78,12 @@ public class CSL
      * (ceiling, in cm).
      */
     public static final int MAX_Z = 250;
-    
+
+    /**
+     * z-dimension of CSL room coordinate system (floor to ceiling, in cm).
+     */
+    public static final int DIM_Z = MAX_Z-MIN_Z;
+
     /**
      * Standard focus of microphone array.
      */

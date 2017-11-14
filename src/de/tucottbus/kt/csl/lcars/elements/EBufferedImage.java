@@ -9,13 +9,16 @@ import java.util.ArrayList;
 import de.tucottbus.kt.csl.lcars.geometries.GBufferedImage;
 import de.tucottbus.kt.lcars.Panel;
 import de.tucottbus.kt.lcars.elements.EElement;
+import de.tucottbus.kt.lcars.elements.ERenderedImage;
 import de.tucottbus.kt.lcars.geometry.AGeometry;
 
 /**
  * A buffered image.
  * 
  * @author Christian Borck
+ * @deprecated -- use {@link ERenderedImage} instead --
  */
+@Deprecated
 public class EBufferedImage extends EElement implements ImageObserver
 {
   private Image image;

@@ -8,6 +8,7 @@ import javax.vecmath.Point3d;
 
 import de.tucottbus.kt.csl.hardware.CslHardware;
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayState;
+import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.DoAEstimator;
 import de.tucottbus.kt.lcars.IScreen;
 import de.tucottbus.kt.lcars.LCARS;
 import de.tucottbus.kt.lcars.Panel;
@@ -34,6 +35,8 @@ public class SensitivityPlotTestPanel extends Panel
   private ElementContributor  eFreqSlider;
   private ElementContributor  eTrolleySlider;
   private ArrayList<EElement> aeButtons;
+  
+  private boolean linkSteering = false;
   
   public SensitivityPlotTestPanel(IScreen iscreen)
   {
@@ -107,6 +110,11 @@ public class SensitivityPlotTestPanel extends Panel
     setLoadStatControl(eGuiLd);
 
     ey += getElements().get(getElements().size()-1).getBounds().height +23;
+    ERect eDim = add(new ERect(this,ex,ey,85,60,LCARS.ES_RECT_RND_W|LCARS.EC_SECONDARY|LCARS.ES_LABEL_SE,"DIM"));
+    ERect eLight = add(new ERect(this,ex+88,ey,85,60,LCARS.ES_RECT_RND_E|LCARS.EC_SECONDARY|LCARS.ES_LABEL_SE,"LIGHT"));
+    setDimContols(eLight, eDim);
+
+    ey += getElements().get(getElements().size()-1).getBounds().height +3;
     eRect = new ERect(this,ex,ey,177,60,LCARS.ES_RECT_RND|LCARS.EC_SECONDARY|LCARS.ES_LABEL_SE,"COLOR SCHEME");
     eRect.addEEventListener(new EEventListenerAdapter()
     {
@@ -131,7 +139,7 @@ public class SensitivityPlotTestPanel extends Panel
       }
     });
     add(eRect);
-
+    
     ey += getElements().get(getElements().size()-1).getBounds().height +3;
     eColorScheme = new ELabel(this,1720,ey,170,26,LCARS.ES_STATIC|LCARS.ES_LABEL_E,"CS_MULIDISP");
     eColorScheme.setColor(new ColorMeta(1f,1f,1f,0.25f));
@@ -151,7 +159,8 @@ public class SensitivityPlotTestPanel extends Panel
       @Override
       public void selectionChanged(Point3d point)
       {
-        //DoAEstimator.getInstance().setTargetSource(point);
+        if (linkSteering)
+          DoAEstimator.getInstance().setTargetSource(point);
       }
     });
     eSensPlts.addToPanel(this);
@@ -160,7 +169,7 @@ public class SensitivityPlotTestPanel extends Panel
   @Override
   protected void fps10()
   {
-    if (eSensPlts!=null)
+    if (eSensPlts!=null && linkSteering)
       eSensPlts.setMicArrayState(MicArrayState.getCurrent());
     
     for (EElement ee : aeButtons)

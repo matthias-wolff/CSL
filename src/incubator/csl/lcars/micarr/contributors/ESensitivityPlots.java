@@ -36,11 +36,11 @@ import incubator.csl.lcars.micarr.geometry.rendering.SensitivityColorScheme;
  * This class contributes 2D sensitivity plots of CLS's microphone array to an
  * LCARS panel.
  * 
- * <p><b>TODO:</b>
+ * <h3>Remarks:</h3>
  * <ul>
- *   <li>Add event listener mechanism.</li>
- *   <li>Add animation: Random trajectory of slice positions attracted to steering
- *   focus and repelled from room borders.</li>
+ *   <li>TODO: Show outlines of microphones array over grids of plots.</li>
+ *   <li>TODO: Implement cursor movement by dragging on scales.</li>
+ *   <li>TODO: Add animation (Random trajectory of slice positions attracted to steering focus and repelled from room borders).</li>
  * </ul></p>
  * 
  * @author Matthias Wolff, BTU Cottbus-Senftenberg
@@ -136,7 +136,7 @@ public class ESensitivityPlots extends ElementContributor
     addAll(gSpxyCursorV);
 
     // XZ-plot
-    int ex = 500;
+    int ex = 490;
     int ey = 0;
     eSpxz = new ESensitivityPlot(null,this.x+ex,this.y+ey,-1,-1,ESensitivityPlot.SLICE_XZ,this.mas);
     eSpxz.addEEventListener(plotTouchedEvent);

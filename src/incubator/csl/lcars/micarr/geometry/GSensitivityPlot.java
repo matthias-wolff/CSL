@@ -8,65 +8,75 @@ import java.awt.geom.Area;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.PaletteData;
 
+import de.tucottbus.kt.csl.CSL;
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayState;
-import de.tucottbus.kt.lcars.elements.ERenderedImage;
 import de.tucottbus.kt.lcars.geometry.AGeometry;
-import de.tucottbus.kt.lcars.logging.Log;
 import incubator.csl.lcars.micarr.geometry.rendering.CLSensitivityRenderer;
 import incubator.csl.lcars.micarr.geometry.rendering.CpuSensitivityRenderer;
-import incubator.csl.lcars.micarr.geometry.rendering.ISensitivityRenderer;
 import incubator.csl.lcars.micarr.geometry.rendering.ISensitivityRendererConstants;
+import incubator.csl.lcars.micarr.geometry.rendering.ISensitivityRenderer;
 
 /**
  * Geometry of a 2D spatial sensitivity plot of the CSL microphone array.
  * 
- * <h3>TODO:</h3>
+ * <h3>Remarks</h3>
  * <ul>
- *   <li>Make sensitivity image scalable.</li>
+ *   <li>TODO: Make sensitivity image scalable.</li>
  * </ul>
  * 
  * @author Martin Birth, BTU Cottbus-Senftenberg
  * @author Matthias Wolff, BTU Cottbus-Senftenberg (revision)
- * @deprecated -- Use {@link ERenderedImage}! --
  */
-@Deprecated
 public class GSensitivityPlot extends AGeometry implements ISensitivityRendererConstants
 {
+  // -- Serializable fields --
+  
+  /**
+   * The default serial version id.
+   */
   private static final long serialVersionUID = 1L;
 
-  /**
-   * Renderer supplying the sensitivity images.
-   */
-  private ISensitivityRenderer renderer;
-  
-  /**
-   * Rendering cache.
-   */
-  private Image image;
-  
   /**
    * Type of slice to display: {@link ISensitivityRendererConstants#SLICE_XY
    * SLICE_XY}, {@link ISensitivityRendererConstants#SLICE_XZ SLICE_XZ}, or
    * {@link ISensitivityRendererConstants#SLICE_YZ SLICE_YZ}.
    */
   private final int sliceType;
+
+  /**
+   * The microphone array state to render the sensitivity plot for.
+   */
+  private MicArrayState state;
+  
+  /**
+   * The frequency to render the sensitivity plot for.
+   */
+  private float freq;
   
   /**
    * Position of slice orthogonal to {@link #sliceType}.
    */
   private int slicePos;
   
+  /**
+   * Top-left corner of the geometry, in LCARS panel pixels.
+   */
   private final Point pos;
   
+  /**
+   * Size of the geometry, in LCARS panel pixels.
+   */
   private final Dimension size;
-  
-  private MicArrayState state;
-  
-  private float freq;
-  
-  private ImageData imageData;
 
+  // -- Transient fields (not serialized) --
+  
+  /**
+   * Renderer supplying the sensitivity images.
+   */
+  private transient ISensitivityRenderer renderer;
+  
   // -- Life cycle
   
   /**
@@ -97,36 +107,21 @@ public class GSensitivityPlot extends AGeometry implements ISensitivityRendererC
     this.state     = state;
     this.pos       = pos;
     this.size      = getDefaultSize();
-    this.slicePos  = sliceType==SLICE_XY ? 160 : 0;
-    this.freq      = 1000;
-   
-    try
-    {
-      this.renderer = new CLSensitivityRenderer();
-    }
-    catch (Exception e)
-    {
-      Log.warn("No openCL rendering available. Falling back to CPU rendering.");
-      this.renderer = new CpuSensitivityRenderer();
-    }
+    this.slicePos  = sliceType==SLICE_XY ? (int)Math.round(CSL.ROOM.DEFAULT_POS.z) : 0;
+    this.freq      = 1000;   
   }
 
   @Override
-  public void finalize()
+  protected void finalize() throws Throwable
   {
-    clearCache();
-  }
-  
-  protected void clearCache()
-  {
-    if (image==null)
-      return;
-    image.dispose();
-    image = null;
+    GeometryImageCache.removeImage(getImageCacheKey());
   }
   
   // -- Getters and setters --
-
+  
+  /**
+   * Determines if this plot geometry uses openCL for rendering.
+   */
   public boolean usesCL()
   {
     return renderer.usesCL();
@@ -147,38 +142,86 @@ public class GSensitivityPlot extends AGeometry implements ISensitivityRendererC
       return new Rectangle(pos.x,pos.y,getDefaultSize().width,getDefaultSize().height);
   }
 
+  /**
+   * Returns the default plot image size.
+   */
   public Dimension getDefaultSize()
   {
     return getDefaultSize(this.sliceType);
   }
   
+  /**
+   * Returns the default plot image size.
+   * 
+   * @param sliceType
+   *          The slice type: {@link ISensitivityRendererConstants#SLICE_XY
+   *          SLICE_XY}, {@link ISensitivityRendererConstants#SLICE_XZ
+   *          SLICE_XZ}, or {@link ISensitivityRendererConstants#SLICE_YZ
+   *          SLICE_YZ}.
+   */
   public static Dimension getDefaultSize(int sliceType)
   {
     switch (sliceType) 
     {
     case SLICE_XZ:
-      return new Dimension(CSL_DIM_X,CSL_DIM_Z);
+      return new Dimension(CSL.ROOM.DIM_X,CSL.ROOM.DIM_Z);
     case SLICE_YZ:
-      return new Dimension(CSL_DIM_Y,CSL_DIM_Z);
+      return new Dimension(CSL.ROOM.DIM_Y,CSL.ROOM.DIM_Z);
     default: // SLICE_XY
-      return new Dimension(CSL_DIM_X,CSL_DIM_Y);
+      return new Dimension(CSL.ROOM.DIM_X,CSL.ROOM.DIM_Y);
     }
   }
   
+  /**
+   * Returns the plot slice type: {@link ISensitivityRendererConstants#SLICE_XY
+   * SLICE_XY}, {@link ISensitivityRendererConstants#SLICE_XZ SLICE_XZ}, or
+   * {@link ISensitivityRendererConstants#SLICE_YZ SLICE_YZ}.
+   */
   public int getSliceType()
   {
     return sliceType;
   }
   
+  /**
+   * Sets the microphone array state.
+   * 
+   * @param state
+   *          The microphone array state.
+   */
+  public void setMicArrayState(MicArrayState state)
+  {
+    if (state==null || state.equals(this.state))
+      return;
+    this.state = state;
+    GeometryImageCache.removeImage(getImageCacheKey());
+  }
+  
+  /**
+   * Returns the microphone array state. 
+   */
+  public MicArrayState getMicArrayState()
+  {
+    return this.state;
+  }
+  
+  /**
+   * Sets the plot slice position.
+   * 
+   * @param slicePos
+   *          The position.
+   */
   public void setSlicePos(double slicePos) 
   {
     int slicePosNew = (int)Math.round(slicePos);
     if (this.slicePos==slicePosNew)
       return;
     this.slicePos = slicePosNew;
-    clearCache();
+    GeometryImageCache.removeImage(getImageCacheKey());
   }
   
+  /**
+   * Returns the plot slice position.
+   */
   public double getSlicePos()
   {
     return this.slicePos;
@@ -196,7 +239,7 @@ public class GSensitivityPlot extends AGeometry implements ISensitivityRendererC
       return;
 
     this.freq = Math.max(freq, 0.1f);
-    clearCache();
+    GeometryImageCache.removeImage(getImageCacheKey());
   }
   
   /**
@@ -206,40 +249,35 @@ public class GSensitivityPlot extends AGeometry implements ISensitivityRendererC
   {
     return this.freq;
   }
-  
-  public void setMicArrayState(MicArrayState state)
-  {
-    if (state==null || state.equals(this.state))
-      return;
-    this.state = state;
-    clearCache();
-  }
-  
-  public MicArrayState getMicArrayState()
-  {
-    return this.state;
-  }
 
   // -- Workers --
   
   @Override
   public void paint2D(GC gc) 
   {
+    if (renderer==null)
+      try
+      {
+        this.renderer = CLSensitivityRenderer.getInstance();
+      }
+      catch (Exception e)
+      {
+        this.renderer = CpuSensitivityRenderer.getInstance();
+      }
+    
     // Render sensitivity plot if image cache is empty
+    Image image = GeometryImageCache.getImage(getImageCacheKey());
     if (image==null)
     {
-      int imgW = getDefaultSize().width;
-      int imgH = getDefaultSize().height;
-      if (imageData == null)
-      {
-        Image img = new Image(gc.getDevice(),imgW,imgH);
-        imageData = img.getImageData();
-        img.dispose();
-      }
-  
-      int[] pixels = renderer.renderIntArray(state,freq,sliceType,slicePos,imgW,imgH);
-      imageData.setPixels(0,0,imgW*imgH,pixels,0);
+      int width = getDefaultSize().width;
+      int height = getDefaultSize().height;
+      PaletteData palette = new PaletteData((int)0xFF00l, (int)0xFF0000l, (int)0xFF000000l);
+      ImageData imageData = new ImageData(width,height,32,palette);
+      int[] pixels = renderer.renderIntArray(state,freq,sliceType,slicePos,width,height);
+      imageData.setPixels(0,0,width*height,pixels,0);
       image = new Image(gc.getDevice(),imageData);
+      
+      GeometryImageCache.putImage(getImageCacheKey(),image);
     }
     
     // Draw sensitivity plot
@@ -252,4 +290,25 @@ public class GSensitivityPlot extends AGeometry implements ISensitivityRendererC
      */
   }
 
+  /**
+   * Returns a key for the global rendered image cache.
+   * 
+   * @see #putImage(Object, Image)
+   * @see #getImage(Object)
+   */
+  protected Object getImageCacheKey()
+  {
+    String key = getClass().getName()+"[";
+    key += state.toString();
+    key += ", "+freq;
+    key += ", "+sliceType;
+    key += ", "+slicePos;
+    key += ", "+getDefaultSize().width;
+    key += ", "+getDefaultSize().height;
+    key += "]";
+    return key;
+  }
+
 }
+
+// EOF

@@ -16,6 +16,7 @@ import com.nativelibs4java.opencl.CLQueue;
 import com.nativelibs4java.opencl.JavaCL;
 
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayState;
+import de.tucottbus.kt.lcars.logging.Log;
 
 /**
  * OpenCL-based renderer for 2D spatial sensitivity plots of the CSL microphone
@@ -42,31 +43,58 @@ public class CLSensitivityRenderer implements ISensitivityRenderer
    * The openCL queue.
    */
   private CLQueue queue;
-  
+
   // -- Life cycle --
+  
+  /**
+   * The singleton instance.
+   */
+  private volatile static CLSensitivityRenderer singleton;
+  
+  /**
+   * Returns the openCL-based renderer for 2D spatial sensitivity plots of the
+   * CSL microphone array.
+   * 
+   * @throws IOException 
+   *           If openCL is not available or initialization failed. In such
+   *           cases the alternative {@link CpuSensitivityRenderer} may be used.
+   */
+  public synchronized static CLSensitivityRenderer getInstance() 
+      throws IOException
+  {
+    if (singleton==null)
+      singleton = new CLSensitivityRenderer();
+    return singleton;
+  }
   
   /**
    * Creates an new openCL-based renderer for 2D spatial sensitivity plots of
    * the CSL microphone array.
    * 
-   * <p>NOTE: Applications must invoke {@link #dispose()} when finished with the
-   * renderer in order to free CL resources.</p>
-   * 
    * @throws IOException
    *           If openCL is not available or initialization failed. In such
    *           cases the alternative {@link CpuSensitivityRenderer} may be used.
    */
-  public CLSensitivityRenderer() throws IOException
+  private CLSensitivityRenderer() throws IOException
   {
-    this.context = JavaCL.createBestContext().createDefaultQueue().getContext(); 
-    this.program = new CLSensitivityRendererProgram(this.context);
-    this.queue   = this.context.createDefaultOutOfOrderQueue();
+    try
+    {
+      this.context = JavaCL.createBestContext().createDefaultQueue().getContext(); 
+      this.program = new CLSensitivityRendererProgram(this.context);
+      this.queue   = this.context.createDefaultOutOfOrderQueue();
+      Log.info("Created openCL sensitivity plot renderer");
+    }
+    catch (IOException e)
+    {
+      Log.warn("No openCL rendering available.");
+      throw e;
+    }
   }
 
   @Override
   public void finalize()
   {
-    System.err.println("CLSensitivityRenderer.finalize()");
+    Log.info("Finalizing openCL sensitivity plot renderer");
     
     if (queue!=null)
     {
@@ -92,36 +120,36 @@ public class CLSensitivityRenderer implements ISensitivityRenderer
   {
     return true;
   }
-
+  
   @Override
   public BufferedImage renderImage
   (
-    MicArrayState state, 
+    MicArrayState mas, 
     float         freq,
-    int           sliceSelect, 
+    int           sliceType, 
     int           slicePos, 
-    int           imgW, 
-    int           imgH
+    int           width, 
+    int           height
   ) throws IllegalStateException
   {
     if (program==null || context==null || queue==null)
       throw new IllegalStateException("Renderer is disposed");
     
     BufferedImage img = null;
-    int[] globalWorkSizes = new int[] { imgW , imgH };
+    int[] globalWorkSizes = new int[] { width , height };
     
     // Allocate buffers
-    CLBuffer<Double> micPosBuff = CLUtils.getOpenClMicPositionBuffer(context,state.positions);
-    CLBuffer<Byte> micsActiveBuff = CLUtils.getOpenClActiveMicsBuffer(context,state.activeMics);
-    CLBuffer<Float> steerBuff = context.createBuffer(Usage.Input,pointerToFloats(state.steerVec), true);
+    CLBuffer<Double> micPosBuff = CLUtils.getOpenClMicPositionBuffer(context,mas.positions);
+    CLBuffer<Byte> micsActiveBuff = CLUtils.getOpenClActiveMicsBuffer(context,mas.activeMics);
+    CLBuffer<Float> steerBuff = context.createBuffer(Usage.Input,pointerToFloats(mas.steerVec), true);
 
     if (CLUtils.hasImageSupport(context)) 
     {
       // Use kernel with image support
-      BufferedImage image = new BufferedImage(imgW, imgH, BufferedImage.TYPE_INT_ARGB);
+      BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
       CLImage2D outImg = context.createImage2D(Usage.Output, image, false);
       CLEvent event 
-        = program.updateImageParams(queue, micPosBuff, micsActiveBuff, steerBuff, freq, sliceSelect, slicePos, outImg, globalWorkSizes);
+        = program.updateImageParams(queue, micPosBuff, micsActiveBuff, steerBuff, freq, sliceType, slicePos, outImg, globalWorkSizes);
       
       synchronized(this)
       {
@@ -135,10 +163,10 @@ public class CLSensitivityRenderer implements ISensitivityRenderer
     else 
     {
       // Use kernel without image support and generate a int[] array with RGB values
-      CLBuffer<Integer> outputBuffer = context.createBuffer(Usage.Output,Integer.class, imgW * imgH);
+      CLBuffer<Integer> outputBuffer = context.createBuffer(Usage.Output,Integer.class, width * height);
       Pointer<Integer> outPtr;
       CLEvent event 
-        = program.updateIntArrayParams(queue, micPosBuff, micsActiveBuff, steerBuff, freq, sliceSelect, slicePos, imgW, imgH, outputBuffer, globalWorkSizes);
+        = program.updateIntArrayParams(queue, micPosBuff, micsActiveBuff, steerBuff, freq, sliceType, slicePos, width, height, outputBuffer, globalWorkSizes);
       
       synchronized(this)
       {
@@ -146,7 +174,7 @@ public class CLSensitivityRenderer implements ISensitivityRenderer
       }
       
       int[] rgbaData = outPtr.getInts();
-      img = CLUtils.pixelsToBufferedImage(rgbaData, imgW, imgH);
+      img = CLUtils.pixelsToBufferedImage(rgbaData, width, height);
 
       outPtr.release();
       outputBuffer.release();
@@ -165,28 +193,28 @@ public class CLSensitivityRenderer implements ISensitivityRenderer
   @Override
   public int[] renderIntArray
   (
-    MicArrayState state, 
+    MicArrayState mas, 
     float         freq,
-    int           sliceSelect, 
+    int           sliceType, 
     int           slicePos, 
-    int           imgW, 
-    int           imgH
+    int           width, 
+    int           height
   ) throws IllegalStateException
   {
     if (program==null || context==null || queue==null)
       throw new IllegalStateException("Renderer is disposed");
 
-    int[] globalWorkSizes = new int[] { imgW , imgH };
+    int[] globalWorkSizes = new int[] { width , height };
 
     // Allocate buffers
-    CLBuffer<Double> micPosBuff = CLUtils.getOpenClMicPositionBuffer(context,state.positions);
-    CLBuffer<Byte> micsActiveBuff = CLUtils.getOpenClActiveMicsBuffer(context,state.activeMics);
-    CLBuffer<Float> steerBuff = context.createBuffer(Usage.Input, pointerToFloats(state.steerVec), true);
+    CLBuffer<Double> micPosBuff = CLUtils.getOpenClMicPositionBuffer(context,mas.positions);
+    CLBuffer<Byte> micsActiveBuff = CLUtils.getOpenClActiveMicsBuffer(context,mas.activeMics);
+    CLBuffer<Float> steerBuff = context.createBuffer(Usage.Input, pointerToFloats(mas.steerVec), true);
 
     CLBuffer<Integer> outputBuffer 
-      = context.createBuffer(Usage.Output, Integer.class, imgW * imgH);
+      = context.createBuffer(Usage.Output, Integer.class, width * height);
     CLEvent event 
-      = program.updateIntArrayParams(queue, micPosBuff, micsActiveBuff, steerBuff, freq, sliceSelect, slicePos, imgW, imgH, outputBuffer, globalWorkSizes);
+      = program.updateIntArrayParams(queue, micPosBuff, micsActiveBuff, steerBuff, freq, sliceType, slicePos, width, height, outputBuffer, globalWorkSizes);
 
     // Do openCL rendering
     Pointer<Integer> outPtr;
@@ -207,7 +235,7 @@ public class CLSensitivityRenderer implements ISensitivityRenderer
     
     return pixels;
   }
-
+  
 }
 
 // EOF
