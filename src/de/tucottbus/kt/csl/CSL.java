@@ -26,6 +26,7 @@ import de.tucottbus.kt.lcars.swt.ColorMeta;
  * <ul>
  *   <li>TODO: Complete microphone array GUI</li>
  *   <li>TODO: Revise Kinect hardware wrapper</li>
+ *   <li>TODO: Move questionable stuff to <code>retired</code> package.
  * </ul>
  * 
  * @author Matthias Wolff, BTU Cottbus-Senftenberg
