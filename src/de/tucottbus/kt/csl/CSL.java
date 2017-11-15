@@ -22,6 +22,12 @@ import de.tucottbus.kt.lcars.swt.ColorMeta;
 /**
  * This singleton represents the KT cognitive systems lab.
  * 
+ * <h3>Remarks:</h3>
+ * <ul>
+ *   <li>TODO: Complete microphone array GUI</li>
+ *   <li>TODO: Revise Kinect hardware wrapper</li>
+ * </ul>
+ * 
  * @author Matthias Wolff, BTU Cottbus-Senftenberg
  */
 public class CSL 

@@ -23,7 +23,7 @@ public class GeometryImageCache
   /**
    * If <code>true<code> print debug messages at stderr.
    */
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
   
   /**
    *  Cache entries: Image with time of last access.
