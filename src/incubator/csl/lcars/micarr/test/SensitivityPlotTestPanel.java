@@ -1,5 +1,7 @@
 package incubator.csl.lcars.micarr.test;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 
@@ -15,10 +17,13 @@ import de.tucottbus.kt.lcars.contributors.ElementContributor;
 import de.tucottbus.kt.lcars.elements.EElement;
 import de.tucottbus.kt.lcars.elements.EEvent;
 import de.tucottbus.kt.lcars.elements.EEventListenerAdapter;
+import de.tucottbus.kt.lcars.elements.EImage;
 import de.tucottbus.kt.lcars.elements.ELabel;
 import de.tucottbus.kt.lcars.elements.ERect;
 import de.tucottbus.kt.lcars.swt.ColorMeta;
+import de.tucottbus.kt.lcars.swt.ImageMeta;
 import incubator.csl.lcars.micarr.contributors.ECslSlider;
+import incubator.csl.lcars.micarr.contributors.ECslSliderCursor;
 import incubator.csl.lcars.micarr.contributors.ESensitivityPlots;
 
 /**
@@ -40,6 +45,7 @@ public class SensitivityPlotTestPanel extends Panel
   private ELabel                   eGuiLd;
   private ELabel                   eColorScheme;
   private ESensitivityPlots        eSensPlts;
+  private ESliderCursorTester      eSct;
   private ElementContributor       eTrolleySlider;
   private HashMap<String,EElement> aeButtons;
   
@@ -150,7 +156,13 @@ public class SensitivityPlotTestPanel extends Panel
     
     ECslSlider slider = new ECslSlider(170,800,440,40,ECslSlider.ES_HORIZONTAL,20);
     aeButtons.get(BTN_TSTSL).setData(slider);
-    
+
+    // Slider cursor test
+    eSct = new ESliderCursorTester(400,170);
+    eSct.addToPanel(this);
+    aeButtons.get(BTN_TSTSL).setData(eSct);
+
+    // Fat initialization
     LCARS.invokeLater(()->
     {
       fatInit();
@@ -159,7 +171,7 @@ public class SensitivityPlotTestPanel extends Panel
 
   protected void fatInit()
   {
-    eSensPlts = new ESensitivityPlots(170,170);
+    eSensPlts = new ESensitivityPlots(120,170);
     eSensPlts.addSelectionListener(new ESensitivityPlots.SelectionListener()
     {
       @Override
@@ -169,7 +181,7 @@ public class SensitivityPlotTestPanel extends Panel
           DoAEstimator.getInstance().setTargetSource(point);
       }
     });
-    eSensPlts.addToPanel(this);
+    //eSensPlts.addToPanel(this);
     aeButtons.get(BTN_PLOTS).setData(eSensPlts);
   }
   
@@ -198,7 +210,65 @@ public class SensitivityPlotTestPanel extends Panel
     }
   }
   
-  // -- Main method --
+  // == Nested classes ==
+  
+  protected class ESliderCursorTester extends ElementContributor
+  {
+
+    public ESliderCursorTester(int x, int y)
+    {
+      super(x, y);
+
+      EImage eImg;
+      try
+      {
+        File imgFile;
+        imgFile = LCARS.getResourceFile("incubator.csl.lcars.micarr.test","plot.png");
+        eImg = new EImage(null,0,0,LCARS.ES_STATIC,new ImageMeta.File(imgFile.getAbsolutePath())); 
+        eImg.setAlpha(0.1f);
+        add(eImg);
+      } 
+      catch (FileNotFoundException e)
+      {
+        e.printStackTrace();
+        return;
+      }
+
+      // TODO: Add ECslSliderCursors at all sides of the image
+      int w = 440;
+      int h = 440;
+      final int CURSOR_WIDTH = 3; 
+      final int KNOB_GAP = 3; 
+      final int KNOB_SIZE = 48;
+      ECslSliderCursor eCsc;
+
+      // - Right
+      eCsc = new ECslSliderCursor(w+KNOB_GAP,0,KNOB_SIZE,h,LCARS.EC_SECONDARY|ECslSliderCursor.ES_VERT_LINE_W,0,w+KNOB_GAP,CURSOR_WIDTH);
+      eCsc.eKnob.setLabel("000");
+      eCsc.addScaleTick(0.45f,"0.45",LCARS.EF_SMALL);
+      add(eCsc);
+
+      // - Left
+      eCsc = new ECslSliderCursor(-KNOB_GAP-KNOB_SIZE,0,KNOB_SIZE,h,ECslSliderCursor.ES_VERT_LINE_E,0,w+KNOB_GAP,CURSOR_WIDTH);
+      eCsc.eKnob.setLabel("000");
+      eCsc.addScaleTick(0.55f,"0.55",LCARS.EF_SMALL);
+      add(eCsc);
+
+      // - Top
+      eCsc = new ECslSliderCursor(0,-KNOB_GAP-KNOB_SIZE*3/4,w,KNOB_SIZE,LCARS.EC_SECONDARY|ECslSliderCursor.ES_HORIZ_LINE_S|ECslSliderCursor.ES_ROTATE_KNOB,0,h+KNOB_GAP,CURSOR_WIDTH);
+      eCsc.eKnob.setLabel("000");
+      eCsc.addScaleTick(0.45f,"0.45",LCARS.EF_SMALL);
+      add(eCsc);
+
+      // - Bottom
+      eCsc = new ECslSliderCursor(0,h+KNOB_GAP-KNOB_SIZE/4,w,KNOB_SIZE,ECslSliderCursor.ES_HORIZ_LINE_N|ECslSliderCursor.ES_ROTATE_KNOB,0,h+KNOB_GAP,CURSOR_WIDTH);
+      eCsc.eKnob.setLabel("000");
+      eCsc.addScaleTick(0.55f,"0.55",LCARS.EF_SMALL);
+      add(eCsc);
+    }
+  }
+  
+  // == Main method ==
   
   public static void main(String[] args)
   {

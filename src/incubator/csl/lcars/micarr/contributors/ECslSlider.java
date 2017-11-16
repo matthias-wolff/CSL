@@ -4,6 +4,7 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import de.tucottbus.kt.csl.hardware.led.ALedController;
 import de.tucottbus.kt.lcars.LCARS;
 import de.tucottbus.kt.lcars.contributors.ElementContributor;
 import de.tucottbus.kt.lcars.elements.EElement;
@@ -15,6 +16,11 @@ import de.tucottbus.kt.lcars.elements.ERect;
 /**
  * A stylish lightweight slider.
  * 
+ * <h3>Remarks:</h3>
+ * <ul>
+ *   <li>TODO: Use {@link ECslSlider} in {@link ALedController.LcarsSubPanel}</li>
+ * </ul>
+ * 
  * @author Matthias Wolff, BTU Cottbus-Senftenberg
  */
 public class ECslSlider extends ElementContributor
@@ -22,12 +28,22 @@ public class ECslSlider extends ElementContributor
   // -- Constants --
   
   /**
-   * Horizontal slider, default is vertical.
+   * Style constant for a vertical slider.
+   */
+  public static final int ES_VERTICAL = 0x00000000;
+  
+  /**
+   * Style constant for a horizontal slider.
    */
   public static final int ES_HORIZONTAL = 0x10000000;
   
   /**
-   * Logarithmic scale, default is linear.
+   * Style constant for a linear scale.
+   */
+  public static final int ES_LINEAR = 0x00000000;
+  
+  /**
+   * Style constant for a logarithmic scale.
    */
   public static final int ES_LOGARITHMIC = 0x20000000;
 
@@ -152,7 +168,6 @@ public class ECslSlider extends ElementContributor
         else
           pos = ee.el.getBounds().y-eBack.getBounds().y+ee.pt.y;
         pos -= dragOffset;
-        System.err.println("dragoffset="+dragOffset);
         if (snapToTicks)
         {
           ScaleTick tick = getClosestScaleTick(pos); 
@@ -205,7 +220,6 @@ public class ECslSlider extends ElementContributor
 
         snapByHoldMillis = System.currentTimeMillis();
         dragLastPos=pos;
-        System.err.println("DRAG="+pos);
         if (snapToTicks)
         {
           ScaleTick tick = getClosestScaleTick(pos); 
@@ -242,7 +256,7 @@ public class ECslSlider extends ElementContributor
     if (horiz)
     {
       eBack = new ERect(null,0,h/8,w,h*3/4,LCARS.ES_NONE,null);
-      eKnob = new ERect(null,w/2-h/4,0,h/2,h,style|LCARS.ES_RECT_RND|LCARS.EB_OVERDRAG,null);
+      eKnob = new ERect(null,w/2-h/4,0,h/2,h,style|LCARS.ES_RECT_RND|LCARS.EB_OVERDRAG|LCARS.EF_SMALL|LCARS.ES_LABEL_C,null);
     }
     else
     {

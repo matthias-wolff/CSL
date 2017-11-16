@@ -368,7 +368,7 @@ public class ESensitivityPlots extends ElementContributor
         setFrequency(value);
       }
     });
-    eFreqSlider.forAllElements((el)->{ add(el); });
+    add(eFreqSlider);
 
     // - Frequency slider: Frame
     ex = eFreqSlider.eBack.getBounds().x - this.x;
