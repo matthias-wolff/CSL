@@ -18,6 +18,7 @@ import de.tucottbus.kt.lcars.elements.ERect;
  * 
  * <h3>Remarks:</h3>
  * <ul>
+ *   <li>TODO: Support {@link LCARS#ES_STATIC} behavior</li>
  *   <li>TODO: Use {@link ECslSlider} in {@link ALedController.LcarsSubPanel}</li>
  * </ul>
  * 
@@ -130,7 +131,9 @@ public class ECslSlider extends ElementContributor
    * @param style
    *          A combination of color style ({@link LCARS}<code>.ES_XXX</code>),
    *          {@link ECslSlider}<code>.ES_XXX</code> and
-   *          {@link ECslSlider}<code>.EB_XXX</code> constants.
+   *          {@link ECslSlider}<code>.EB_XXX</code> constants. Add
+   *          {@link LCARS#ES_STATIC} if the cursor shall not be movable by the
+   *          user.
    * @param fatFingerMargin
    *          Margin of touch-sensitive area around the bounding rectangle (in
    *          LCARS panel pixels).
