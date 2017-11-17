@@ -6,6 +6,7 @@ import java.awt.geom.Area;
 import java.util.ArrayList;
 
 import de.tucottbus.kt.lcars.LCARS;
+import de.tucottbus.kt.lcars.elements.ERect;
 import de.tucottbus.kt.lcars.elements.modify.EGeometryModifier;
 import de.tucottbus.kt.lcars.geometry.AGeometry;
 import de.tucottbus.kt.lcars.geometry.GArea;
@@ -17,6 +18,7 @@ import de.tucottbus.kt.lcars.geometry.GArea;
  * <h3>Remarks:</h3>
  * <ul>
  *   <li>TODO: Use {@link ECslSliderCursor} in {@link ESensitivityPlots}</li>
+ *   <li>TODO: Do not include cursor line in knob but add extra {@link ERect}</li>
  * </ul>
  * 
  * @author Matthias Wolff, BTU Cottbus-Senftenberg
@@ -25,6 +27,12 @@ public class ECslSliderCursor extends ECslSlider
 {
   // -- Constants --
 
+  /**
+   * Cursor line is right (vertical slider) or at the bottom (horizontal
+   * slider). Default is the oppositite side.
+   */
+  protected static final int ES_LINE_ES = 0x40000000;
+  
   /**
    * Style constant for a vertical slider with a horizontal cursor line attached
    * to the left side of the slider knob.
@@ -35,7 +43,7 @@ public class ECslSliderCursor extends ECslSlider
    * Style constant for a vertical slider with a horizontal cursor line attached
    * to the right side of the slider knob.
    */
-  public static final int ES_VERT_LINE_E = ES_VERTICAL | 0x40000000;
+  public static final int ES_VERT_LINE_E = ES_VERTICAL | ES_LINE_ES;
 
   /**
    * Style constant for a horizontal slider with a vertical cursor line attached
@@ -47,7 +55,7 @@ public class ECslSliderCursor extends ECslSlider
    * Style constant for a horizontal slider with a vertical cursor line attached
    * to the bottom of the slider knob.
    */
-  public static final int ES_HORIZ_LINE_S = ES_HORIZONTAL | 0x40000000;
+  public static final int ES_HORIZ_LINE_S = ES_HORIZONTAL | ES_LINE_ES;
   
   /**
    * Rotates the knob by 90 degrees.

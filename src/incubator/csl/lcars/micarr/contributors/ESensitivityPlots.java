@@ -5,6 +5,7 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.geom.Area;
 import java.util.ArrayList;
+import java.util.Enumeration;
 
 import javax.vecmath.Point3d;
 
@@ -17,6 +18,7 @@ import de.tucottbus.kt.lcars.elements.EElement;
 import de.tucottbus.kt.lcars.elements.EEvent;
 import de.tucottbus.kt.lcars.elements.EEventListener;
 import de.tucottbus.kt.lcars.elements.EEventListenerAdapter;
+import de.tucottbus.kt.lcars.elements.EImage;
 import de.tucottbus.kt.lcars.elements.ELabel;
 import de.tucottbus.kt.lcars.elements.ERect;
 import de.tucottbus.kt.lcars.elements.EValue;
@@ -49,14 +51,14 @@ public class ESensitivityPlots extends ElementContributor
   
   private       MicArrayState     mas;
   private final ESensitivityPlot  eSpxy;
-  private final CCursor           gSpxyCursorH;
-  private final CCursor           gSpxyCursorV;
+  private final ECursor           eSpxyCursorH;
+  private final ECursor           eSpxyCursorV;
   private final ESensitivityPlot  eSpyz;
-  private final CCursor           gSpyzCursorH;
-  private final CCursor           gSpyzCursorV;
+  private final ECursor           eSpyzCursorH;
+  private final ECursor           eSpyzCursorV;
   private final ESensitivityPlot  eSpxz;
-  private final CCursor           gSpxzCursorH;
-  private final CCursor           gSpxzCursorV;
+  private final ECursor           eSpxzCursorH;
+  private final ECursor           eSpxzCursorV;
   private final EEventListener    plotSelectionListener;
   private final EValue            eXPos;
   private final EValue            eYPos;
@@ -67,6 +69,8 @@ public class ESensitivityPlots extends ElementContributor
   private final EElbo             eXyXz2;
   private final EElement          eXyXzArrow;
   private final CSensitivityScale gSensScale;
+  private final ECslSliderCursor  eSensitivitySlider;
+  private final EElement          eSensitivityScale;
   private final ECslSlider        eFreqSlider;
   private final EValue            eFreq;
 
@@ -102,7 +106,7 @@ public class ESensitivityPlots extends ElementContributor
       public void touchDown(EEvent ee)
       {
         Point3d point = ((ESensitivityPlot)ee.el).elementToCsl(ee.pt);
-        setSelecion(point);
+        setSelection(point);
         fireSelectionChanged(point);
       }
     };
@@ -123,23 +127,27 @@ public class ESensitivityPlots extends ElementContributor
     eValue.setValueMargin(0); eValue.setValue("XY");
     add(eValue);
     
-    // - XY-plot: Cursors, grid and scales
-    gSpxyCursorH = new CCursor(eSpxy,true,true);
-    gSpxyCursorH.addScaleTick( 20, "200",true);
-    gSpxyCursorH.addScaleTick( 40,"y/cm",false);
-    gSpxyCursorH.addScaleTick(120, "100",true);
-    gSpxyCursorH.addScaleTick(220,   "0",true);
-    gSpxyCursorH.addScaleTick(320,"-100",true);
-    gSpxyCursorH.addScaleTick(420,"-200",true);
-    gSpxyCursorV = new CCursor(eSpxy,false,true);
-    gSpxyCursorV.addScaleTick( 20,"-200",true);
-    gSpxyCursorV.addScaleTick(120,"-100",true);
-    gSpxyCursorV.addScaleTick(220,   "0",true);
-    gSpxyCursorV.addScaleTick(320, "100",true);
-    gSpxyCursorV.addScaleTick(390,"x/cm",false);
-    gSpxyCursorV.addScaleTick(420, "200",true);
-    addAll(gSpxyCursorH);
-    addAll(gSpxyCursorV);
+    // - XY-plot: Cursors, grid and scales    
+    eSpxyCursorH = new ECursor(this,eSpxy,ECslSliderCursor.ES_VERT_LINE_E);
+    eSpxyCursorH.eKnob.setColorStyle(LCARS.EC_SECONDARY);
+    eSpxyCursorH.setMinMaxValue(CSL.ROOM.MIN_Y,CSL.ROOM.MAX_Y);
+    eSpxyCursorH.addScaleTick(-200f,"-200",LCARS.EF_TINY);
+    eSpxyCursorH.addScaleTick(-100f,"-100",LCARS.EF_TINY);
+    eSpxyCursorH.addScaleTick(   0f,   "0",LCARS.EF_TINY);
+    eSpxyCursorH.addScaleTick( 100f, "100",LCARS.EF_TINY);
+    eSpxyCursorH.addScaleTick( 200f, "200",LCARS.EF_TINY);
+    eSpxyCursorH.addScaleLabel(eSpxyCursorH.valueToPos(172f),"Y/cm",LCARS.EF_TINY);
+    eSpxyCursorV = new ECursor(this,eSpxy,ECslSliderCursor.ES_HORIZ_LINE_S);
+    eSpxyCursorV.eKnob.setColorStyle(LCARS.EC_SECONDARY);
+    eSpxyCursorV.setMinMaxValue(CSL.ROOM.MIN_X,CSL.ROOM.MAX_X);
+    eSpxyCursorV.addScaleTick(-200f,"-200",LCARS.EF_TINY);
+    eSpxyCursorV.addScaleTick(-100f,"-100",LCARS.EF_TINY);
+    eSpxyCursorV.addScaleTick(   0f,   "0",LCARS.EF_TINY);
+    eSpxyCursorV.addScaleTick( 100f, "100",LCARS.EF_TINY);
+    eSpxyCursorV.addScaleTick( 200f, "200",LCARS.EF_TINY);
+    eSpxyCursorV.addScaleLabel(eSpxyCursorV.valueToPos(172f),"X/cm",LCARS.EF_TINY);
+    add(eSpxyCursorH,false);
+    add(eSpxyCursorV,false);
 
     // XZ-plot
     ex = 490;
@@ -174,21 +182,25 @@ public class ESensitivityPlots extends ElementContributor
     add(eValue);
 
     // - XZ-plot: Cursors, grid and scales
-    gSpxzCursorH = new CCursor(eSpxz,true,false);
-    gSpxzCursorH.addScaleTick(250,   "0",true);
-    gSpxzCursorH.addScaleTick(150, "100",true);
-    gSpxzCursorH.addScaleTick( 50, "200",true);
-    gSpxzCursorH.addScaleTick( 30,"z/cm",false);
-    gSpxzCursorV = new CCursor(eSpxz,false,true);
-    gSpxzCursorV.addScaleTick( 20,"-200",true);
-    gSpxzCursorV.addScaleTick(120,"-100",true);
-    gSpxzCursorV.addScaleTick(220,   "0",true);
-    gSpxzCursorV.addScaleTick(320, "100",true);
-    gSpxzCursorV.addScaleTick(390,"x/cm",false);
-    gSpxzCursorV.addScaleTick(420, "200",true);
-    addAll(gSpxzCursorH);
-    addAll(gSpxzCursorV);
-
+    eSpxzCursorH = new ECursor(this,eSpxz,ECursor.ES_VERT_LINE_W);
+    eSpxzCursorH.eKnob.setColorStyle(LCARS.EC_SECONDARY);
+    eSpxzCursorH.setMinMaxValue(CSL.ROOM.MIN_Z,CSL.ROOM.MAX_Z);
+    eSpxzCursorH.addScaleTick(  0f,   "0",LCARS.EF_TINY);
+    eSpxzCursorH.addScaleTick(100f, "100",LCARS.EF_TINY);
+    eSpxzCursorH.addScaleTick(200f, "200",LCARS.EF_TINY);
+    eSpxzCursorH.addScaleLabel(eSpxzCursorH.valueToPos(220f),"Z/cm",LCARS.EF_TINY);
+    eSpxzCursorV = new ECursor(this,eSpxz,ECslSliderCursor.ES_HORIZ_LINE_S);
+    eSpxzCursorV.eKnob.setColorStyle(LCARS.EC_SECONDARY);
+    eSpxzCursorV.setMinMaxValue(CSL.ROOM.MIN_X,CSL.ROOM.MAX_X);
+    eSpxzCursorV.addScaleTick(-200f,"-200",LCARS.EF_TINY);
+    eSpxzCursorV.addScaleTick(-100f,"-100",LCARS.EF_TINY);
+    eSpxzCursorV.addScaleTick(   0f,   "0",LCARS.EF_TINY);
+    eSpxzCursorV.addScaleTick( 100f, "100",LCARS.EF_TINY);
+    eSpxzCursorV.addScaleTick( 200f, "200",LCARS.EF_TINY);
+    eSpxzCursorV.addScaleLabel(eSpxzCursorV.valueToPos(172f),"X/cm",LCARS.EF_TINY);
+    add(eSpxzCursorH,false);
+    add(eSpxzCursorV,false);
+    
     // YZ-plot
     ex = eSpxz.getBounds().x - this.x;
     ey = 303;
@@ -222,21 +234,25 @@ public class ESensitivityPlots extends ElementContributor
     add(eValue);
 
     // - YZ-plot: Cursors, grid and scales    
-    gSpyzCursorH = new CCursor(eSpyz,true,false);
-    gSpyzCursorH.addScaleTick(250,   "0",true);
-    gSpyzCursorH.addScaleTick(150, "100",true);
-    gSpyzCursorH.addScaleTick( 50, "200",true);
-    gSpyzCursorH.addScaleTick( 30,"z/cm",false);
-    gSpyzCursorV = new CCursor(eSpyz,false,false);
-    gSpyzCursorV.addScaleTick( 20,"-200",true);
-    gSpyzCursorV.addScaleTick(120,"-100",true);
-    gSpyzCursorV.addScaleTick(220,   "0",true);
-    gSpyzCursorV.addScaleTick(320, "100",true);
-    gSpyzCursorV.addScaleTick(390,"y/cm",false);
-    gSpyzCursorV.addScaleTick(420, "200",true);
-    addAll(gSpyzCursorH);
-    addAll(gSpyzCursorV);
-    
+    eSpyzCursorH = new ECursor(this,eSpyz,ECursor.ES_VERT_LINE_W);
+    eSpyzCursorH.eKnob.setColorStyle(LCARS.EC_SECONDARY);
+    eSpyzCursorH.setMinMaxValue(CSL.ROOM.MIN_Z,CSL.ROOM.MAX_Z);
+    eSpyzCursorH.addScaleTick(  0f,   "0",LCARS.EF_TINY);
+    eSpyzCursorH.addScaleTick(100f, "100",LCARS.EF_TINY);
+    eSpyzCursorH.addScaleTick(200f, "200",LCARS.EF_TINY);
+    eSpyzCursorH.addScaleLabel(eSpyzCursorH.valueToPos(220f),"Z/cm",LCARS.EF_TINY);
+    eSpyzCursorV = new ECursor(this,eSpyz,ECslSliderCursor.ES_HORIZ_LINE_N);
+    eSpyzCursorV.eKnob.setColorStyle(LCARS.EC_SECONDARY);
+    eSpyzCursorV.setMinMaxValue(CSL.ROOM.MIN_Y,CSL.ROOM.MAX_Y);
+    eSpyzCursorV.addScaleTick(-200f,"-200",LCARS.EF_TINY);
+    eSpyzCursorV.addScaleTick(-100f,"-100",LCARS.EF_TINY);
+    eSpyzCursorV.addScaleTick(   0f,   "0",LCARS.EF_TINY);
+    eSpyzCursorV.addScaleTick( 100f, "100",LCARS.EF_TINY);
+    eSpyzCursorV.addScaleTick( 200f, "200",LCARS.EF_TINY);
+    eSpyzCursorV.addScaleLabel(eSpyzCursorV.valueToPos(172f),"Y/cm",LCARS.EF_TINY);
+    add(eSpyzCursorH,false);
+    add(eSpyzCursorV,false);
+
     // Slices position display
     ex = eSpxz.getBounds().x - this.x;
     ey = eSpyz.getBounds().y - this.y - KNOB_SIZE - KNOB_GAP;
@@ -249,7 +265,7 @@ public class ESensitivityPlots extends ElementContributor
       {
         Point3d point = getSelection();
         point.x = 0;
-        setSelecion(point);
+        setSelection(point);
         fireSelectionChanged(point);
       }
     });
@@ -263,7 +279,7 @@ public class ESensitivityPlots extends ElementContributor
       {
         Point3d point = getSelection();
         point.y = 0;
-        setSelecion(point);
+        setSelection(point);
         fireSelectionChanged(point);
       }
     });
@@ -277,7 +293,7 @@ public class ESensitivityPlots extends ElementContributor
       {
         Point3d point = getSelection();
         point.z = 160;
-        setSelecion(point);
+        setSelection(point);
         fireSelectionChanged(point);
       }
     });
@@ -333,11 +349,67 @@ public class ESensitivityPlots extends ElementContributor
     };
     add(eXyXzArrow);
     
-    // Sensitivity scale
+    // TODO: Sensitivity scale
     Rectangle bSpxy = eSpxy.getBounds();
     Rectangle bSpyz = eSpyz.getBounds();
+    ex = bSpxy.x-this.x;
+    ey = bSpyz.y-this.y+bSpyz.height-40;
+    ew = bSpxy.width;
+    eSensitivityScale = new EElement(null,ex,ey,ew,40,LCARS.ES_NONE,null)
+    {
+      @Override
+      protected ArrayList<AGeometry> createGeometriesInt()
+      {
+        ArrayList<AGeometry> geos = new ArrayList<AGeometry>();
+        Rectangle b = getBounds();
+        geos.add(new GSensitivityScale(b.x,b.y,b.width,b.height));    
+        return geos;
+      }
+    };
+    ey += 40-KNOB_SIZE/4+KNOB_GAP;
+    eSensitivitySlider = new ECslSliderCursor(ex,ey,ew,KNOB_SIZE,LCARS.ES_STATIC|ECslSliderCursor.ES_ROTATE_KNOB|ECslSliderCursor.ES_HORIZ_LINE_N,0,40+KNOB_GAP,CURSOR_WIDTH);
+    eSensitivitySlider.setMinMaxValue(-36f,0f);
+    eSensitivitySlider.addScaleTick(-36f,"-36",LCARS.EF_TINY);
+    eSensitivitySlider.addScaleTick(-30f,"-30",LCARS.EF_TINY);
+    eSensitivitySlider.addScaleTick(-24f,"-24",LCARS.EF_TINY);
+    eSensitivitySlider.addScaleTick(-18f,"-18",LCARS.EF_TINY);
+    eSensitivitySlider.addScaleTick(-12f,"-12",LCARS.EF_TINY);
+    eSensitivitySlider.addScaleTick( -6f, "-6",LCARS.EF_TINY);
+    eSensitivitySlider.addScaleLabel(eSensitivitySlider.valueToPos(-1.3f),"dB",LCARS.EF_TINY);
+    add(eSensitivityScale);
+    add(eSensitivitySlider);
+    
+    // - Sensitivity scale: Frame
+    ex -= KNOB_GAP+KNOB_SIZE*7/8;
+    ey = eSpxy.getBounds().y + eSpxy.getBounds().height -this.y +3;
+    eh = eSensitivityScale.getBounds().y - this.y -ey -KNOB_GAP;
+    eElbo = new EElbo(null,ex,ey,411,eh,LCARS.ES_SHAPE_SW,null);
+    eElbo.setArmWidths(KNOB_SIZE*3/4,KNOB_SIZE/2);
+    eElbo.setArcWidths(Math.round(KNOB_SIZE*1.5f),KNOB_SIZE/2);
+    add(eElbo);
+    // ---
+    ex += eElbo.getBounds().width;
+    ey += eElbo.getBounds().height - KNOB_SIZE/2;
+    ew = eSensitivityScale.getBounds().width - eElbo.getBounds().width + KNOB_GAP+KNOB_SIZE*7/8 +3;
+    eValue = new EValue(null,ex,ey-1,ew,KNOB_SIZE/2,LCARS.ES_STATIC,null);
+    eValue.setValueMargin(0); eValue.setValueWidth(eValue.getBounds().width);
+    eValue.setValue("SENSITIVTY");
+    add(eValue);
+    ex += eValue.getBounds().width;
+    eh = eValue.getBounds().height + KNOB_GAP + eSensitivityScale.getBounds().height/2;
+    eElbo = new EElbo(null,ex,ey,10,eh,LCARS.ES_SHAPE_NE,null);
+    eElbo.setArmWidths(4,KNOB_SIZE/2);
+    add(eElbo);
+    ey += eh;
+    eh = eSensitivitySlider.eBack.getBounds().y+eSensitivitySlider.eBack.getBounds().height;
+    eh -= eElbo.getBounds().y+eElbo.getBounds().height+KNOB_SIZE/8;
+    eElbo = new EElbo(null,ex,ey,10,eh-1,LCARS.ES_SHAPE_SE,null);
+    eElbo.setArmWidths(4,KNOB_SIZE/2);
+    add(eElbo);
+    
+    // TODO: Remove old sensitivity scale
     gSensScale = new CSensitivityScale(bSpxy.x-this.x,bSpyz.y-this.y+bSpyz.height-40,bSpxy.width,40);
-    addAll(gSensScale);
+//    addAll(gSensScale);
 
     // Frequency slider
     ex = eSpxz.getBounds().x + eSpxz.getBounds().width - this.x + 66;
@@ -465,11 +537,11 @@ public class ESensitivityPlots extends ElementContributor
     add(eValue);
 
     // Initialization
-    gSpxyCursorH.setAlterEgo(gSpyzCursorV); gSpyzCursorV.setAlterEgo(gSpxyCursorH);
-    gSpxyCursorV.setAlterEgo(gSpxzCursorV); gSpxzCursorV.setAlterEgo(gSpxyCursorV);
-    gSpyzCursorH.setAlterEgo(gSpxzCursorH); gSpxzCursorH.setAlterEgo(gSpyzCursorH);
+    eSpxyCursorH.setAlterEgo(eSpyzCursorV); eSpyzCursorV.setAlterEgo(eSpxyCursorH);
+    eSpxyCursorV.setAlterEgo(eSpxzCursorV); eSpxzCursorV.setAlterEgo(eSpxyCursorV);
+    eSpyzCursorH.setAlterEgo(eSpxzCursorH); eSpxzCursorH.setAlterEgo(eSpyzCursorH);
    
-    setSelecion(CSL.ROOM.DEFAULT_POS);
+    setSelection(CSL.ROOM.DEFAULT_POS);
   }
   
   // -- Getters and setters --
@@ -509,7 +581,7 @@ public class ESensitivityPlots extends ElementContributor
    * @param point
    *          The new slice positions.
    */
-  public void setSelecion(Point3d point)
+  public void setSelection(Point3d point)
   {
     point.x = Math.max(CSL.ROOM.MIN_X,Math.min(CSL.ROOM.MAX_X,point.x));
     point.y = Math.max(CSL.ROOM.MIN_Y,Math.min(CSL.ROOM.MAX_Y,point.y));
@@ -520,16 +592,16 @@ public class ESensitivityPlots extends ElementContributor
     eZPos.setValue(String.format("% 04.0f",point.z));
     
     eSpxy.setSlicePos(point.z);
-    gSpxyCursorH.setSelection(eSpxy.cslToElement(point).y,point.y);
-    gSpxyCursorV.setSelection(eSpxy.cslToElement(point).x,point.x);
+    eSpxyCursorV.setValue((float)point.x);
+    eSpxyCursorH.setValue((float)point.y);
 
     eSpyz.setSlicePos(point.x);
-    gSpyzCursorH.setSelection(eSpyz.cslToElement(point).y,point.z);
-    gSpyzCursorV.setSelection(eSpyz.cslToElement(point).x,point.y);
+    eSpyzCursorV.setValue((float)point.y);
+    eSpyzCursorH.setValue((float)point.z);
     
     eSpxz.setSlicePos(point.y);
-    gSpxzCursorH.setSelection(eSpxz.cslToElement(point).y,point.z);
-    gSpxzCursorV.setSelection(eSpxz.cslToElement(point).x,point.x);
+    eSpxzCursorV.setValue((float)point.x);
+    eSpxzCursorH.setValue((float)point.z);
     
     updateInt();
   }
@@ -542,9 +614,10 @@ public class ESensitivityPlots extends ElementContributor
    */
   public Point3d getSelection()
   {
-    int x = gSpxyCursorV.getSelection();
-    int y = gSpxyCursorH.getSelection();
-    return eSpxy.elementToCsl(new Point(x,y));
+    float x = eSpxyCursorV.getValue();
+    float y = eSpxyCursorH.getValue();
+    float z = eSpxzCursorH.getValue();
+    return new Point3d(x,y,z);
   }
   
   /**
@@ -625,24 +698,27 @@ public class ESensitivityPlots extends ElementContributor
   
   // -- Workers and event handlers --
   
-  protected void cursorDragged(CCursor cur, int pos)
+  private void cursorDragged(ECursor cur, float pos)
   {
-    Point3d point = new Point3d();
+    float x = eSpxyCursorV.getValue();
+    float y = eSpxyCursorH.getValue();
+    float z = eSpxzCursorH.getValue();
+    Point3d point = new Point3d(x,y,z);
 
-    if (cur==gSpxyCursorH)
-      point = eSpxy.elementToCsl(new Point(gSpxyCursorV.getSelection(),pos));
-    else if (cur==gSpxyCursorV)
-      point = eSpxy.elementToCsl(new Point(pos,gSpxyCursorH.getSelection()));
-    else if (cur==gSpyzCursorH)
-      point = eSpyz.elementToCsl(new Point(gSpyzCursorV.getSelection(),pos));
-    else if (cur==gSpyzCursorV)
-      point = eSpyz.elementToCsl(new Point(pos,gSpyzCursorH.getSelection()));
-    else if (cur==gSpxzCursorH)
-      point = eSpxz.elementToCsl(new Point(gSpxzCursorV.getSelection(),pos));
-    else if (cur==gSpxzCursorV)
-      point = eSpxz.elementToCsl(new Point(pos,gSpxzCursorH.getSelection()));
+    if (cur==eSpxyCursorH)
+      point.y = pos;
+    else if (cur==eSpxyCursorV)
+      point.x = pos;
+    else if (cur==eSpyzCursorH)
+      point.z = pos;
+    else if (cur==eSpyzCursorV)
+      point.y = pos;
+    else if (cur==eSpxzCursorH)
+      point.z = pos;
+    else if (cur==eSpxzCursorV)
+      point.x = pos;
     
-    setSelecion(point);
+    setSelection(point);
     fireSelectionChanged(point);
   }
   
@@ -670,7 +746,7 @@ public class ESensitivityPlots extends ElementContributor
     // Reposition line from XY to YZ plot
     b1 = eSpxy.getBounds();
     b2 = eSpyz.getBounds();
-    p1 = new Point(b1.x+gSpxyCursorV.getSelection()-CURSOR_WIDTH/2,b1.y+b1.height);
+    p1 = new Point(b1.x+eSpxyCursorV.valueToPos(eSpxyCursorV.getValue())-CURSOR_WIDTH/2,b1.y+b1.height);
     p2 = new Point(b2.x-13,p1.y+30);
     eXyYz.setBounds(new Rectangle(p1.x,p1.y,p2.x-p1.x,p2.y-p1.y));
     
@@ -681,7 +757,7 @@ public class ESensitivityPlots extends ElementContributor
     
     // Reposition line from XY to XZ plot
     b2 = eSpxz.getBounds();
-    p1 = new Point(b1.x+b1.width,b1.y+gSpxyCursorH.getSelection()-CURSOR_WIDTH/2);
+    p1 = new Point(b1.x+b1.width,b1.y+eSpxyCursorH.valueToPos(eSpxyCursorH.getValue())-CURSOR_WIDTH/2);
     p2 = new Point(b2.x-13,b2.y+b2.height/2-CURSOR_WIDTH/2);
     pm = new Point(p1.x+(p2.x-p1.x)/2,p1.y+(p2.y-p1.y)/2);
     b1 = new Rectangle(p1.x,p1.y,pm.x-p1.x+CURSOR_WIDTH/2,pm.y-p1.y);
@@ -713,229 +789,109 @@ public class ESensitivityPlots extends ElementContributor
   
   // -- Nested classes --
   
-  private class CCursor extends ArrayList<EElement>
+  private static class ECursor extends ECslSliderCursor
   {
-    private static final long serialVersionUID = 1L;
-    
-    protected final ESensitivityPlot sp;
-    protected final boolean          horiz;
-    protected final boolean          knobLeftOrTop;
-    protected final ERect            eSclBk;
-    protected final ERect            eLine;
-    protected final ERect            eKnob;
-    protected       CCursor          alterEgo;
-   
-    protected CCursor(ESensitivityPlot sp, boolean horizonal, boolean knobLeftOrTop)
-    { 
-      this.sp = sp;
-      this.horiz = horizonal;
-      this.knobLeftOrTop = knobLeftOrTop;
-      
-      // Drag listener
-      EEventListenerAdapter dragListener = new EEventListenerAdapter()
-      {
-        @Override
-        public void touchDown(EEvent ee)
-        {
-          setHighlighted(true);
-          if (alterEgo!=null)
-            alterEgo.setHighlighted(true);
-          int pos;
-          if (ee.el!=eSclBk)
-            return;
-          if (horiz)
-            pos = ee.el.getBounds().y-sp.getBounds().y+ee.pt.y;
-          else
-            pos = ee.el.getBounds().x-sp.getBounds().x+ee.pt.x;
-          ESensitivityPlots.this.cursorDragged(CCursor.this,pos);
-        }
+    private static enum CA { STYLE, X, Y, W, H, CL};
 
+    protected ECursor eAlterEgo;
+    
+    protected ECursor(ESensitivityPlots sps, ESensitivityPlot sp, int style)
+    {
+      super
+      (
+        getConstrArg(CA.X,sp,style),
+        getConstrArg(CA.Y,sp,style),
+        getConstrArg(CA.W,sp,style),
+        getConstrArg(CA.H,sp,style),
+        getConstrArg(CA.STYLE,sp,style),
+        KNOB_GAP,
+        getConstrArg(CA.CL,sp,style),
+        CURSOR_WIDTH
+      );
+      
+      addSelectionListener((value)->
+      {
+        sps.cursorDragged(this,value);
+      });
+      
+      EEventListener touchListener = new EEventListenerAdapter()
+      {
         @Override
         public void touchUp(EEvent ee)
         {
           setHighlighted(false);
-          if (alterEgo!=null)
-            alterEgo.setHighlighted(false);
-          int pos;
-          if (horiz)
-            pos = ee.el.getBounds().y-sp.getBounds().y+ee.pt.y;
-          else
-            pos = ee.el.getBounds().x-sp.getBounds().x+ee.pt.x;
-          ESensitivityPlots.this.cursorDragged(CCursor.this,pos);
+          if (eAlterEgo!=null)
+            eAlterEgo.setHighlighted(false);
         }
         
         @Override
-        public void touchDrag(EEvent ee)
+        public void touchDown(EEvent ee)
         {
-          int pos;
-          if (horiz)
-            pos = ee.el.getBounds().y-sp.getBounds().y+ee.pt.y;
-          else
-            pos = ee.el.getBounds().x-sp.getBounds().x+ee.pt.x;
-          ESensitivityPlots.this.cursorDragged(CCursor.this,pos);
+          setHighlighted(true);
+          if (eAlterEgo!=null)
+            eAlterEgo.setHighlighted(true);
         }
-      }; 
-      
-      // Add scale background
-      Rectangle b = getInitialScaleBounds();
-      eSclBk = new ERect(null,b.x,b.y,b.width,b.height,LCARS.EB_OVERDRAG,null);
-      eSclBk.addEEventListener(dragListener);
-
-      eSclBk.setAlpha(0.2f);
-      add(eSclBk);
-
-      // Add cursor line
-      b = getInitialCursorLineBounds();
-      eLine = new ERect(null,b.x,b.y,b.width,b.height,LCARS.ES_STATIC|LCARS.EC_SECONDARY,null);
-      add(eLine);
-      
-      // Add cursor knob
-      if (knobLeftOrTop)
-        if (horiz) { b.x-=KNOB_SIZE; b.y-=KNOB_SIZE/4; }
-        else      { b.x-=KNOB_SIZE/2; b.y-=KNOB_SIZE/2; }
-      else
-        if (horiz) { b.x+=b.width; b.y-=KNOB_SIZE/4; }
-        else      { b.x-=KNOB_SIZE/2; b.y+=b.height; }
-      
-      int style = LCARS.ES_RECT_RND|LCARS.EB_OVERDRAG|LCARS.ES_LABEL_C|LCARS.EF_SMALL|LCARS.EC_SECONDARY;
-      eKnob = new ERect(null,b.x,b.y,KNOB_SIZE,KNOB_SIZE/2,style,"000");
-      eKnob.addEEventListener(dragListener);
-      add(eKnob);
-      
-      // Initialize
-      setHighlighted(false);
+      };
+      eKnob.addEEventListener(touchListener);
+      eSens.addEEventListener(touchListener);
     }
     
-    protected void addScaleTick(int pos, String label, boolean gridLine)
+    protected void setAlterEgo(ECursor eAlterEgo)
     {
-      Rectangle b = getInitialCursorLineBounds();
-      if (horiz)
-      {
-        b.y = sp.getBounds().y - ESensitivityPlots.this.y + pos;
-        b.height = 1;
-        b.width += KNOB_SIZE*7/8;
-        if (knobLeftOrTop)
-          b.x -= KNOB_SIZE*7/8;
-      }
-      else
-      {
-        b.x = sp.getBounds().x - ESensitivityPlots.this.x + pos;
-        b.width = 1;
-        b.height += KNOB_SIZE/2;
-        if (knobLeftOrTop)
-          b.y -= KNOB_SIZE/2;
-      }
-      
-      if (gridLine)
-      {
-        ERect eGridLine = new ERect(null,b.x,b.y,b.width,b.height,LCARS.ES_STATIC,null); 
-        eGridLine.setAlpha(0.3f);
-        add(eGridLine);
-      }
-      
-      int s = LCARS.ES_STATIC|LCARS.EF_TINY;
-      if (knobLeftOrTop)
-        if (horiz) { b.x-=3; b.y-=KNOB_SIZE/2-3; s |= LCARS.ES_LABEL_SE; }
-        else      { b.x+=3; s |= LCARS.ES_LABEL_W; }
-      else
-        if (horiz) { b.y-=KNOB_SIZE/2-3; b.x += b.width-KNOB_SIZE*3/4-3; s |= LCARS.ES_LABEL_SE; }
-        else      { b.x+=3; b.y += b.height-KNOB_SIZE/2; s |= LCARS.ES_LABEL_W; }
-      
-      ELabel eLabel = new ELabel(null,b.x,b.y,KNOB_SIZE*3/4,KNOB_SIZE/2,s,label);
-      eLabel.setAlpha(0.5f);
-      add(eLabel);
-    
+      this.eAlterEgo = eAlterEgo;
     }
     
-    protected void setAlterEgo(CCursor alterEgo)
-    {
-      this.alterEgo = alterEgo;
-    }
-    
-    protected void setSelection(int pos, double value)
-    {
-      // Move cursor line
-      Rectangle b = eLine.getBounds();
-      if (horiz)
-        b.y = sp.getBounds().y+pos-b.height/2;
-      else
-        b.x = sp.getBounds().x+pos-b.width/2;
-      eLine.setBounds(b);
-
-      // Move cursor value
-      b = eKnob.getBounds();
-      if (horiz)
-        b.y = sp.getBounds().y+pos-b.height/2;
-      else
-        b.x = sp.getBounds().x+pos-b.width/2;
-      eKnob.setBounds(b);
-      eKnob.setLabel(String.format("%.0f",value));
-    }
-    
-    protected int getSelection()
-    {
-      Rectangle b = eKnob.getBounds();
-      if (horiz)
-        return b.y - sp.getBounds().y + b.height/2;
-      else
-        return b.x - sp.getBounds().x + b.width/2;
-    }
-    
-    protected void setHighlighted(boolean highlight)
+    public void setHighlighted(boolean highlight)
     {
       int ec = highlight?LCARS.EC_PRIMARY:LCARS.EC_SECONDARY;
-      eLine.setColorStyle(ec);
-      eLine.setSelected(highlight);
-      eLine.setAlpha(highlight?1f:0.5f);
       eKnob.setColorStyle(ec);
       eKnob.setSelected(highlight);
     }
-  
-    private Rectangle getInitialCursorLineBounds()
+    
+    @Override
+    public void setValue(float value)
     {
-      Rectangle b = sp.getBounds(); 
-      int x = b.x+(horiz?0:b.width/2-CURSOR_WIDTH/2) - ESensitivityPlots.this.x;
-      int y = b.y+(horiz?b.height/2-CURSOR_WIDTH/2:0) - ESensitivityPlots.this.y;
-      int w = horiz?b.width:CURSOR_WIDTH;
-      int h = horiz?CURSOR_WIDTH:b.height;
-      
-      if (knobLeftOrTop)
-      {
-        if (horiz) { x-=KNOB_GAP; w+=KNOB_GAP; }
-        else      { y-=KNOB_GAP; h+=KNOB_GAP; }
-      }
-      else
-      {
-        if (horiz) { w+=KNOB_GAP; }
-        else      { h+=KNOB_GAP; }
-      }
-
-      return new Rectangle(x,y,w,h);
+      super.setValue(value);
+      eKnob.setLabel(String.format("%.0f",value));
     }
     
-    private Rectangle getInitialScaleBounds()
+    private static int getConstrArg(CA ca, ESensitivityPlot sp, int style)
+    throws IllegalArgumentException
     {
-      Rectangle b = sp.getBounds(); 
-      int x = b.x - ESensitivityPlots.this.x;
-      int y = b.y - ESensitivityPlots.this.y;
-      int w = horiz?KNOB_SIZE*3/4:b.width;
-      int h = horiz?b.height:KNOB_SIZE/2;
-      
-      if (knobLeftOrTop)
-      {
-        if (horiz) { x-=KNOB_GAP+KNOB_SIZE*7/8; }
-        else      { y-=KNOB_GAP+KNOB_SIZE/2; }
-      }
-      else
-      {
-        if (horiz) { x+=b.width+KNOB_GAP+KNOB_SIZE/8; }
-        else      { y+=b.height+KNOB_GAP; }
-      }
+      if (sp==null)
+        throw new IllegalArgumentException("Invalid value of argument sp");
 
-      return new Rectangle(x,y,w,h);
+      Rectangle b = sp.getBounds();
+      boolean horiz = (style&ES_HORIZONTAL)!=0;
+      boolean lineES = (style&ES_LINE_ES)!=0;
+
+      switch (ca)
+      {
+      case STYLE:
+        return horiz ? style |= ES_ROTATE_KNOB : style;
+      case X:
+        if (horiz) 
+          return b.x;
+        else 
+          return (lineES ? b.x-KNOB_SIZE-KNOB_GAP : b.x+b.width+KNOB_GAP) +1;  
+      case Y:
+        if (!horiz) 
+          return b.y;
+        else
+          return (lineES ? b.y-KNOB_SIZE*3/4-KNOB_GAP : b.y+b.height+KNOB_GAP-KNOB_SIZE/4) +1;
+      case W:
+        return horiz ? b.width : KNOB_SIZE;
+      case H:
+        return horiz ? KNOB_SIZE : b.height;
+      case CL:
+        return horiz ? b.height+KNOB_GAP : b.width+KNOB_GAP;
+      default:
+        throw new IllegalArgumentException("Invalid value of argument ca");
+      }
     }
   }
 
+  @Deprecated
   private class CSensitivityScale extends ArrayList<EElement>
   {
     private static final long serialVersionUID = 1L;

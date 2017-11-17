@@ -29,11 +29,6 @@ import incubator.csl.lcars.micarr.contributors.ESensitivityPlots;
 /**
  * -- <i>for testing only</i> --
  * 
- * <h3>Remarks</h3>
- * <ul>
- *   <li>TODO: Create slider contributor.</li>
- * </ul>
- * 
  * @author Matthias Wolff, BTU Cottbus-Senftenberg
  */
 public class SensitivityPlotTestPanel extends Panel
@@ -159,7 +154,7 @@ public class SensitivityPlotTestPanel extends Panel
 
     // Slider cursor test
     eSct = new ESliderCursorTester(400,170);
-    eSct.addToPanel(this);
+    //eSct.addToPanel(this);
     aeButtons.get(BTN_TSTSL).setData(eSct);
 
     // Fat initialization
@@ -181,8 +176,14 @@ public class SensitivityPlotTestPanel extends Panel
           DoAEstimator.getInstance().setTargetSource(point);
       }
     });
-    //eSensPlts.addToPanel(this);
+    eSensPlts.addToPanel(this);
     aeButtons.get(BTN_PLOTS).setData(eSensPlts);
+    
+//    ECslSlider cs = new ECslSlider(120,1000,400,20,ECslSlider.ES_HORIZONTAL,10);
+//    cs.addSelectionListener((value)->
+//    {
+//    });
+//    cs.addToPanel(this);
   }
   
   @Override
@@ -245,6 +246,7 @@ public class SensitivityPlotTestPanel extends Panel
       // - Right
       eCsc = new ECslSliderCursor(w+KNOB_GAP,0,KNOB_SIZE,h,LCARS.EC_SECONDARY|ECslSliderCursor.ES_VERT_LINE_W,0,w+KNOB_GAP,CURSOR_WIDTH);
       eCsc.eKnob.setLabel("000");
+      eCsc.setStatic(true);
       eCsc.addScaleTick(0.45f,"0.45",LCARS.EF_SMALL);
       add(eCsc);
 

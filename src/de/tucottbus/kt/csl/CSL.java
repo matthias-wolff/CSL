@@ -277,8 +277,8 @@ public class CSL
 
     // Start LCARS
     Log.info("Starting LCARS");
-//    if (LCARS.getArg(args, "--clientof=") == null)
-//      args = LCARS.setArg(args, "--server", null);
+    if (LCARS.getArg(args, "--clientof=") == null)
+      args = LCARS.setArg(args, "--server", null);
     LCARS.main(args);
     
     if (CSL.instance!=null)

@@ -18,7 +18,6 @@ import de.tucottbus.kt.lcars.elements.ERect;
  * 
  * <h3>Remarks:</h3>
  * <ul>
- *   <li>TODO: Support {@link LCARS#ES_STATIC} behavior</li>
  *   <li>TODO: Use {@link ECslSlider} in {@link ALedController.LcarsSubPanel}</li>
  * </ul>
  * 
@@ -148,7 +147,7 @@ public class ECslSlider extends ElementContributor
     this.style = style & LCARS.ES_STYLE;
     int ffm = Math.max(0,fatFingerMargin);
     lScaleTicks = new ArrayList<ECslSlider.ScaleTick>();
-
+    
     // Drag listener
     EEventListener dragListener = new EEventListener()
     {
@@ -279,6 +278,7 @@ public class ECslSlider extends ElementContributor
     add(eKnob);
     
     setMinMaxValue(0,1);
+    setStatic((style & LCARS.ES_STATIC)!=0);
   }
 
   // -- Public API --
@@ -332,7 +332,7 @@ public class ECslSlider extends ElementContributor
    */
   public ScaleTick addScaleLabel(int pos, String label, int fontStyle)
   {
-    return add(new ScaleTick(pos,label,fontStyle,false,false));
+    return add(new ScaleTick(pos,label,fontStyle,true,false));
   }
   
   /**
@@ -419,6 +419,32 @@ public class ECslSlider extends ElementContributor
   }
 
   /**
+   * Sets this slider static, i.e. not accepting user input, or non-static.
+   * 
+   * @param stat
+   *          <code>true</code> to make the slider static, <code>false</code>
+   *          otherwise
+   */
+  public void setStatic(boolean stat)
+  {
+    eSens.setStatic(stat);
+    eBack.setStatic(stat);
+    eKnob.setStatic(stat);
+  }
+  
+  /**
+   * Determines if this slider is static, i.e. not accepting user input.
+   * 
+   * @param stat
+   *          <code>true</code> if the slider is static, <code>false</code>
+   *          otherwise
+   */
+  public boolean isStatic()
+  {
+    return eKnob.isStatic();
+  }
+  
+  /**
    * Converts a value to a slider position.
    * 
    * @param value
@@ -455,7 +481,7 @@ public class ECslSlider extends ElementContributor
     Rectangle b = eBack.getBounds();
     if (horiz)
     {
-      pos = Math.max(0,Math.min(b.height,pos));
+      pos = Math.max(0,Math.min(b.width,pos));
       return expValue((float)pos/(float)b.width*(max-min)+min);
     }
     else
@@ -630,7 +656,7 @@ public class ECslSlider extends ElementContributor
       {
         this.eLine = new ERect(null,b.x+pos,b.y,1,b.height,style|LCARS.ES_STATIC,null);
         if (label!=null && label.length()>0)
-          this.eLabel = new ELabel(null,b.x+pos-4,b.y,1,b.height,fontStyle|LCARS.ES_LABEL_E|fontStyle,label);
+          this.eLabel = new ELabel(null,b.x+pos+2,b.y,1,b.height,fontStyle|LCARS.ES_LABEL_W|fontStyle,label);
         else
           this.eLabel = null;
       }
@@ -638,7 +664,7 @@ public class ECslSlider extends ElementContributor
       {
         eLine = new ERect(null,b.x,b.y+pos,b.width,1,style|LCARS.ES_STATIC,null);
         if (label!=null && label.length()>0)
-          this.eLabel = new ELabel(null,b.x,b.y+pos-1,b.width-3,1,fontStyle|LCARS.ES_LABEL_SE,label);
+          this.eLabel = new ELabel(null,b.x,b.y+pos+1,b.width-3,1,fontStyle|LCARS.ES_LABEL_SE,label);
         else
           eLabel = null;
       }
