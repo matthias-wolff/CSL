@@ -18,6 +18,7 @@ import de.tucottbus.kt.csl.hardware.micarray3d.MicArray3D;
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayCeiling;
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayState;
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayViewer;
+import de.tucottbus.kt.csl.lcars.contributors.EMicrophoneArray;
 import de.tucottbus.kt.lcars.IScreen;
 import de.tucottbus.kt.lcars.LCARS;
 import de.tucottbus.kt.lcars.MainPanel;
