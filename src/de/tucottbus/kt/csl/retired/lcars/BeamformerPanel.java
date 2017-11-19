@@ -36,6 +36,7 @@ import de.tucottbus.kt.csl.retired.lcars.messages.NewSlicePositionMsg;
 import de.tucottbus.kt.lcars.IScreen;
 import de.tucottbus.kt.lcars.LCARS;
 import de.tucottbus.kt.lcars.MainPanel;
+import de.tucottbus.kt.lcars.Panel;
 import de.tucottbus.kt.lcars.Screen;
 import de.tucottbus.kt.lcars.contributors.EPositioner;
 import de.tucottbus.kt.lcars.contributors.IPositionListener;
@@ -56,7 +57,7 @@ import de.tucottbus.kt.lcars.swt.ImageMeta;
  *
  */
 @Deprecated
-public class BeamformerPanel extends MainPanel implements IObservable {
+public class BeamformerPanel extends Panel implements IObservable {
   
   /**
    * Panel name

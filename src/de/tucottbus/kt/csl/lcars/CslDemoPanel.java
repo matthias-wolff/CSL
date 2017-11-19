@@ -1,10 +1,11 @@
-package de.tucottbus.kt.csl;
+package de.tucottbus.kt.csl.lcars;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
 import java.net.URL;
 
+import de.tucottbus.kt.csl.CSL;
 import de.tucottbus.kt.csl.speech.Fvr;
 import de.tucottbus.kt.lcars.IScreen;
 import de.tucottbus.kt.lcars.LCARS;

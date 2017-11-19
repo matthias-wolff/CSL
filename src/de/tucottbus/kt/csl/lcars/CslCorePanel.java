@@ -1,4 +1,4 @@
-package de.tucottbus.kt.csl;
+package de.tucottbus.kt.csl.lcars;
 
 import java.rmi.RemoteException;
 

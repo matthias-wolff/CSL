@@ -1,4 +1,4 @@
-package de.tucottbus.kt.csl.lcars;
+package de.tucottbus.kt.csl.retired.lcars.woo;
 
 import java.awt.Rectangle;
 import java.awt.geom.Area;
