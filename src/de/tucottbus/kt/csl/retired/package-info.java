@@ -4,4 +4,5 @@
  * 
  * @author Matthias Wolff, BTU Cottbus-Senftenberg
  */
+@java.lang.Deprecated
 package de.tucottbus.kt.csl.retired;
