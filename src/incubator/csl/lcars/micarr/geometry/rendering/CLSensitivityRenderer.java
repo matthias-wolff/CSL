@@ -22,6 +22,12 @@ import de.tucottbus.kt.lcars.logging.Log;
  * OpenCL-based renderer for 2D spatial sensitivity plots of the CSL microphone
  * array.
  * 
+ * <h3>Remarks:</h3>
+ * <ul>
+ *   <li>TODO: Respect gains computing sensitivity plot
+ *     </li>
+ * </ul>
+ * 
  * @author Martin Birth, BTU Cottbus-Senftenberg
  * @author Matthias Wolff, BTU Cottbus-Senftenberg (revision)
  */
@@ -139,8 +145,8 @@ public class CLSensitivityRenderer implements ISensitivityRenderer
     int[] globalWorkSizes = new int[] { width , height };
     
     // Allocate buffers
-    CLBuffer<Double> micPosBuff = CLUtils.getOpenClMicPositionBuffer(context,mas.positions);
-    CLBuffer<Byte> micsActiveBuff = CLUtils.getOpenClActiveMicsBuffer(context,mas.activeMics);
+    CLBuffer<Double> micPosBuff = CLUtils.point3dToBuffer(context,mas.positions);
+    CLBuffer<Byte> micsActiveBuff = CLUtils.booleanToClBuffer(context,mas.activeMics);
     CLBuffer<Float> steerBuff = context.createBuffer(Usage.Input,pointerToFloats(mas.steerVec), true);
 
     if (CLUtils.hasImageSupport(context)) 
@@ -207,8 +213,8 @@ public class CLSensitivityRenderer implements ISensitivityRenderer
     int[] globalWorkSizes = new int[] { width , height };
 
     // Allocate buffers
-    CLBuffer<Double> micPosBuff = CLUtils.getOpenClMicPositionBuffer(context,mas.positions);
-    CLBuffer<Byte> micsActiveBuff = CLUtils.getOpenClActiveMicsBuffer(context,mas.activeMics);
+    CLBuffer<Double> micPosBuff = CLUtils.point3dToBuffer(context,mas.positions);
+    CLBuffer<Byte> micsActiveBuff = CLUtils.booleanToClBuffer(context,mas.activeMics);
     CLBuffer<Float> steerBuff = context.createBuffer(Usage.Input, pointerToFloats(mas.steerVec), true);
 
     CLBuffer<Integer> outputBuffer 

@@ -13,7 +13,8 @@ import de.tucottbus.kt.lcars.geometry.AGeometry;
  * 
  * <h3>Remarks:</h3>
  * <ul>
- *   <li>TODO: Move to LCARSWT's geometries package when testing is complete.</li>
+ *   <li>TODO: Move to LCARSWT's geometries package when testing is complete.
+ *     </li>
  * </ul>
  * 
  * @author Matthias Wolff, BTU Cottbus-Senftenberg

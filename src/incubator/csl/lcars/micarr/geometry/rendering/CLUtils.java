@@ -39,7 +39,6 @@ public class CLUtils
   
   /**
    * Converts and array 3D points to a openCL buffer of doubles.
-   * <p style="color:red"><b>TODO:</b> Rename to <code>pos3dToClBuffer</code>!</p>
    * 
    * @param context
    *          The openCL context.
@@ -47,7 +46,7 @@ public class CLUtils
    *          An array of 3D points.
    * @return An openCL buffer of doubles representing the positions.
    */
-  public static CLBuffer<Double> getOpenClMicPositionBuffer
+  public static CLBuffer<Double> point3dToBuffer
   (
     CLContext context,
     Point3d[] positions
@@ -66,7 +65,6 @@ public class CLUtils
   
   /**
    * Converts an array of booleans to an openCL buffer of bytes.
-   * <p style="color:red"><b>TODO:</b> Rename to <code>booleanToClBuffer</code>!</p>
    * 
    * @param context
    *          The openCL context.
@@ -74,7 +72,7 @@ public class CLUtils
    *          An array of booleans.
    * @return An openCL buffer of bytes representing the booleans.
    */
-  public static CLBuffer<Byte> getOpenClActiveMicsBuffer
+  public static CLBuffer<Byte> booleanToClBuffer
   (
     CLContext context,
     boolean[] activeMics

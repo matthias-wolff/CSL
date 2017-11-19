@@ -4,26 +4,23 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import de.tucottbus.kt.csl.hardware.led.ALedController;
+import de.tucottbus.kt.lcars.IScreen;
 import de.tucottbus.kt.lcars.LCARS;
 import de.tucottbus.kt.lcars.contributors.ElementContributor;
 import de.tucottbus.kt.lcars.elements.EElement;
 import de.tucottbus.kt.lcars.elements.EEvent;
 import de.tucottbus.kt.lcars.elements.EEventListener;
+import de.tucottbus.kt.lcars.elements.EEventListenerAdapter;
 import de.tucottbus.kt.lcars.elements.ELabel;
 import de.tucottbus.kt.lcars.elements.ERect;
+import incubator.csl.lcars.micarr.test.ATestPanel;
 
 /**
  * A stylish lightweight slider.
  * 
- * <h3>Remarks:</h3>
- * <ul>
- *   <li>TODO: Use {@link ECslSlider} in {@link ALedController.LcarsSubPanel}</li>
- * </ul>
- * 
  * @author Matthias Wolff, BTU Cottbus-Senftenberg
  */
-public class ECslSlider extends ElementContributor
+public class ESlider extends ElementContributor
 {
   // -- Constants --
   
@@ -56,6 +53,11 @@ public class ECslSlider extends ElementContributor
    */
   public static final int EB_SNAPTOTICKS = 0x40000000;
 
+  /**
+   * Style constant for rotating the slider knob by 90 degrees.
+   */
+  public static final int ES_ROTATE_KNOB = 0x80000000;
+  
   protected static final int SNAPBYHOLD_TIMEOUT = 1000;
   
   // -- Public fields --
@@ -71,6 +73,22 @@ public class ECslSlider extends ElementContributor
    * linear.
    */
   public final boolean log;
+
+  /**
+   * If <code>true</code> the slider knob will snap to scale ticks, i.e. only
+   * values corresponding to scale ticks can be selected.
+   * 
+   * @see #EB_SNAPTOTICKS
+   * @see #add(ScaleTick)
+   */
+  public boolean snapToTicks;
+
+  /**
+   * If <code>true</code> the slider knob is rotated by 90 degrees.
+   * 
+   * @see #ES_ROTATE_KNOB
+   */
+  private final boolean rotateKnob;
   
   /**
    * The slider background {@link EElement}.
@@ -93,26 +111,19 @@ public class ECslSlider extends ElementContributor
    * The slider knob.
    */
   public final ERect eKnob;
-
-  /**
-   * If <code>true</code> the slider knob will snap to scale ticks, i.e. only
-   * values corresponding to scale ticks can be selected.
-   * 
-   * @see #EB_SNAPTOTICKS
-   * @see #add(ScaleTick)
-   */
-  public boolean snapToTicks;
   
   // -- Protected fields --
   
-  protected final   ArrayList<ScaleTick> lScaleTicks;
-  protected int     style;
-  protected float   min;
-  protected float   max;
-  protected int     dragOffset;
-  protected int     dragLastPos;
-  protected boolean snapByHold;
-  protected long    snapByHoldMillis;
+  protected final ArrayList<ScaleTick> lScaleTicks;
+  protected final ScaleTick scaleTickMin;
+  protected final ScaleTick scaleTickMax;
+  protected final int       style;
+  protected       float     min;
+  protected       float     max;
+  protected       int       dragOffset;
+  protected       int       dragLastPos;
+  protected       boolean   snapByHold;
+  protected       long      snapByHoldMillis;
   
   // -- Life cycle --
   
@@ -128,25 +139,26 @@ public class ECslSlider extends ElementContributor
    * @param h
    *          The height (in LCARS panel pixels).
    * @param style
-   *          A combination of color style ({@link LCARS}<code>.ES_XXX</code>),
-   *          {@link ECslSlider}<code>.ES_XXX</code> and
-   *          {@link ECslSlider}<code>.EB_XXX</code> constants. Add
+   *          A combination of color style ({@link LCARS}<code>.EC_XXX</code>),
+   *          {@link ESlider}<code>.ES_XXX</code> and
+   *          {@link ESlider}<code>.EB_XXX</code> constants. Add
    *          {@link LCARS#ES_STATIC} if the cursor shall not be movable by the
    *          user.
    * @param fatFingerMargin
    *          Margin of touch-sensitive area around the bounding rectangle (in
    *          LCARS panel pixels).
    */
-  public ECslSlider(int x, int y, int w, int h, int style, int fatFingerMargin)
+  public ESlider(int x, int y, int w, int h, int style, int fatFingerMargin)
   {
     super(x, y);
 
     this.horiz = (style & ES_HORIZONTAL)!=0;
     this.log = (style & ES_LOGARITHMIC)!=0;
     this.snapToTicks = (style & EB_SNAPTOTICKS)!=0;
-    this.style = style & LCARS.ES_STYLE;
+    this.rotateKnob = (style & ES_ROTATE_KNOB)!=0;
+    this.style = (style & LCARS.ES_STYLE);
     int ffm = Math.max(0,fatFingerMargin);
-    lScaleTicks = new ArrayList<ECslSlider.ScaleTick>();
+    lScaleTicks = new ArrayList<ESlider.ScaleTick>();
     
     // Drag listener
     EEventListener dragListener = new EEventListener()
@@ -156,6 +168,8 @@ public class ECslSlider extends ElementContributor
       {
         snapByHoldMillis = System.currentTimeMillis();
         eBack.setSelected(!eBack.isSelected());
+        if (ee.el!=eKnob)
+          eKnob.setSelected(eBack.isSelected());
         
         dragOffset = 0;
         dragLastPos = Integer.MIN_VALUE;
@@ -188,6 +202,8 @@ public class ECslSlider extends ElementContributor
       {
         int pos;
         eBack.setSelected(!eBack.isSelected());
+        if (ee.el!=eKnob)
+          eKnob.setSelected(eBack.isSelected());
         if (snapByHold)
           return;
         if (horiz)
@@ -255,16 +271,28 @@ public class ECslSlider extends ElementContributor
       }
     }; 
 
-    if (horiz)
-    {
-      eBack = new ERect(null,0,h/8,w,h*3/4,LCARS.ES_NONE,null);
-      eKnob = new ERect(null,w/2-h/4,0,h/2,h,style|LCARS.ES_RECT_RND|LCARS.EB_OVERDRAG|LCARS.EF_SMALL|LCARS.ES_LABEL_C,null);
-    }
+    if (!rotateKnob)
+      if (horiz)
+      {
+        eBack = new ERect(null,0,h/8,w,h*3/4,this.style|LCARS.ES_STATIC,null);
+        eKnob = new ERect(null,w/2-h/4,0,h/2,h,style|LCARS.ES_RECT_RND|LCARS.EB_OVERDRAG|LCARS.EF_SMALL|LCARS.ES_LABEL_C,null);
+      }
+      else
+      {
+        eBack = new ERect(null,w/8,0,w*3/4,h,this.style|LCARS.ES_STATIC,null);
+        eKnob = new ERect(null,0,h/2-w/4,w,w/2,style|LCARS.ES_RECT_RND|LCARS.EB_OVERDRAG|LCARS.EF_SMALL|LCARS.ES_LABEL_C,null);
+      }
     else
-    {
-      eBack = new ERect(null,w/8,0,w*3/4,h,LCARS.ES_NONE,null);
-      eKnob = new ERect(null,0,h/2-w/4,w,w/2,style|LCARS.ES_RECT_RND|LCARS.EB_OVERDRAG|LCARS.EF_SMALL|LCARS.ES_LABEL_C,null);
-    }
+      if (horiz)
+      {
+        eBack = new ERect(null,0,0,w,h,this.style|LCARS.ES_STATIC,null);
+        eKnob = new ERect(null,w/2-h,0,2*h,h,style|LCARS.ES_RECT_RND|LCARS.EB_OVERDRAG|LCARS.EF_SMALL|LCARS.ES_LABEL_C,null);
+      }
+      else
+      {
+        eBack = new ERect(null,0,0,w,h,this.style|LCARS.ES_STATIC,null);
+        eKnob = new ERect(null,0,h/2-w,w,2*w,style|LCARS.ES_RECT_RND|LCARS.EB_OVERDRAG|LCARS.EF_SMALL|LCARS.ES_LABEL_C,null);
+      }
     eBack.setAlpha(0.2f);
     eSens = new ERect(null,-ffm,-ffm,w+2*ffm,h+2*ffm,LCARS.EB_OVERDRAG,null);
     eSens.setColor(LCARS.getColor(LCARS.CS_REDALERT,LCARS.EC_HEADLINE));
@@ -273,8 +301,10 @@ public class ECslSlider extends ElementContributor
     eKnob.addEEventListener(dragListener);
     add(eBack);
     add(eSens);
-    add(new ScaleTick(0,null,LCARS.ES_NONE,true,true));
-    add(new ScaleTick(this.horiz?w:h,null,LCARS.ES_NONE,true,true));
+    scaleTickMin = new ScaleTick(0,null,LCARS.ES_NONE,true,true);
+    scaleTickMax = new ScaleTick(this.horiz?w:h,null,LCARS.ES_NONE,true,true); 
+    add(scaleTickMin);
+    add(scaleTickMax);
     add(eKnob);
     
     setMinMaxValue(0,1);
@@ -336,9 +366,47 @@ public class ECslSlider extends ElementContributor
   }
   
   /**
+   * Removes a scale tick. If the scale tick does not exist, the method does
+   * nothing.
+   * 
+   * @param scaleTick
+   *          The scale tick
+   */
+  public void removeScaleTick(ScaleTick scaleTick)
+  {
+    // Do not remove default scale ticks
+    if (scaleTick==scaleTickMin || scaleTick==scaleTickMax)
+      return;
+
+    // Remove scale tick
+    remove(scaleTick.eLine);
+    remove(scaleTick.eLabel);
+    lScaleTicks.remove(scaleTick);
+  }
+
+  /**
+   * Removes all scale ticks except the default invisible scale ticks at both
+   * ends of the slider.
+   */
+  public void removeAllScaleTicks()
+  {
+    for (ScaleTick scaleTick : getScaleTicks()) 
+      // Note: This is safe because getScaleTicks() returns a copy of the list! 
+      removeScaleTick(scaleTick);
+  }
+  
+  /**
    * Returns the list of scale ticks and scale labels. The returned object is a
    * copy, modifying it has no effect on the slider. You can, however, modify the
    * {@link EElement}s in the scale ticks.
+   * 
+   * <h3>Remarks:</h3>
+   * <ul>
+   *   <li>The list does not include the default invisible scale ticks at both
+   *   ends of the slider. It does, however, include scale labels added by {@link 
+   *   #addScaleLabel(int, String, int)}. An empty return value means, that there 
+   *   were no scale ticks or scale labels added by the application.</li>
+   * </ul>
    * 
    * @see #addScaleTick(int, String, int)
    * @see #addScaleTick(float, String, int)
@@ -346,9 +414,12 @@ public class ECslSlider extends ElementContributor
    */
   public Collection<ScaleTick> getScaleTicks()
   {
-    return new ArrayList<ScaleTick>(lScaleTicks);
+    ArrayList<ScaleTick> l = new ArrayList<ScaleTick>(lScaleTicks);
+    l.remove(scaleTickMin);
+    l.remove(scaleTickMax);
+    return l;
   }
-  
+
   /**
    * Returns the scale tick closest to a knob position.
    * 
@@ -435,13 +506,31 @@ public class ECslSlider extends ElementContributor
   /**
    * Determines if this slider is static, i.e. not accepting user input.
    * 
-   * @param stat
-   *          <code>true</code> if the slider is static, <code>false</code>
-   *          otherwise
+   * @return <code>true</code> if the slider is static, <code>false</code>
+   *         otherwise
    */
   public boolean isStatic()
   {
     return eKnob.isStatic();
+  }
+
+  /**
+   * Sets this slider disabled or enabled.
+   * 
+   * @param disabled
+   *         The new disabled state.
+   */
+  public void setDisabled(boolean disabled)
+  {
+    forAllElements((el)-> { el.setDisabled(disabled); });
+  }
+  
+  /**
+   * Determines if this slider is disabled or enabled.
+   */
+  public boolean isDisabled()
+  {
+    return eKnob.isDisabled();
   }
   
   /**
@@ -499,8 +588,6 @@ public class ECslSlider extends ElementContributor
    */
   protected boolean setKnobPos(int pos)
   {
-    if (pos==getKnobPos())
-      return false;
     Rectangle b = eKnob.getBounds();
     if (horiz)
     { 
@@ -512,6 +599,8 @@ public class ECslSlider extends ElementContributor
       pos = Math.max(0,Math.min(eBack.getBounds().height,pos));
       b.y = eBack.getBounds().y+pos-b.height/2;
     }
+    if (pos==getKnobPos())
+      return false;
     eKnob.setBounds(b);
     return true;
   }
@@ -541,6 +630,9 @@ public class ECslSlider extends ElementContributor
   
   protected ScaleTick add(ScaleTick scaleTick)
   {
+    if (lScaleTicks.contains(scaleTick))
+      return scaleTick;
+    
     remove(eSens);
     remove(eKnob);
     
@@ -633,8 +725,8 @@ public class ECslSlider extends ElementContributor
      * <h3>Remarks:</h3>
      * <ul>
      *   <li>Tick snapping must be activated by the
-     *   {@link ECslSlider#EB_SNAPTOTICKS} style or by setting
-     *   {@link ECslSlider#snapToTicks}!</li>
+     *   {@link ESlider#EB_SNAPTOTICKS} style or by setting
+     *   {@link ESlider#snapToTicks}!</li>
      * </ul>
      */
     public boolean snapToTick;
@@ -694,6 +786,137 @@ public class ECslSlider extends ElementContributor
     }
   }
   
+  // == TESTING AND DEBUGGING ==
+
+  protected static class CslSliderTestPanel extends ATestPanel
+  {
+    protected ERect        eBtnScales;
+    protected ERect        eBtnSnapToScales;
+    protected ESlider[] sliders;
+
+    public CslSliderTestPanel(IScreen iscreen)
+    {
+      super(iscreen);
+    }
+    
+    @Override
+    public void init()
+    {
+      super.init();
+      final int KNOB_SIZE = 44;
+      int ex;
+      int ey;
+      
+      // Create sliders
+      sliders = new ESlider[4];
+      ex = 600;
+      ey = 170;
+      sliders[0] = new ESlider(ex,ey,400,KNOB_SIZE,ESlider.ES_HORIZONTAL,5);
+      sliders[0].addToPanel(this);
+      ey += sliders[0].eKnob.getBounds().height+10;
+      sliders[1] = new ESlider(ex,ey,400,KNOB_SIZE/2,ESlider.ES_HORIZONTAL|ESlider.ES_ROTATE_KNOB,5);
+      sliders[1].addToPanel(this);
+      ey += sliders[1].eKnob.getBounds().height+10;
+      sliders[0].addSelectionListener((value)->
+      {
+        System.out.println("slider0.value="+value);
+        sliders[1].setValue(value);
+      });
+      sliders[1].addSelectionListener((value)->
+      {
+        System.out.println("slider1.value="+value);
+        sliders[0].setValue(value);
+      });
+
+      ey += 20;
+      sliders[2] = new ESlider(ex,ey,KNOB_SIZE,400,LCARS.ES_NONE,5);
+      sliders[2].addToPanel(this);
+      ex += sliders[2].eKnob.getBounds().width+10;
+      sliders[3] = new ESlider(ex,ey,KNOB_SIZE/2,400,ESlider.ES_ROTATE_KNOB,5);
+      sliders[3].addToPanel(this);
+
+      sliders[2].addSelectionListener((value)->
+      {
+        System.out.println("slider2.value="+value);
+        sliders[3].setValue(value);
+      });
+      sliders[3].addSelectionListener((value)->
+      {
+        System.out.println("slider3.value="+value);
+        sliders[2].setValue(value);
+      });
+    }
+    
+    @Override
+    protected int createToolBar(int x, int y, int w, int h)
+    {
+      int ey = y;
+      int style = LCARS.ES_RECT_RND|LCARS.ES_LABEL_E;
+      
+      eBtnScales = new ERect(this,x,ey,w,h,style,"SCALES");
+      eBtnScales.addEEventListener(new EEventListenerAdapter()
+      {
+        @Override
+        public void touchUp(EEvent ee)
+        {
+          boolean hasScales = hasScales();
+          for (ESlider slider : sliders)
+            slider.removeAllScaleTicks();
+          if (!hasScales)
+            for (ESlider slider : sliders)
+            {
+              slider.addScaleTick(0.2f,"0.2",LCARS.EF_TINY);
+              slider.addScaleTick(0.4f,"0.4",LCARS.EF_TINY);
+              slider.addScaleTick(0.6f,"0.6",LCARS.EF_TINY);
+              slider.addScaleTick(0.8f,"0.8",LCARS.EF_TINY);
+            }
+        }
+      });
+      add(eBtnScales);
+      ey += getElements().get(getElements().size()-1).getBounds().height +3;
+
+      eBtnSnapToScales = new ERect(this,x,ey,w,h,style,"SNAP TO SCALES");
+      eBtnSnapToScales.addEEventListener(new EEventListenerAdapter()
+      {
+        @Override
+        public void touchUp(EEvent ee)
+        {
+          boolean snapToScales = isSnapToScales(); 
+          for (ESlider slider : sliders)
+            slider.snapToTicks = !snapToScales;
+        }
+      });
+      add(eBtnSnapToScales);
+      ey += getElements().get(getElements().size()-1).getBounds().height +3;
+
+      return ey-y-3;
+    }
+    
+    @Override
+    protected void fps10()
+    {
+      eBtnScales.setSelected(hasScales());
+      eBtnSnapToScales.setSelected(isSnapToScales());
+    }
+    
+    protected boolean hasScales()
+    {
+      return !sliders[0].getScaleTicks().isEmpty();
+    }
+    
+    protected boolean isSnapToScales()
+    {
+      return sliders[0].snapToTicks;
+    }
+    
+  }
+  
+  public static void main(String[] args)
+  {
+    args = LCARS.setArg(args,"--panel=",CslSliderTestPanel.class.getName());
+    args = LCARS.setArg(args,"--nospeech",null);
+    LCARS.main(args);
+  }
 }
 
 // EOF

@@ -83,7 +83,7 @@ public class CLSensitivityRendererProgram extends CLAbstractUserProgram
    * @param micPosBuff
    *          The microphone positions in the CSL coordinate system as, e.g.,
    *          obtained by
-   *          {@link CLUtils#getOpenClMicPositionBuffer(CLContext, javax.vecmath.Point3d[])
+   *          {@link CLUtils#point3dToBuffer(CLContext, javax.vecmath.Point3d[])
    *          CLUtils.getOpenClMicPositionBuffer(...)}
    * @param micsActiveBuff
    *          Array of 64 bytes indicating the activation states of the
@@ -149,7 +149,7 @@ public class CLSensitivityRendererProgram extends CLAbstractUserProgram
    * @param micPosBuff
    *          The microphone positions in the CSL coordinate system as, e.g.,
    *          obtained by
-   *          {@link CLUtils#getOpenClMicPositionBuffer(CLContext, javax.vecmath.Point3d[])
+   *          {@link CLUtils#point3dToBuffer(CLContext, javax.vecmath.Point3d[])
    *          CLUtils.getOpenClMicPositionBuffer(...)}
    * @param micsActiveBuff
    *          Array of 64 bytes indicating the activation states of the

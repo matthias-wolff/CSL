@@ -139,7 +139,7 @@ public class CpuSensitivityRenderer implements ISensitivityRenderer
       double tau = Steering.getDelayFromMicToPoint(state.positions[n], new Point3d(x,y,z));
       delta = PI_DOUBLE * freq * (state.steerVec[n] + tau);
 
-      // TODO: Gewichtungsfaktor
+      // TODO: Respect gains computing sensitivity plot
       //a_n=tau/steeringVector[n];
 
       sumRe += state.gains[n] * a_n * Math.cos(delta);

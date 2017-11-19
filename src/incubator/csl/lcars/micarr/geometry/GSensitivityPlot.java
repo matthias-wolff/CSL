@@ -22,11 +22,6 @@ import incubator.csl.lcars.micarr.geometry.rendering.ISensitivityRendererConstan
  * Geometry of a 2D spatial sensitivity plot of the CSL microphone array. The
  * images are rendered on the LCARS screen side.
  * 
- * <h3>Remarks</h3>
- * <ul>
- *   <li>TODO: Make sensitivity image scalable.</li>
- * </ul>
- * 
  * @author Martin Birth, BTU Cottbus-Senftenberg
  * @author Matthias Wolff, BTU Cottbus-Senftenberg (revision)
  */

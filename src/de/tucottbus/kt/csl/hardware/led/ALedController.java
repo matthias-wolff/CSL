@@ -4,9 +4,6 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.Area;
-import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Float;
-import java.awt.geom.Rectangle2D;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -21,9 +18,7 @@ import de.tucottbus.kt.csl.hardware.HardwareException;
 import de.tucottbus.kt.lcars.IScreen;
 import de.tucottbus.kt.lcars.LCARS;
 import de.tucottbus.kt.lcars.Panel;
-import de.tucottbus.kt.lcars.contributors.EPositioner;
 import de.tucottbus.kt.lcars.contributors.ElementContributor;
-import de.tucottbus.kt.lcars.contributors.IPositionListener;
 import de.tucottbus.kt.lcars.elements.EElbo;
 import de.tucottbus.kt.lcars.elements.EElement;
 import de.tucottbus.kt.lcars.elements.EEvent;
@@ -35,6 +30,7 @@ import de.tucottbus.kt.lcars.elements.modify.EGeometryModifier;
 import de.tucottbus.kt.lcars.geometry.AGeometry;
 import de.tucottbus.kt.lcars.geometry.GArea;
 import de.tucottbus.kt.lcars.swt.ColorMeta;
+import incubator.csl.lcars.micarr.contributors.ESlider;
 
 /**
  * Hardware wrapper of mbed LED controller boards.
@@ -681,39 +677,19 @@ public abstract class ALedController extends AAtomicHardware implements Runnable
   
   // -- LCARS Element Contributor --
   
-  protected class ERgbSlider extends EPositioner
+  protected static class ERgbSlider extends ESlider
   {
     public ERgbSlider(int x, int y, int w, int h)
     {
-      super
-      (
-        new Rectangle(x,y,w,h),
-        new Rectangle2D.Float(-1,0,1,256),
-        ""
-      );
-      Rectangle2D.Float constraints = new Rectangle2D.Float(0,0,0,255);
-      setConstraints(constraints,true);
-      setGrid(new Point2D.Float(51,51),null,false);
-      
-      setActualPos(new Point2D.Float(0,0));
-      removeCursor(true);
-      
-      // Bind actual to target position
-      addPositionListener(new IPositionListener() 
-      {
-        @Override
-        public void positionChanging(Float position) 
-        {
-          setActualPos(position);
-        }
-        
-        @Override
-        public void positionChanged(Float position) 
-        {
-          setActualPos(position);
-        }
-      });
-
+      super(x,y,w,h,LCARS.ES_NONE,0);
+      setMinMaxValue(0,255);
+      setValue(0f);
+      addScaleTick((float)0x00,"00",LCARS.EF_TINY);
+      addScaleTick((float)0x33,"33",LCARS.EF_TINY);
+      addScaleTick((float)0x66,"66",LCARS.EF_TINY);
+      addScaleTick((float)0x99,"99",LCARS.EF_TINY);
+      addScaleTick((float)0xCC,"CC",LCARS.EF_TINY);
+      addScaleTick((float)0xFF,null,LCARS.EF_TINY);
     }
   }
 
@@ -975,21 +951,13 @@ public abstract class ALedController extends AAtomicHardware implements Runnable
         });
         add(eRgbUp[i]);
         
-        eRgbSliders[i] = new ERgbSlider(x+ax+(8+i)*(bw+3),y+ay+15,bw,4*(bh+3)-33);
-        eRgbSliders[i].addPositionListener(new IPositionListener() 
+        eRgbSliders[i] = new ERgbSlider(ax+(8+i)*(bw+3),ay+17,bw,4*(bh+3)-38);
+        eRgbSliders[i].setDisabled(true);
+        eRgbSliders[i].addSelectionListener((value)->
         {
-          @Override
-          public void positionChanging(Float position) 
-          {
-            onRgbChanged();
-          }
-          
-          @Override
-          public void positionChanged(Float position) 
-          {
-            onRgbChanged();
-          }
-        });        
+          onRgbChanged();
+        });
+        add(eRgbSliders[i]);
 
         eRgbDown[i] = new EValue(null,ax+(8+i)*(bw+3),ay+4*(bh+3),bw,44,LCARS.EC_ELBOUP,null);
         eRgbDown[i].addGeometryModifier(new EGeometryModifier() 
@@ -1088,8 +1056,6 @@ public abstract class ALedController extends AAtomicHardware implements Runnable
     {
       addObserver(this);
       super.addToPanel(panel);
-      for (ERgbSlider slider : eRgbSliders)
-        slider.addToPanel(panel);
       linkedColor.addObserver(this);
     }
 
@@ -1098,8 +1064,6 @@ public abstract class ALedController extends AAtomicHardware implements Runnable
     {
       deleteObserver(this);
       super.removeFromPanel();
-      for (ERgbSlider slider : eRgbSliders)
-        slider.removeFromPanel();
       linkedColor.deleteObserver(this);
     }
 
@@ -1112,9 +1076,9 @@ public abstract class ALedController extends AAtomicHardware implements Runnable
         eLink.setBlinking(color!=null);
         if (color!=null)
         {
-          eRgbSliders[0].setActualPos(new Point2D.Float(0,color.getRed()));
-          eRgbSliders[1].setActualPos(new Point2D.Float(0,color.getGreen()));
-          eRgbSliders[2].setActualPos(new Point2D.Float(0,color.getBlue()));
+          eRgbSliders[0].setValue(color.getRed());
+          eRgbSliders[1].setValue(color.getGreen());
+          eRgbSliders[2].setValue(color.getBlue());
           eRgbDown[0].setValue(String.format("%02X",color.getRed()));
           eRgbDown[1].setValue(String.format("%02X",color.getGreen()));
           eRgbDown[2].setValue(String.format("%02X",color.getBlue()));
@@ -1185,9 +1149,9 @@ public abstract class ALedController extends AAtomicHardware implements Runnable
     
     private ColorMeta getSelectedColor()
     {
-      int r = Math.round(eRgbSliders[0].getActualPos().y);
-      int g = Math.round(eRgbSliders[1].getActualPos().y);
-      int b = Math.round(eRgbSliders[2].getActualPos().y);
+      int r = Math.round(eRgbSliders[0].getValue());
+      int g = Math.round(eRgbSliders[1].getValue());
+      int b = Math.round(eRgbSliders[2].getValue());
       return new ColorMeta(r,g,b);
     }
     
@@ -1213,9 +1177,9 @@ public abstract class ALedController extends AAtomicHardware implements Runnable
       else if (el==eRgbDown[1]) { i=1; j=-1; }
       else if (el==eRgbDown[2]) { i=2; j=-1; }
       else return;
-      Point2D.Float pos = eRgbSliders[i].getActualPos();
-      int y = (int)Math.max(0,Math.min(255,pos.y+j));
-      eRgbSliders[i].setActualPos(new Point2D.Float(pos.x,y));
+      int pos = Math.round(eRgbSliders[i].getValue());
+      pos = Math.max(0,Math.min(255,pos+j));
+      eRgbSliders[i].setValue(pos);
       onRgbChanged();
     }
   }

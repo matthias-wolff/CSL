@@ -5,12 +5,16 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.geom.Area;
 import java.util.ArrayList;
-import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.function.Consumer;
 
 import javax.vecmath.Point3d;
 
 import de.tucottbus.kt.csl.CSL;
+import de.tucottbus.kt.csl.hardware.CslHardware;
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayState;
+import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.DoAEstimator;
+import de.tucottbus.kt.lcars.IScreen;
 import de.tucottbus.kt.lcars.LCARS;
 import de.tucottbus.kt.lcars.contributors.ElementContributor;
 import de.tucottbus.kt.lcars.elements.EElbo;
@@ -18,8 +22,6 @@ import de.tucottbus.kt.lcars.elements.EElement;
 import de.tucottbus.kt.lcars.elements.EEvent;
 import de.tucottbus.kt.lcars.elements.EEventListener;
 import de.tucottbus.kt.lcars.elements.EEventListenerAdapter;
-import de.tucottbus.kt.lcars.elements.EImage;
-import de.tucottbus.kt.lcars.elements.ELabel;
 import de.tucottbus.kt.lcars.elements.ERect;
 import de.tucottbus.kt.lcars.elements.EValue;
 import de.tucottbus.kt.lcars.geometry.AGeometry;
@@ -27,6 +29,7 @@ import de.tucottbus.kt.lcars.geometry.GArea;
 import incubator.csl.lcars.micarr.elements.ESensitivityPlot;
 import incubator.csl.lcars.micarr.geometry.GSensitivityScale;
 import incubator.csl.lcars.micarr.geometry.rendering.CpuSensitivityRenderer;
+import incubator.csl.lcars.micarr.test.ATestPanel;
 
 /**
  * This class contributes 2D sensitivity plots of CLS's microphone array to an
@@ -34,8 +37,10 @@ import incubator.csl.lcars.micarr.geometry.rendering.CpuSensitivityRenderer;
  * 
  * <h3>Remarks:</h3>
  * <ul>
- *   <li>TODO: Show outlines of microphones array over grids of plots.</li>
- *   <li>TODO: Add animation (Random trajectory of slice positions attracted to steering focus and repelled from room borders).</li>
+ *   <li>TODO: Show outlines of microphones array over grids of plots.
+ *     </li>
+ *   <li>TODO: Add animation (Random trajectory of slice positions attracted to steering focus and repelled from room borders).
+ *     </li>
  * </ul></p>
  * 
  * @author Matthias Wolff, BTU Cottbus-Senftenberg
@@ -49,30 +54,29 @@ public class ESensitivityPlots extends ElementContributor
   
   // -- Fields --
   
-  private       MicArrayState     mas;
-  private final ESensitivityPlot  eSpxy;
-  private final ECursor           eSpxyCursorH;
-  private final ECursor           eSpxyCursorV;
-  private final ESensitivityPlot  eSpyz;
-  private final ECursor           eSpyzCursorH;
-  private final ECursor           eSpyzCursorV;
-  private final ESensitivityPlot  eSpxz;
-  private final ECursor           eSpxzCursorH;
-  private final ECursor           eSpxzCursorV;
-  private final EEventListener    plotSelectionListener;
-  private final EValue            eXPos;
-  private final EValue            eYPos;
-  private final EValue            eZPos;
-  private final EElbo             eXyYz;
-  private final EElement          eXyYzArrow;
-  private final EElbo             eXyXz1;
-  private final EElbo             eXyXz2;
-  private final EElement          eXyXzArrow;
-  private final CSensitivityScale gSensScale;
-  private final ECslSliderCursor  eSensitivitySlider;
-  private final EElement          eSensitivityScale;
-  private final ECslSlider        eFreqSlider;
-  private final EValue            eFreq;
+  private       MicArrayState    mas;
+  private final ESensitivityPlot eSpxy;
+  private final ECursor          eSpxyCursorH;
+  private final ECursor          eSpxyCursorV;
+  private final ESensitivityPlot eSpyz;
+  private final ECursor          eSpyzCursorH;
+  private final ECursor          eSpyzCursorV;
+  private final ESensitivityPlot eSpxz;
+  private final ECursor          eSpxzCursorH;
+  private final ECursor          eSpxzCursorV;
+  private final EEventListener   plotSelectionListener;
+  private final EValue           eXPos;
+  private final EValue           eYPos;
+  private final EValue           eZPos;
+  private final EElbo            eXyYz;
+  private final EElement         eXyYzArrow;
+  private final EElbo            eXyXz1;
+  private final EElbo            eXyXz2;
+  private final EElement         eXyXzArrow;
+  private final ESliderCursor    eSensitivitySlider;
+  private final EElement         eSensitivityScale;
+  private final ESlider          eFreqSlider;
+  private final EValue           eFreq;
 
   // -- Life cycle --
   
@@ -107,7 +111,7 @@ public class ESensitivityPlots extends ElementContributor
       {
         Point3d point = ((ESensitivityPlot)ee.el).elementToCsl(ee.pt);
         setSelection(point);
-        fireSelectionChanged(point);
+        fireSelectionChanged((listener)->listener.slicePositionsChanged(point));
       }
     };
 
@@ -121,32 +125,18 @@ public class ESensitivityPlots extends ElementContributor
     add(eSpxy);
     
     // - XY-plot: Frame
-    ex = -KNOB_SIZE*7/8-KNOB_GAP;
+    ex = -KNOB_SIZE*7/8-KNOB_GAP-1;
     ey = -KNOB_GAP-KNOB_SIZE/2;
     eValue = new EValue(null, ex, ey, KNOB_SIZE*7/8+KNOB_GAP, KNOB_SIZE/2, LCARS.ES_STATIC|LCARS.ES_SELECTED, null);
     eValue.setValueMargin(0); eValue.setValue("XY");
     add(eValue);
     
     // - XY-plot: Cursors, grid and scales    
-    eSpxyCursorH = new ECursor(this,eSpxy,ECslSliderCursor.ES_VERT_LINE_E);
-    eSpxyCursorH.eKnob.setColorStyle(LCARS.EC_SECONDARY);
-    eSpxyCursorH.setMinMaxValue(CSL.ROOM.MIN_Y,CSL.ROOM.MAX_Y);
-    eSpxyCursorH.addScaleTick(-200f,"-200",LCARS.EF_TINY);
-    eSpxyCursorH.addScaleTick(-100f,"-100",LCARS.EF_TINY);
-    eSpxyCursorH.addScaleTick(   0f,   "0",LCARS.EF_TINY);
-    eSpxyCursorH.addScaleTick( 100f, "100",LCARS.EF_TINY);
-    eSpxyCursorH.addScaleTick( 200f, "200",LCARS.EF_TINY);
-    eSpxyCursorH.addScaleLabel(eSpxyCursorH.valueToPos(172f),"Y/cm",LCARS.EF_TINY);
-    eSpxyCursorV = new ECursor(this,eSpxy,ECslSliderCursor.ES_HORIZ_LINE_S);
-    eSpxyCursorV.eKnob.setColorStyle(LCARS.EC_SECONDARY);
-    eSpxyCursorV.setMinMaxValue(CSL.ROOM.MIN_X,CSL.ROOM.MAX_X);
-    eSpxyCursorV.addScaleTick(-200f,"-200",LCARS.EF_TINY);
-    eSpxyCursorV.addScaleTick(-100f,"-100",LCARS.EF_TINY);
-    eSpxyCursorV.addScaleTick(   0f,   "0",LCARS.EF_TINY);
-    eSpxyCursorV.addScaleTick( 100f, "100",LCARS.EF_TINY);
-    eSpxyCursorV.addScaleTick( 200f, "200",LCARS.EF_TINY);
-    eSpxyCursorV.addScaleLabel(eSpxyCursorV.valueToPos(172f),"X/cm",LCARS.EF_TINY);
+    eSpxyCursorH = new ECursor(this,eSpxy,ESliderCursor.ES_VERT_LINE_E);
+    eSpxyCursorH.xScale();
     add(eSpxyCursorH,false);
+    eSpxyCursorV = new ECursor(this,eSpxy,ESliderCursor.ES_HORIZ_LINE_S);
+    eSpxyCursorV.yScale();
     add(eSpxyCursorV,false);
 
     // XZ-plot
@@ -183,22 +173,10 @@ public class ESensitivityPlots extends ElementContributor
 
     // - XZ-plot: Cursors, grid and scales
     eSpxzCursorH = new ECursor(this,eSpxz,ECursor.ES_VERT_LINE_W);
-    eSpxzCursorH.eKnob.setColorStyle(LCARS.EC_SECONDARY);
-    eSpxzCursorH.setMinMaxValue(CSL.ROOM.MIN_Z,CSL.ROOM.MAX_Z);
-    eSpxzCursorH.addScaleTick(  0f,   "0",LCARS.EF_TINY);
-    eSpxzCursorH.addScaleTick(100f, "100",LCARS.EF_TINY);
-    eSpxzCursorH.addScaleTick(200f, "200",LCARS.EF_TINY);
-    eSpxzCursorH.addScaleLabel(eSpxzCursorH.valueToPos(220f),"Z/cm",LCARS.EF_TINY);
-    eSpxzCursorV = new ECursor(this,eSpxz,ECslSliderCursor.ES_HORIZ_LINE_S);
-    eSpxzCursorV.eKnob.setColorStyle(LCARS.EC_SECONDARY);
-    eSpxzCursorV.setMinMaxValue(CSL.ROOM.MIN_X,CSL.ROOM.MAX_X);
-    eSpxzCursorV.addScaleTick(-200f,"-200",LCARS.EF_TINY);
-    eSpxzCursorV.addScaleTick(-100f,"-100",LCARS.EF_TINY);
-    eSpxzCursorV.addScaleTick(   0f,   "0",LCARS.EF_TINY);
-    eSpxzCursorV.addScaleTick( 100f, "100",LCARS.EF_TINY);
-    eSpxzCursorV.addScaleTick( 200f, "200",LCARS.EF_TINY);
-    eSpxzCursorV.addScaleLabel(eSpxzCursorV.valueToPos(172f),"X/cm",LCARS.EF_TINY);
+    eSpxzCursorH.zScale();
     add(eSpxzCursorH,false);
+    eSpxzCursorV = new ECursor(this,eSpxz,ESliderCursor.ES_HORIZ_LINE_S);
+    eSpxzCursorV.xScale();
     add(eSpxzCursorV,false);
     
     // YZ-plot
@@ -235,22 +213,10 @@ public class ESensitivityPlots extends ElementContributor
 
     // - YZ-plot: Cursors, grid and scales    
     eSpyzCursorH = new ECursor(this,eSpyz,ECursor.ES_VERT_LINE_W);
-    eSpyzCursorH.eKnob.setColorStyle(LCARS.EC_SECONDARY);
-    eSpyzCursorH.setMinMaxValue(CSL.ROOM.MIN_Z,CSL.ROOM.MAX_Z);
-    eSpyzCursorH.addScaleTick(  0f,   "0",LCARS.EF_TINY);
-    eSpyzCursorH.addScaleTick(100f, "100",LCARS.EF_TINY);
-    eSpyzCursorH.addScaleTick(200f, "200",LCARS.EF_TINY);
-    eSpyzCursorH.addScaleLabel(eSpyzCursorH.valueToPos(220f),"Z/cm",LCARS.EF_TINY);
-    eSpyzCursorV = new ECursor(this,eSpyz,ECslSliderCursor.ES_HORIZ_LINE_N);
-    eSpyzCursorV.eKnob.setColorStyle(LCARS.EC_SECONDARY);
-    eSpyzCursorV.setMinMaxValue(CSL.ROOM.MIN_Y,CSL.ROOM.MAX_Y);
-    eSpyzCursorV.addScaleTick(-200f,"-200",LCARS.EF_TINY);
-    eSpyzCursorV.addScaleTick(-100f,"-100",LCARS.EF_TINY);
-    eSpyzCursorV.addScaleTick(   0f,   "0",LCARS.EF_TINY);
-    eSpyzCursorV.addScaleTick( 100f, "100",LCARS.EF_TINY);
-    eSpyzCursorV.addScaleTick( 200f, "200",LCARS.EF_TINY);
-    eSpyzCursorV.addScaleLabel(eSpyzCursorV.valueToPos(172f),"Y/cm",LCARS.EF_TINY);
+    eSpyzCursorH.zScale();
     add(eSpyzCursorH,false);
+    eSpyzCursorV = new ECursor(this,eSpyz,ESliderCursor.ES_HORIZ_LINE_N);
+    eSpyzCursorV.yScale();
     add(eSpyzCursorV,false);
 
     // Slices position display
@@ -266,7 +232,7 @@ public class ESensitivityPlots extends ElementContributor
         Point3d point = getSelection();
         point.x = 0;
         setSelection(point);
-        fireSelectionChanged(point);
+        fireSelectionChanged((listener)->listener.slicePositionsChanged(point));
       }
     });
     add(eXPos);
@@ -280,7 +246,7 @@ public class ESensitivityPlots extends ElementContributor
         Point3d point = getSelection();
         point.y = 0;
         setSelection(point);
-        fireSelectionChanged(point);
+        fireSelectionChanged((listener)->listener.slicePositionsChanged(point));
       }
     });
     add(eYPos);
@@ -294,7 +260,7 @@ public class ESensitivityPlots extends ElementContributor
         Point3d point = getSelection();
         point.z = 160;
         setSelection(point);
-        fireSelectionChanged(point);
+        fireSelectionChanged((listener)->listener.slicePositionsChanged(point));
       }
     });
     add(eZPos);
@@ -349,7 +315,7 @@ public class ESensitivityPlots extends ElementContributor
     };
     add(eXyXzArrow);
     
-    // TODO: Sensitivity scale
+    // Sensitivity scale
     Rectangle bSpxy = eSpxy.getBounds();
     Rectangle bSpyz = eSpyz.getBounds();
     ex = bSpxy.x-this.x;
@@ -366,28 +332,16 @@ public class ESensitivityPlots extends ElementContributor
         return geos;
       }
     };
-    ey += 40-KNOB_SIZE/4+KNOB_GAP;
-    eSensitivitySlider = new ECslSliderCursor(ex,ey,ew,KNOB_SIZE,LCARS.ES_STATIC|ECslSliderCursor.ES_ROTATE_KNOB|ECslSliderCursor.ES_HORIZ_LINE_N,0,40+KNOB_GAP,CURSOR_WIDTH);
-    eSensitivitySlider.setMinMaxValue(-36f,0f);
-    eSensitivitySlider.addScaleTick(-36f,"-36",LCARS.EF_TINY);
-    eSensitivitySlider.addScaleTick(-30f,"-30",LCARS.EF_TINY);
-    eSensitivitySlider.addScaleTick(-24f,"-24",LCARS.EF_TINY);
-    eSensitivitySlider.addScaleTick(-18f,"-18",LCARS.EF_TINY);
-    eSensitivitySlider.addScaleTick(-12f,"-12",LCARS.EF_TINY);
-    eSensitivitySlider.addScaleTick( -6f, "-6",LCARS.EF_TINY);
-    eSensitivitySlider.addScaleLabel(eSensitivitySlider.valueToPos(-1.3f),"dB",LCARS.EF_TINY);
     add(eSensitivityScale);
-    add(eSensitivitySlider);
     
     // - Sensitivity scale: Frame
-    ex -= KNOB_GAP+KNOB_SIZE*7/8;
+    ex = bSpxy.x-this.x-KNOB_GAP-KNOB_SIZE*7/8-1;
     ey = eSpxy.getBounds().y + eSpxy.getBounds().height -this.y +3;
     eh = eSensitivityScale.getBounds().y - this.y -ey -KNOB_GAP;
-    eElbo = new EElbo(null,ex,ey,411,eh,LCARS.ES_SHAPE_SW,null);
+    eElbo = new EElbo(null,ex,ey,412,eh,LCARS.ES_SHAPE_SW,null);
     eElbo.setArmWidths(KNOB_SIZE*3/4,KNOB_SIZE/2);
     eElbo.setArcWidths(Math.round(KNOB_SIZE*1.5f),KNOB_SIZE/2);
     add(eElbo);
-    // ---
     ex += eElbo.getBounds().width;
     ey += eElbo.getBounds().height - KNOB_SIZE/2;
     ew = eSensitivityScale.getBounds().width - eElbo.getBounds().width + KNOB_GAP+KNOB_SIZE*7/8 +3;
@@ -401,20 +355,31 @@ public class ESensitivityPlots extends ElementContributor
     eElbo.setArmWidths(4,KNOB_SIZE/2);
     add(eElbo);
     ey += eh;
-    eh = eSensitivitySlider.eBack.getBounds().y+eSensitivitySlider.eBack.getBounds().height;
-    eh -= eElbo.getBounds().y+eElbo.getBounds().height+KNOB_SIZE/8;
+    eh = eSensitivityScale.getBounds().y+eSensitivityScale.getBounds().height+KNOB_SIZE/2+KNOB_GAP-ey-this.y+1;
     eElbo = new EElbo(null,ex,ey,10,eh-1,LCARS.ES_SHAPE_SE,null);
     eElbo.setArmWidths(4,KNOB_SIZE/2);
     add(eElbo);
     
-    // TODO: Remove old sensitivity scale
-    gSensScale = new CSensitivityScale(bSpxy.x-this.x,bSpyz.y-this.y+bSpyz.height-40,bSpxy.width,40);
-//    addAll(gSensScale);
+    // Sensitivity scale: Static slider
+    ex = bSpxy.x-this.x;
+    ey = eSensitivityScale.getBounds().y + eSensitivityScale.getBounds().height + KNOB_GAP - this.y;
+    ew = eSensitivityScale.getBounds().width;
+    eSensitivitySlider = new ESliderCursor(ex,ey,ew,KNOB_SIZE/2,LCARS.ES_STATIC|ESliderCursor.ES_ROTATE_KNOB|ESliderCursor.ES_HORIZ_LINE_N,0,40+KNOB_GAP,CURSOR_WIDTH);
+    eSensitivitySlider.setMinMaxValue(-36f,0f);
+    eSensitivitySlider.addScaleTick(-36f,"-36",LCARS.EF_TINY);
+    eSensitivitySlider.addScaleTick(-30f,"-30",LCARS.EF_TINY);
+    eSensitivitySlider.addScaleTick(-24f,"-24",LCARS.EF_TINY);
+    eSensitivitySlider.addScaleTick(-18f,"-18",LCARS.EF_TINY);
+    eSensitivitySlider.addScaleTick(-12f,"-12",LCARS.EF_TINY);
+    eSensitivitySlider.addScaleTick( -6f, "-6",LCARS.EF_TINY);
+    eSensitivitySlider.addScaleLabel(eSensitivitySlider.valueToPos(-1.3f),"dB",LCARS.EF_TINY);
+    eSensitivitySlider.eLine.setAlpha(0.5f);
+    add(eSensitivitySlider);
 
     // Frequency slider
     ex = eSpxz.getBounds().x + eSpxz.getBounds().width - this.x + 66;
     eh = eSpyz.getBounds().y + eSpyz.getBounds().height - eSpxz.getBounds().y - KNOB_SIZE/2;
-    eFreqSlider = new ECslSlider(ex,0,2*KNOB_SIZE,eh,ECslSlider.ES_LOGARITHMIC,10);
+    eFreqSlider = new ESlider(ex,0,2*KNOB_SIZE,eh,ESlider.ES_LOGARITHMIC,10);
     eFreqSlider.eKnob.setColorStyle(LCARS.EC_SECONDARY);
     eFreqSlider.setMinMaxValue(10,10000);
     float[] ticks = new float[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
@@ -432,7 +397,7 @@ public class ESensitivityPlots extends ElementContributor
       }
     eFreqSlider.addScaleLabel(25,"f/Hz",LCARS.EF_TINY).eLabel.setAlpha(0.75f);;
     eFreqSlider.setValue(1000); eFreqSlider.eKnob.setLabel("1000");
-    eFreqSlider.addSelectionListener(new ECslSlider.SelectionListener()
+    eFreqSlider.addSelectionListener(new ESlider.SelectionListener()
     {
       @Override
       public void selectionChanged(float value)
@@ -519,15 +484,15 @@ public class ESensitivityPlots extends ElementContributor
     add(eValue);
     
     // Main frame
-    ex = -KNOB_SIZE*7/8-KNOB_GAP;
+    ex = -KNOB_SIZE*7/8-KNOB_GAP-1;
     ey = -KNOB_SIZE-2*KNOB_GAP;
-    eElbo = new EElbo(null, ex, ey, KNOB_SIZE*7/8, KNOB_SIZE/2, LCARS.ES_STATIC|LCARS.ES_SHAPE_NW, null);
+    eElbo = new EElbo(null, ex, ey, KNOB_SIZE*7/8+1, KNOB_SIZE/2, LCARS.ES_STATIC|LCARS.ES_SHAPE_NW, null);
     eElbo.setArmWidths(KNOB_SIZE, KNOB_SIZE/2);
     eElbo.setArcWidths(KNOB_SIZE, 0);
     add(eElbo);
-    ex = -KNOB_GAP;
+    ex = -3;
     ew = eSpyz.getBounds().x + eSpyz.getBounds().width - eSpxy.getBounds().x -200;
-    eValue = new EValue(null, 0, ey, ew, KNOB_SIZE/2, LCARS.ES_STATIC|LCARS.ES_VALUE_W, null);
+    eValue = new EValue(null, ex, ey, ew, KNOB_SIZE/2, LCARS.ES_STATIC|LCARS.ES_VALUE_W, null);
     eValue.setValueMargin(0); eValue.setValue("CEILING>FLOOR");
     add(eValue);
     ex += ew+3;
@@ -587,9 +552,9 @@ public class ESensitivityPlots extends ElementContributor
     point.y = Math.max(CSL.ROOM.MIN_Y,Math.min(CSL.ROOM.MAX_Y,point.y));
     point.z = Math.max(CSL.ROOM.MIN_Z,Math.min(CSL.ROOM.MAX_Z,point.z));
    
-    eXPos.setValue(String.format("% 04.0f",point.x));
-    eYPos.setValue(String.format("% 04.0f",point.y));
-    eZPos.setValue(String.format("% 04.0f",point.z));
+    eXPos.setValue(String.format("% 04.0f",(float)Math.round(point.x)));
+    eYPos.setValue(String.format("% 04.0f",(float)Math.round(point.y)));
+    eZPos.setValue(String.format("% 04.0f",(float)Math.round(point.z)));
     
     eSpxy.setSlicePos(point.z);
     eSpxyCursorV.setValue((float)point.x);
@@ -644,6 +609,25 @@ public class ESensitivityPlots extends ElementContributor
   {
     return eSpxy.getFrequency();
   }
+
+  /**
+   * Sets this contributor disabled or enabled.
+   * 
+   * @param disabled
+   *         The new disabled state.
+   */
+  public void setDisabled(boolean disabled)
+  {
+    forAllElements((el)-> { el.setDisabled(disabled); });
+  }
+  
+  /**
+   * Determines if this contributor is disabled or enabled.
+   */
+  public boolean isDisabled()
+  {
+    return eSpxy.isDisabled();
+  }
   
   // -- Listener implementation --
   
@@ -654,12 +638,24 @@ public class ESensitivityPlots extends ElementContributor
   {
 
     /**
-     * Called when the selection, i.e. the plot slice positions, has changed.
+     * Called when the selected plot slice positions have changed.
      * 
      * @param point
      *          The new plot slice position in cm (CSL room coordinates).
      */
-    public void selectionChanged(Point3d point);
+    public default void slicePositionsChanged(Point3d point)
+    {
+    }
+
+    /**
+     * Called when the selected frequency has changed.
+     * 
+     * @param freq
+     *          The new frequency in Hz.
+     */
+    public default void frequencyChanged(float freq)
+    {
+    }
 
   }
 
@@ -688,12 +684,12 @@ public class ESensitivityPlots extends ElementContributor
     listeners.clear();
   }
   
-  protected void fireSelectionChanged(Point3d point)
+  protected void fireSelectionChanged(Consumer<SelectionListener> action)
   {
     if (listeners==null)
       return;
     for (SelectionListener listener : listeners)
-      listener.selectionChanged(point);
+      action.accept(listener);
   }
   
   // -- Workers and event handlers --
@@ -719,7 +715,7 @@ public class ESensitivityPlots extends ElementContributor
       point.x = pos;
     
     setSelection(point);
-    fireSelectionChanged(point);
+    fireSelectionChanged((listener)->listener.slicePositionsChanged(point));
   }
   
   protected void updateInt()
@@ -731,7 +727,8 @@ public class ESensitivityPlots extends ElementContributor
     float   freq  = getFrequency();
     Point3d point = getSelection();
     float   db    = CpuSensitivityRenderer.getDB(this.mas,freq,point.x,point.y,point.z);
-    gSensScale.setSelection(db);
+    eSensitivitySlider.setValue(db);
+    eSensitivitySlider.eKnob.setLabel(String.format("%.0f",(float)Math.round(db)));
   }
   
   protected void repositionConnectingLines()
@@ -789,7 +786,7 @@ public class ESensitivityPlots extends ElementContributor
   
   // -- Nested classes --
   
-  private static class ECursor extends ECslSliderCursor
+  private static class ECursor extends ESliderCursor
   {
     private static enum CA { STYLE, X, Y, W, H, CL};
 
@@ -828,12 +825,59 @@ public class ESensitivityPlots extends ElementContributor
         public void touchDown(EEvent ee)
         {
           setHighlighted(true);
+          if (ee.el==eKnob)
+            ee.el.setSelected(false);
           if (eAlterEgo!=null)
             eAlterEgo.setHighlighted(true);
         }
       };
-      eKnob.addEEventListener(touchListener);
       eSens.addEEventListener(touchListener);
+      eKnob.addEEventListener(touchListener);
+      eKnob.setColorStyle(LCARS.EC_SECONDARY);
+      eLine.setColorStyle(LCARS.EC_SECONDARY);
+      eLine.setAlpha(0.5f);
+    }
+    
+    protected void xScale()
+    {
+      setMinMaxValue(CSL.ROOM.MIN_X,CSL.ROOM.MAX_X);
+      addScaleTick(-200f,"-200",LCARS.EF_TINY);
+      addScaleTick(-100f,"-100",LCARS.EF_TINY);
+      ScaleTick tick = addScaleTick(0f,"0",LCARS.EF_TINY);
+      tick.eLine.setColorStyle(LCARS.EC_SECONDARY);
+      tick.eLine.setAlpha(0.6f);
+      tick.eLabel.setColorStyle(LCARS.EC_SECONDARY);
+      addScaleTick(100f,"100",LCARS.EF_TINY);
+      addScaleTick(200f,"200",LCARS.EF_TINY);
+      addScaleLabel(valueToPos(172f),"X/cm",LCARS.EF_TINY);
+    }
+    
+    protected void yScale()
+    {
+      setMinMaxValue(CSL.ROOM.MIN_Y,CSL.ROOM.MAX_Y);
+      addScaleTick(-200f,"-200",LCARS.EF_TINY);
+      addScaleTick(-100f,"-100",LCARS.EF_TINY);
+      ScaleTick tick = addScaleTick(0f,"0",LCARS.EF_TINY);
+      tick.eLine.setColorStyle(LCARS.EC_SECONDARY);
+      tick.eLine.setAlpha(0.6f);
+      tick.eLabel.setColorStyle(LCARS.EC_SECONDARY);
+      addScaleTick(100f,"100",LCARS.EF_TINY);
+      addScaleTick(200f,"200",LCARS.EF_TINY);
+      addScaleLabel(valueToPos(172f),"Y/cm",LCARS.EF_TINY);
+    }
+    
+    protected void zScale()
+    {
+      setMinMaxValue(CSL.ROOM.MIN_Z,CSL.ROOM.MAX_Z);
+      addScaleTick(  0f,   "0",LCARS.EF_TINY);
+      addScaleTick(100f, "100",LCARS.EF_TINY);
+      addScaleTick(200f, "200",LCARS.EF_TINY);
+      float defZ = (float)CSL.ROOM.DEFAULT_POS.z;
+      ScaleTick tick = addScaleTick(defZ,String.format("%.0f",defZ),LCARS.EF_TINY);
+      tick.eLine.setColorStyle(LCARS.EC_SECONDARY);
+      tick.eLine.setAlpha(0.6f);
+      tick.eLabel.setColorStyle(LCARS.EC_SECONDARY);
+      addScaleLabel(valueToPos(220f),"Z/cm",LCARS.EF_TINY);
     }
     
     protected void setAlterEgo(ECursor eAlterEgo)
@@ -846,6 +890,9 @@ public class ESensitivityPlots extends ElementContributor
       int ec = highlight?LCARS.EC_PRIMARY:LCARS.EC_SECONDARY;
       eKnob.setColorStyle(ec);
       eKnob.setSelected(highlight);
+      eLine.setColorStyle(ec);
+      eLine.setSelected(highlight);
+      eLine.setAlpha(highlight?1f:0.5f);
     }
     
     @Override
@@ -873,16 +920,16 @@ public class ESensitivityPlots extends ElementContributor
         if (horiz) 
           return b.x;
         else 
-          return (lineES ? b.x-KNOB_SIZE-KNOB_GAP : b.x+b.width+KNOB_GAP) +1;  
+          return (lineES ? b.x-KNOB_SIZE-KNOB_GAP : b.x+b.width+KNOB_GAP);  
       case Y:
         if (!horiz) 
           return b.y;
         else
-          return (lineES ? b.y-KNOB_SIZE*3/4-KNOB_GAP : b.y+b.height+KNOB_GAP-KNOB_SIZE/4) +1;
+          return (lineES ? b.y-KNOB_SIZE/2-KNOB_GAP : b.y+b.height+KNOB_GAP);
       case W:
         return horiz ? b.width : KNOB_SIZE;
       case H:
-        return horiz ? KNOB_SIZE : b.height;
+        return horiz ? KNOB_SIZE/2 : b.height;
       case CL:
         return horiz ? b.height+KNOB_GAP : b.width+KNOB_GAP;
       default:
@@ -891,168 +938,130 @@ public class ESensitivityPlots extends ElementContributor
     }
   }
 
-  @Deprecated
-  private class CSensitivityScale extends ArrayList<EElement>
+  // == TESTING AND DEBUGGING ==
+
+  public static class SensitivityPlotsTestPanel extends ATestPanel
   {
-    private static final long serialVersionUID = 1L;
+    private static final String BTN_PLOTS = "SENSITIVITY PLOTS";
+    private static final String BTN_TLYSL = "TROLLEY SLIDER";
 
-    private final int      x;
-    private final int      y;
-    private final int      w;
-    private final int      h;
-    private final EElement eImage;
-    private final ERect    eLine;
-    private final ERect    eKnob;
+    private ESensitivityPlots        eSensPlts;
+    private ETrolleySlider           eTrolleySlider;
+    private HashMap<String,EElement> aeButtons;
     
-    private static final float MIN_DB = -36;
-    private static final float MAX_DB = 0;
+    private boolean linkSteering = true;
     
-    protected CSensitivityScale(int x, int y, int w, int h)
+    public SensitivityPlotsTestPanel(IScreen iscreen)
     {
-      this.x = x;
-      this.y = y;
-      this.h = h;
-      this.w = w;
+      super(iscreen);
+    }
 
-      boolean alternativeLayout = false;
+    @Override
+    public void init()
+    {
+      super.init();
       
-      ERect  eRect;
-      EElbo  eElbo;
-      EValue eValue;
-      ELabel eLabel;
-      int    ex;
-      int    ey;
-      int    eh;
-      
-      // Frame
-      if (!alternativeLayout)
+      // Trolley slider tester
+      eTrolleySlider = new ETrolleySlider(1300,170,2*KNOB_SIZE,532);
+      eTrolleySlider.addSelectionListener((value)->
       {
-        ex = x-KNOB_GAP-KNOB_SIZE*7/8;
-        ey = y-70;
-        eh = y-ey-KNOB_GAP;
-        eElbo = new EElbo(null,ex,ey,411,eh,LCARS.ES_SHAPE_SW,null);
-        eElbo.setArmWidths(KNOB_SIZE*3/4,KNOB_SIZE/2);
-        eElbo.setArcWidths(Math.round(KNOB_SIZE*1.5f),KNOB_SIZE/2);
-        add(eElbo);
-      }
-      ey = y-KNOB_SIZE/2-KNOB_GAP;
-      eh = h/2+KNOB_SIZE/2+KNOB_GAP;
-      if (alternativeLayout)
-      {
-        eElbo = new EElbo(null,x-10,ey,10,eh,LCARS.ES_SHAPE_NW,null);
-        eElbo.setArmWidths(4,KNOB_SIZE/2);
-        add(eElbo);
-      }
-      eElbo = new EElbo(null,x+w+KNOB_GAP,ey,10,eh,LCARS.ES_SHAPE_NE,null);
-      eElbo.setArmWidths(4,KNOB_SIZE/2);
-      add(eElbo);
-      eValue = new EValue(null,x+w-120+KNOB_GAP,ey-1,120,KNOB_SIZE/2,LCARS.ES_STATIC,null);
-      eValue.setValueMargin(0); eValue.setValueWidth(eValue.getBounds().width);
-      eValue.setValue("SENSITIVTY");
-      add(eValue);
-      ey += h+KNOB_GAP;
-      if (alternativeLayout)
-      {
-        eElbo = new EElbo(null,x-10,ey,10,eh,LCARS.ES_SHAPE_SW,null);
-        eElbo.setArmWidths(4,KNOB_SIZE/2);
-        add(eElbo);
-      }
-      eElbo = new EElbo(null,x+w+KNOB_GAP,ey,10,eh,LCARS.ES_SHAPE_SE,null);
-      eElbo.setArmWidths(4,KNOB_SIZE/2);
-      add(eElbo);
+        eTrolleySlider.setActualValue(value);
+      });
+      eTrolleySlider.addToPanel(this);
+      aeButtons.get(BTN_TLYSL).setData(eTrolleySlider);
       
-      // Scale background
-      eRect = new ERect(null,x,y+h+KNOB_GAP,w,KNOB_SIZE/2,LCARS.ES_NONE,null);
-      eRect.setAlpha(0.2f);
-      add(eRect);
-      
-      // Scale image
-      this.eImage = new EElement(null,x,y,w,h,LCARS.ES_NONE,null)
+      // ESensitivityPlots tester
+      LCARS.invokeLater(()->
+      {
+        eSensPlts = new ESensitivityPlots(120,170);
+        eSensPlts.addSelectionListener(new SelectionListener()
+        {
+          @Override
+          public void slicePositionsChanged(Point3d point)
+          {
+            if (linkSteering)
+              DoAEstimator.getInstance().setTargetSource(point);
+          }
+        });
+        eSensPlts.addToPanel(this);
+        aeButtons.get(BTN_PLOTS).setData(eSensPlts);
+      });
+    }
+
+    @Override
+    protected int createToolBar(int x, int y, int w, int h)
+    {
+      aeButtons = new HashMap<String,EElement>();
+      ERect eRect;
+      int ey = y;
+
+      EEventListenerAdapter buttonListerner = new EEventListenerAdapter()
       {
         @Override
-        protected ArrayList<AGeometry> createGeometriesInt()
+        public void touchUp(EEvent ee)
         {
-          ArrayList<AGeometry> geos = new ArrayList<AGeometry>();
-          Rectangle b = getBounds();
-          geos.add(new GSensitivityScale(b.x,b.y,b.width,b.height));    
-          return geos;
+          ElementContributor ec = (ElementContributor)ee.el.getData();
+          if (ec==null)
+            return;
+          if (ec.isDisplayed())
+            ec.removeFromPanel();
+          else
+            ec.addToPanel(SensitivityPlotsTestPanel.this);
         }
       };
-      add(eImage);
+
+      eRect = new ERect(this,x,ey,w,h,LCARS.ES_RECT_RND|LCARS.ES_LABEL_E,BTN_PLOTS);
+      eRect.addEEventListener(buttonListerner);
+      add(eRect); aeButtons.put(eRect.getLabel(),eRect);
+      ey += getElements().get(getElements().size()-1).getBounds().height +3;
+
+      eRect = new ERect(this,x,ey,w,h,LCARS.ES_RECT_RND|LCARS.ES_LABEL_E,BTN_TLYSL);
+      eRect.addEEventListener(buttonListerner);
+      add(eRect); aeButtons.put(eRect.getLabel(),eRect);
+      ey += getElements().get(getElements().size()-1).getBounds().height +3;
+
+      return ey-y-3;
+    }
+    
+    @Override
+    protected void fps10()
+    {
+      if (eSensPlts!=null && eSensPlts.isDisplayed() && linkSteering && LCARS.getArg("--nohardware")==null)
+        eSensPlts.setMicArrayState(MicArrayState.getCurrent());
       
-      // Scale ticks and unit
-      addScaleTick(-36);
-      addScaleTick(-30);
-      addScaleTick(-24);
-      addScaleTick(-18);
-      addScaleTick(-12);
-      addScaleTick(-6);
-      ex = x+w-50-KNOB_GAP;
-      ey = y+h+KNOB_GAP;
-      eLabel = new ELabel(null,ex,ey,50,KNOB_SIZE/2,LCARS.ES_STATIC|LCARS.ES_LABEL_E|LCARS.EF_TINY,"dB");
-      eLabel.setAlpha(0.5f);
-      add(eLabel);
-      
-      // Cursor
-      ex = x+dbToPos(-18)-CURSOR_WIDTH/2;
-      eLine = new ERect(null,ex,y,CURSOR_WIDTH,h+KNOB_GAP,LCARS.ES_STATIC,null);
-      eLine.setAlpha(0.7f);
-      add(eLine);
-      ex -= KNOB_SIZE/2-CURSOR_WIDTH/2;
-      eKnob = new ERect(null,ex,ey,KNOB_SIZE,KNOB_SIZE/2,LCARS.ES_STATIC|LCARS.ES_LABEL_C|LCARS.EF_SMALL|LCARS.ES_RECT_RND,"-18");
-      add(eKnob);
-      
-      // Initialize
-      setSelection(0);
+      for (EElement e : aeButtons.values())
+      {
+        ElementContributor ec = (ElementContributor)e.getData();
+
+        if (ec==null)
+        {
+          e.setSelected(false);
+          e.setDisabled(true);
+          e.setAlpha(0.5f);
+        }
+        else
+        {
+          e.setDisabled(false);
+          e.setSelected(ec.isDisplayed());
+          e.setAlpha(1f);
+        }
+      }
     }
     
-    protected void setSelection(float db)
-    {
-      db = Math.round(Math.max(-36,Math.min(0,db)));
-      Rectangle b = eKnob.getBounds();
-      b.x = eImage.getBounds().x+dbToPos(db)-KNOB_SIZE/2;
-      eKnob.setBounds(b);
-      eKnob.setLabel(String.format("%.0f",db));
-      b = eLine.getBounds();
-      b.x = eImage.getBounds().x+dbToPos(db)-CURSOR_WIDTH/2;
-      eLine.setBounds(b);
-    }
-    
-    @SuppressWarnings("unused")
-    protected float getSelection()
-    {
-      int x0 = eImage.getBounds().x;
-      int x1 = eLine.getBounds().x+CURSOR_WIDTH/2;
-      return posToDb(x1-x0);
-    }
-    
-    private void addScaleTick(float db)
-    {
-      int ex = this.x + dbToPos(db);
-      ERect eRect = new ERect(null,ex,y,1,this.h+KNOB_SIZE/2+KNOB_GAP,LCARS.ES_NONE,null);
-      eRect.setAlpha(0.3f);
-      add(eRect);
-      
-      ex += KNOB_GAP;
-      int ey = this.y+this.h+KNOB_GAP;
-      String s = String.format("%.0f",db);
-      ELabel eLabel = new ELabel(null,ex,ey,30,KNOB_SIZE/2,LCARS.ES_STATIC|LCARS.ES_LABEL_W|LCARS.EF_TINY,s);
-      eLabel.setAlpha(0.5f);
-      add(eLabel);
-    }
-    
-    private float posToDb(int pos)
-    {
-      return MIN_DB + (MAX_DB-MIN_DB)*pos/this.w;
-    }
-    
-    private int dbToPos(float db)
-    {
-      db = Math.min(0,Math.max(-36,db));
-      return Math.round((db-MIN_DB)/(MAX_DB-MIN_DB)*this.w);
-    }
   }
   
+  public static void main(String[] args)
+  {
+    args = LCARS.setArg(args,"--panel=",SensitivityPlotsTestPanel.class.getName());
+    args = LCARS.setArg(args,"--nospeech",null);
+    LCARS.main(args);
+    if (LCARS.getArg("--nohardware")==null)
+    {
+      CslHardware.getInstance().dispose();
+      System.exit(0);
+    }
+  }
+
 }
 
 // EOF

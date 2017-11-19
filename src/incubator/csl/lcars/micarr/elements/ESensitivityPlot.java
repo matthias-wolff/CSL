@@ -18,11 +18,6 @@ import incubator.csl.lcars.micarr.geometry.rendering.ISensitivityRendererConstan
 
 /**
  * 2D sensitivity plot of CLS's microphone array.
- * <p><b>TODO:</b>
- * <ul>
- *   <li>Extend {@link ERenderedImage}!</li>
- * </ul>
- * </p>
  * 
  * @author Martin Birth, BTU Cottbus-Senftenberg
  * @author Matthias Wolff, BTU Cottbus-Senftenberg (revision)
