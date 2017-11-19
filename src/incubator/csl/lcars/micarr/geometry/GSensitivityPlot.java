@@ -13,6 +13,7 @@ import org.eclipse.swt.graphics.PaletteData;
 import de.tucottbus.kt.csl.CSL;
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayState;
 import de.tucottbus.kt.lcars.geometry.AGeometry;
+import de.tucottbus.kt.lcars.geometry.rendering.GeometryImageCache;
 import incubator.csl.lcars.micarr.geometry.rendering.CLSensitivityRenderer;
 import incubator.csl.lcars.micarr.geometry.rendering.CpuSensitivityRenderer;
 import incubator.csl.lcars.micarr.geometry.rendering.ISensitivityRenderer;

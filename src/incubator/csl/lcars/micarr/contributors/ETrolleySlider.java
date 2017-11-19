@@ -7,6 +7,7 @@ import java.awt.geom.RoundRectangle2D;
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayCeiling;
 import de.tucottbus.kt.csl.hardware.micarray3d.trolley.Trolley;
 import de.tucottbus.kt.lcars.LCARS;
+import de.tucottbus.kt.lcars.contributors.ESlider;
 import de.tucottbus.kt.lcars.elements.EElement;
 import de.tucottbus.kt.lcars.elements.ELabel;
 import de.tucottbus.kt.lcars.elements.ERect;

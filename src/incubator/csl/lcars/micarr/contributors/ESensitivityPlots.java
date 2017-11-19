@@ -16,6 +16,8 @@ import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayState;
 import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.DoAEstimator;
 import de.tucottbus.kt.lcars.IScreen;
 import de.tucottbus.kt.lcars.LCARS;
+import de.tucottbus.kt.lcars.contributors.ESlider;
+import de.tucottbus.kt.lcars.contributors.ESliderCursor;
 import de.tucottbus.kt.lcars.contributors.ElementContributor;
 import de.tucottbus.kt.lcars.elements.EElbo;
 import de.tucottbus.kt.lcars.elements.EElement;
@@ -26,10 +28,10 @@ import de.tucottbus.kt.lcars.elements.ERect;
 import de.tucottbus.kt.lcars.elements.EValue;
 import de.tucottbus.kt.lcars.geometry.AGeometry;
 import de.tucottbus.kt.lcars.geometry.GArea;
+import de.tucottbus.kt.lcars.test.ATestPanel;
 import incubator.csl.lcars.micarr.elements.ESensitivityPlot;
 import incubator.csl.lcars.micarr.geometry.GSensitivityScale;
 import incubator.csl.lcars.micarr.geometry.rendering.CpuSensitivityRenderer;
-import incubator.csl.lcars.micarr.test.ATestPanel;
 
 /**
  * This class contributes 2D sensitivity plots of CLS's microphone array to an

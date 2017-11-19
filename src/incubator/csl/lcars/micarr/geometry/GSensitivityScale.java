@@ -10,6 +10,7 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 
 import de.tucottbus.kt.lcars.geometry.AGeometry;
+import de.tucottbus.kt.lcars.geometry.rendering.GeometryImageCache;
 import incubator.csl.lcars.micarr.geometry.rendering.SensitivityColorScheme;
 
 /**

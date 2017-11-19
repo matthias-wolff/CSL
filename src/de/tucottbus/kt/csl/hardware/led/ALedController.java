@@ -18,6 +18,7 @@ import de.tucottbus.kt.csl.hardware.HardwareException;
 import de.tucottbus.kt.lcars.IScreen;
 import de.tucottbus.kt.lcars.LCARS;
 import de.tucottbus.kt.lcars.Panel;
+import de.tucottbus.kt.lcars.contributors.ESlider;
 import de.tucottbus.kt.lcars.contributors.ElementContributor;
 import de.tucottbus.kt.lcars.elements.EElbo;
 import de.tucottbus.kt.lcars.elements.EElement;
@@ -30,7 +31,6 @@ import de.tucottbus.kt.lcars.elements.modify.EGeometryModifier;
 import de.tucottbus.kt.lcars.geometry.AGeometry;
 import de.tucottbus.kt.lcars.geometry.GArea;
 import de.tucottbus.kt.lcars.swt.ColorMeta;
-import incubator.csl.lcars.micarr.contributors.ESlider;
 
 /**
  * Hardware wrapper of mbed LED controller boards.
