@@ -9,7 +9,7 @@ import de.tucottbus.kt.csl.hardware.led.LedControllerViewer;
 import de.tucottbus.kt.lcars.contributors.ElementContributor;
 
 /**
- * <b>Incubating:</b> The main viewer microphone array hardware wrapper.
+ * The main viewer microphone array hardware wrapper.
  * 
  * @author Matthas Wolff
  * @author Martin Birth

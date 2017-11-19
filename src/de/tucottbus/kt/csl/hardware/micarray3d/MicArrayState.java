@@ -15,23 +15,30 @@ import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.dsb.Steering;
 import de.tucottbus.kt.lcars.logging.Log;
 
 /**
- * This class represents a state of the entire microphone array. <br> It can be used
+ * This class represents a state of the entire microphone array. It can be used
  * for saving profiles or for transferring data to LCARS display elements.
- * <br><br>
- * The MicArrayState contains all information about the microphone array in a certain state.
- * <br><br>
- * <b>MicArrayState elements:</b>
+ * 
+ * <h3>Elements:</h3>
  * <ul>
- * <li>{@link #target}</li> 
- * <li>{@link #positions}</li> 
- * <li>{@link #trolleyPos}</li>
- * <li>{@link #delays}</li> 
- * <li>{@link #gains}</li>
- * <li>{@link #activeMics}</li> 
- * <li>{@link #numberOfActiveMics}</li> 
+ *   <li>{@link #target}</li>
+ *   <li>{@link #positions}</li>
+ *   <li>{@link #trolleyPos}</li>
+ *   <li>{@link #delays}</li>
+ *   <li>{@link #gains}</li>
+ *   <li>{@link #activeMics}</li>
+ *   <li>{@link #numberOfActiveMics}</li>
+ * </ul>
+ * 
+ * <h3>Remarks:</h3>
+ * <ul>
+ *   <li>TODO: Review {@link #getCurrent()} method.
+ *     </li>
+ *   <li>TODO: Implement <code>getNumberOfActiveMics()</code>.
+ *     </li>
  * </ul>
  * 
  * @author Martin Birth
+ * @author Matthias Wolff
  */
 public class MicArrayState implements Serializable 
 {
@@ -85,10 +92,16 @@ public class MicArrayState implements Serializable
   
   /**
    * The number of activated microphones.
+   * 
+   * @deprecated
    */
+  @Deprecated
   public int numberOfActiveMics = 0;
   
-  private static MicArrayState memoryState;
+  /**
+   * The most recent known actual state.
+   */
+  private static MicArrayState cachedState;
   
   @Override
   public boolean equals(Object obj)
@@ -138,23 +151,22 @@ public class MicArrayState implements Serializable
    * 
    * @see MicArray3D
    */
-  // TODO: is a review necessary?
   public static synchronized MicArrayState getCurrent()
   {
     if
     (
-      memoryState!=null 
-      && memoryState.target.equals(DoAEstimator.getInstance().getTargetSource())
-      && memoryState.trolleyPos==MicArrayCeiling.getInstance().getPosition().y
-      && memoryState.activeMics.equals(MicArray3D.getInstance().getActiveMics())
+      cachedState!=null 
+      && cachedState.target.equals(DoAEstimator.getInstance().getTargetSource())
+      && cachedState.trolleyPos==MicArrayCeiling.getInstance().getPosition().y
+      && cachedState.activeMics.equals(MicArray3D.getInstance().getActiveMics())
     )
     {
-      return memoryState;
+      return cachedState;
     } 
     else 
     {
-      memoryState=getStateInt();
-      return memoryState;
+      cachedState=getStateInt();
+      return cachedState;
     }
   }
   
@@ -198,8 +210,47 @@ public class MicArrayState implements Serializable
     return mas;
   }
   
+  // --  File operations --
+  
   /**
-   * Determines the microphone array state.
+   * Safe state to file.
+   * 
+   * @param state MicArrayState
+   * @param filePath String
+   */
+  public static void toFile(MicArrayState state, String filePath) {
+    try {
+      FileOutputStream fout = new FileOutputStream(filePath);
+      ObjectOutputStream oos = new ObjectOutputStream(fout);
+      oos.writeObject(state);
+      oos.close();
+    } catch (Exception e) {
+      Log.err(e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Get MicArrayState from file.
+   * @param filePath String
+   * @return MicArrayState
+   */
+  public static MicArrayState fromFile(String filePath) {
+    MicArrayState state = null;
+    try {
+      FileInputStream fin = new FileInputStream(filePath);
+      ObjectInputStream ois = new ObjectInputStream(fin);
+      state = (MicArrayState) ois.readObject();
+      ois.close();
+    } catch (Exception e) {
+      Log.err(e.getMessage(), e);
+    }
+    return state;
+  }
+
+  // -- Private methods --
+
+  /**
+   * Retrieves the microphone array state from the underlying hardware wrappers.
    */
   private static MicArrayState getStateInt()
   {
@@ -241,51 +292,20 @@ public class MicArrayState implements Serializable
   }
   
   /**
-   * Counting the active channels.
-   * @param activeMics
-   * @return int
+   * Counts the active microphones.
+   * 
+   * @deprecated
    */
-  private static int getNumberOfActiveMics(boolean[] activeMics){
-    int counter = 0;
-    for (int i = 0; i < activeMics.length; i++) {
-      if(activeMics[i]==true) counter++;
-    }
-    return counter;
+  @Deprecated
+  private static int getNumberOfActiveMics(boolean[] activeMics)
+  {
+    int count = 0;
+    for (int i = 0; i < activeMics.length; i++) 
+      if(activeMics[i]) 
+        count++;
+    return count;
   }
   
-  /**
-   * Safe state to file.
-   * 
-   * @param state MicArrayState
-   * @param filePath String
-   */
-  public static void toFile(MicArrayState state, String filePath) {
-    try {
-      FileOutputStream fout = new FileOutputStream(filePath);
-      ObjectOutputStream oos = new ObjectOutputStream(fout);
-      oos.writeObject(state);
-      oos.close();
-    } catch (Exception e) {
-      Log.err(e.getMessage(), e);
-    }
-  }
-
-  /**
-   * Get MicArrayState from file.
-   * @param filePath String
-   * @return MicArrayState
-   */
-  public static MicArrayState fromFile(String filePath) {
-    MicArrayState state = null;
-    try {
-      FileInputStream fin = new FileInputStream(filePath);
-      ObjectInputStream ois = new ObjectInputStream(fin);
-      state = (MicArrayState) ois.readObject();
-      ois.close();
-    } catch (Exception e) {
-      Log.err(e.getMessage(), e);
-    }
-    return state;
-  }
-
 }
+
+// EOF

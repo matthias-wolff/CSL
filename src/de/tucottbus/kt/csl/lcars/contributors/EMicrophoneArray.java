@@ -23,7 +23,9 @@ import de.tucottbus.kt.lcars.elements.EValue;
  * Instances of this class provide the topographical GUI of a microphone array.
  * 
  * @author Matthias Wolff
+ * @deprecated Being replaced by {@link de.tucottbus.kt.csl.incubator.lcars.contributors.EMicrophoneArray}.
  */
+@Deprecated
 public class EMicrophoneArray extends ETopography
 {
   private AMicArray3DPart   micArray;

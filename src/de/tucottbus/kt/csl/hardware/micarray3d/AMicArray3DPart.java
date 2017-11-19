@@ -19,12 +19,11 @@ import de.tucottbus.kt.lcars.LCARS;
 import de.tucottbus.kt.lcars.swt.ColorMeta;
 
 /**
- * <b>Incubating:</b> Abstract base class of the {@link MicArrayCeiling} and
- * {@link MicArrayViewer} 2D microphone sub-arrays. Each sub-array consists of
- * 32 BeyerDynamic MM1 microphones (which do not have own hardware wrappers but
- * are accessible through this class). The 2D sub-arrays further contain an LED
- * controller providing access to the background and single microphone
- * illumination.
+ * Abstract base class of the {@link MicArrayCeiling} and {@link MicArrayViewer}
+ * 2D microphone sub-arrays. Each sub-array consists of 32 BeyerDynamic MM1
+ * microphones (which do not have own hardware wrappers but are accessible
+ * through this class). The 2D sub-arrays further contain an LED controller
+ * providing access to the background and single microphone illumination.
  * 
  * @author Matthias Wolff
  * @author Martin Birth

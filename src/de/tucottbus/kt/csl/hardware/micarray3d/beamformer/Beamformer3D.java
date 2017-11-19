@@ -20,7 +20,7 @@ import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.dsb.DSBeamformer;
 import de.tucottbus.kt.lcars.contributors.ElementContributor;
 
 /**
- * <b>Incubating:</b> Virtual hardware device wrapper of the 3D beamformer. 
+ * Virtual hardware device wrapper of the 3D beamformer. 
  * 
  * @author Martin Birth
  * @author MAtthias Wolff

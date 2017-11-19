@@ -21,14 +21,19 @@ import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.Beamformer3D;
 import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.DoAEstimator;
 import de.tucottbus.kt.lcars.contributors.ElementContributor;
 
-// TODO: Make sum level observable
-// TODO: Provide sum audio stream
-
 /**
- * <b>Incubating:</b> The 3D microphone array hardware wrapper. The 3D
+ * The 3D microphone array hardware wrapper. The 3D
  * microphone array consists of the {@linkplain MicArrayCeiling ceiling} and
  * {@linkplain MicArrayViewer main viewer} sub-arrays, and of the {@linkplain 
  * Beamformer3D 3D beamformer virtual device}. This is a top-level device.
+ * 
+ * <h3>Remarks:</h3>
+ * <ul>
+ *   <li>TODO: Make sum level observable.
+ *     </li>
+ *   <li>TODO: Provide sum audio stream.
+ *     </li>
+ * </ul>
  * 
  * @author Matthias Wolff
  * @author Martin Birth

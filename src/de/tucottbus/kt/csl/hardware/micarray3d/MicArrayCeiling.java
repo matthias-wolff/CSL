@@ -12,7 +12,7 @@ import de.tucottbus.kt.csl.hardware.micarray3d.trolley.Trolley;
 import de.tucottbus.kt.lcars.contributors.ElementContributor;
 
 /**
- * <b>Incubating:</b> The ceiling microphone array composite hardware wrapper. 
+ * The ceiling microphone array composite hardware wrapper. 
  * 
  * @author Matthas Wolff
  * @author Martin Birth
