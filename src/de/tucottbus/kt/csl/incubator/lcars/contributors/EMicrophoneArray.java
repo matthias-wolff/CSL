@@ -31,7 +31,8 @@ public class EMicrophoneArray extends ETopography
   // -- Public final fields --
   
   /**
-   * The microphone array type, {@link MicArrayCeiling}<code>.class</code> or
+   * The microphone array type being displayed,
+   * {@link MicArrayCeiling}<code>.class</code> or
    * {@link MicArrayViewer}<code>.class</code>.
    */
   public final Class<? extends AMicArray3DPart> tMicArray;
