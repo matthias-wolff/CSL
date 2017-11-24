@@ -389,7 +389,7 @@ extends ACompositeHardware implements Observer
    * Returns the LED illumination color for a microphone input level.
    * 
    * @param level
-   *          The level.
+   *          The level in dB.
    * @return The color.
    */
   protected static ColorMeta getLevelColor(float level)
@@ -399,6 +399,55 @@ extends ACompositeHardware implements Observer
     int colorIndex = Math.round(level/2+50);
     colorIndex = Math.min(Math.max(colorIndex,0),levelColors.length-1);
     return levelColors[colorIndex];
+  }
+
+  /**
+   * Returns the LED illumination color for a microphone delay.
+   * 
+   * @param delay
+   *          The delay in seconds.
+   * @return The color.
+   */
+  protected ColorMeta getDelayColor(float[] delays, int micId)
+  {
+    // TODO: Revise!
+    float minDelay = Float.MAX_VALUE;
+    float maxDelay = Float.MIN_VALUE;
+    float meanDelay = 0f;
+    for (int i=getMinMicId(); i<=getMaxMicId(); i++)
+    {
+      minDelay = Math.min(minDelay,delays[i]);
+      maxDelay = Math.max(maxDelay,delays[i]);
+      meanDelay += delays[i];
+    }
+    meanDelay /= (getMaxMicId()-getMinMicId()+1);
+    float normDelay = 2*((delays[micId]-minDelay)/(maxDelay-minDelay)-0.5f);
+    System.err.println("normDelay="+normDelay);
+    
+    ColorMeta cL = new ColorMeta(0.25f,0f,0f);
+    ColorMeta cM = new ColorMeta(0.25f,0.25f,0.25f);
+    ColorMeta cH = new ColorMeta(0f,0f,0.5f);
+
+    ColorMeta c = new ColorMeta(cM,1f);
+    if (normDelay<0)
+      c = LCARS.interpolateColors(cM,cH,Math.min(1f,Math.abs(normDelay*1.5f)));
+    else if (normDelay>0)
+      c = LCARS.interpolateColors(cM,cL,Math.min(1f,Math.abs(normDelay*1.5f)));
+
+    return c;
+  }
+
+  /**
+   * Returns the LED illumination color for a microphone gain.
+   * 
+   * @param gain
+   *          The gain.
+   * @return The color.
+   */
+  protected static ColorMeta getGainColor(float delay)
+  {
+    // TODO: Implement getGainColor;
+    return new ColorMeta(0.25f,0.25f,0.25f);
   }
   
   /**
@@ -414,6 +463,7 @@ extends ACompositeHardware implements Observer
       @Override
       public void run() 
       {
+        MicArrayState mas = getState();
         for (int micId=minMicId; micId<=maxMicId; micId++)
         {
           ColorMeta color = ColorMeta.BLACK;
@@ -426,10 +476,10 @@ extends ACompositeHardware implements Observer
             color = getLevelColor(getMicLevel(micId));
             break;
           case MicArray3D.ILLUMINATION_DELAY:
-            // TODO: ...
+            color = getDelayColor(mas.delays,micId);
             break;
           case MicArray3D.ILLUMINATION_GAIN:
-            // TODO: ...
+            color = getGainColor(mas.gains[micId]);
             break;
           }
 

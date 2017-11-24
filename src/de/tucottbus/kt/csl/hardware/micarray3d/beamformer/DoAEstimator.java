@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.vecmath.Point3d;
 
 import Jama.Matrix;
+import de.tucottbus.kt.csl.CSL;
 import de.tucottbus.kt.csl.hardware.AAtomicHardware;
 import de.tucottbus.kt.csl.hardware.AHardware;
 import de.tucottbus.kt.csl.hardware.audio.input.AudioInputConstants;
@@ -48,8 +49,11 @@ public final class DoAEstimator extends AAtomicHardware implements Runnable{
   
   /**
    * The default target (0,0,160) cm.
+   * 
+   * @deprecated -- use {@link CSL.ROOM#DEFAULT_POS} --
    */
-  public static final Point3d DEFAULT_TARGET = new Point3d(0,0,160.0);
+  @Deprecated
+  public static final Point3d DEFAULT_TARGET = CSL.ROOM.DEFAULT_POS;
     
   /**
    * Selector for microphone array

@@ -41,7 +41,7 @@ public class ETrolleySlider extends ESlider
   public ETrolleySlider(int x, int y, int w, int h)
   {
     super(x, y, w, h, LCARS.EC_SECONDARY, 0);
-    setMinMaxValue(-140,249);
+    setMinMaxValue(-140,107);
     eBack.setAlpha(0.15f);
     
     // Add scale
@@ -54,9 +54,7 @@ public class ETrolleySlider extends ESlider
     tick.eLabel.setSelected(true);
     addScaleTick( 50f, "50",LCARS.EF_TINY);
     addScaleTick(100f,"100",LCARS.EF_TINY);
-    addScaleTick(150f,"150",LCARS.EF_TINY);
-    addScaleTick(200f,"200",LCARS.EF_TINY);
-    addScaleLabel(valueToPos(230f),"Y/cm",LCARS.EF_TINY);
+    addScaleLabel(valueToPos(90f),"Y/cm",LCARS.EF_TINY);
     
     // Add position marker
     Rectangle b = eKnob.getBounds();

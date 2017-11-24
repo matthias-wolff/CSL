@@ -47,6 +47,8 @@ import de.tucottbus.kt.lcars.util.Objectt;
  * 
  * <h3>Remarks:</h3>
  * <ul>
+ *   <li>TODO: LCARS sub-panel should not directly invoke hardware or MicArrayState instance getters.
+ *     </li>
  *   <li>TODO: Make sum level observable.
  *     </li>
  *   <li>TODO: Provide sum audio stream.
@@ -433,6 +435,8 @@ public final class MicArray3D extends ACompositeHardware
     protected final LinkedHashMap<String,boolean[]> hConfig;
     protected final LinkedHashMap<String,Integer>   hIllum;
     
+    protected MicArrayState lastMas = MicArrayState.getDummy(); 
+
     public LcarsSubPanel(int x, int y)
     {
       super(x, y);
@@ -520,6 +524,7 @@ public final class MicArray3D extends ACompositeHardware
           if (!cTrlySldr.isLocked())
             try
             {
+              cTrlySldr.setValue(0f);
               MicArray3D.getInstance().setCeilingArrayYPosition(0);
             }
             catch (Exception e)
@@ -930,6 +935,21 @@ public final class MicArray3D extends ACompositeHardware
       
       // Other GUI update
       eElaLock.setBlinking(cTarget.getLock());
+      
+      // TODO: Updating illumination should not be done here
+      try
+      {
+        if (!mas.equals(lastMas))
+        {
+          lastMas = mas;
+          micArrayViewer.illuminate(ma.getIlluminationMode());
+          micArrayCeiling.illuminate(ma.getIlluminationMode());
+        }
+      }
+      catch (Exception e)
+      {
+        e.printStackTrace();
+      }
     }
   }
   
