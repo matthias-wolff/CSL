@@ -9,6 +9,9 @@ import de.tucottbus.kt.csl.hardware.micarray3d.trolley.Trolley;
 import de.tucottbus.kt.lcars.LCARS;
 import de.tucottbus.kt.lcars.contributors.ESlider;
 import de.tucottbus.kt.lcars.elements.EElement;
+import de.tucottbus.kt.lcars.elements.EEvent;
+import de.tucottbus.kt.lcars.elements.EEventListener;
+import de.tucottbus.kt.lcars.elements.EEventListenerAdapter;
 import de.tucottbus.kt.lcars.elements.ELabel;
 import de.tucottbus.kt.lcars.elements.ERect;
 import de.tucottbus.kt.lcars.geometry.GArea;
@@ -33,6 +36,7 @@ public class ETrolleySlider extends ESlider
   public final ELabel ePosLabel;
   
   protected EElement eLockControl;
+  protected EEventListener lockControlListener;
 
   public ETrolleySlider(int x, int y, int w, int h)
   {
@@ -68,14 +72,14 @@ public class ETrolleySlider extends ESlider
       a.subtract(inner);
       g.setShape(a);
       bnds.x += bnds.width;
-      bnds.width = 46;
+      bnds.width = 26;
       bnds.y = bnds.y + bnds.height / 2 - 1;
       bnds.height = 3;
       geos.add(new GArea(new Area(bnds), false));
 
     });
     add(ePos,false);
-    ePosLabel = new ELabel(null,b.x+b.width+3,b.y,43,b.height,LCARS.ES_STATIC|LCARS.EC_ELBOUP|LCARS.ES_LABEL_E|LCARS.EF_SMALL,"ACTUAL\n000");
+    ePosLabel = new ELabel(null,b.x+b.width+3,b.y,23,b.height,LCARS.ES_STATIC|LCARS.EC_ELBOUP|LCARS.ES_LABEL_E|LCARS.EF_SMALL," ACT\n 000");
     add(ePosLabel,false);
     
     // Extend knob
@@ -83,17 +87,17 @@ public class ETrolleySlider extends ESlider
     {
       GArea gKnob = (GArea)geos.get(0);
       Rectangle bnds = gKnob.getBounds();
-      bnds.x -= 50;
-      bnds.width = 51;
+      bnds.x -= 30;
+      bnds.width = 31;
       bnds.y = bnds.y + bnds.height / 2 - 1;
       bnds.height = 3;
       geos.add(new GArea(new Area(bnds), false));
     });
     b = eKnob.getBounds();
-    b.x -= 50; b.width = 51;
+    b.x -= 33; b.width = 34;
     b.y = b.y+b.height/2-20; b.height=41;
     int style = eKnob.getStyle() & (~LCARS.ES_LABEL) | LCARS.ES_LABEL_W;
-    eKnobLabel = new ELabel(null,b.x,b.y,b.width,b.height,style,"TARGET\n000");
+    eKnobLabel = new ELabel(null,b.x,b.y,b.width,b.height,style," TGT\n 000");
     remove(eKnob);
     add(eKnobLabel,false);
     add(eKnob,false);
@@ -115,14 +119,33 @@ public class ETrolleySlider extends ESlider
   
   public void setLockControl(EElement eLockControl)
   {
+    if (lockControlListener==null)
+      lockControlListener = new EEventListenerAdapter()
+      {
+        @Override
+        public void touchDown(EEvent ee)
+        {
+          setLocked(!isLocked());
+        }
+      };
+    
+    if (this.eLockControl!=null)
+      eLockControl.removeEEventListener(lockControlListener);
+    
     this.eLockControl = eLockControl;
     if (eLockControl!=null)
+    {
+      eLockControl.addEEventListener(lockControlListener);
       eLockControl.setBlinking(isLocked());
+    }
   }
   
   public void setLocked(boolean locked)
   {
     eKnob.setVisible(!locked);
+    eKnobLabel.setVisible(!locked);
+    if (!locked)
+      setKnobPos(getActualPos());
     setStatic(locked);
     if (eLockControl!=null)
       eLockControl.setBlinking(locked);
@@ -142,7 +165,7 @@ public class ETrolleySlider extends ESlider
     Rectangle bLab = eKnobLabel.getBounds();
     bLab.y = bKnob.y+bKnob.height/2-bLab.height/2 -1;
     eKnobLabel.setBounds(bLab);
-    eKnobLabel.setLabel(String.format("TARGET\n% 04d",Math.round(posToValue(pos))));
+    eKnobLabel.setLabel(String.format(" TGT\n% 04d",Math.round(posToValue(pos))));
 
     return hasChanged;
   }
@@ -162,7 +185,7 @@ public class ETrolleySlider extends ESlider
     Rectangle bLab = ePosLabel.getBounds();
     bLab.y = bAct.y+bAct.height/2-bLab.height/2 -1;
     ePosLabel.setBounds(bLab);
-    ePosLabel.setLabel(String.format("ACTUAL\n% 04d",Math.round(posToValue(pos))));
+    ePosLabel.setLabel(String.format(" ACT\n% 04d",Math.round(posToValue(pos))));
 
     return true;
   }

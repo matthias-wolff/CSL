@@ -132,12 +132,12 @@ public class MicArrayState implements Serializable
   {
     String s = "[";
     s += target;
-    s += ", ("; for (int i=0; i<32; i++) s+=positions[i]; s+=")";
+    s += ", ("; for (int i=0; i<CH_NUM; i++) s+=positions[i]; s+=")";
     s += ", "+trolleyPos;
-    s += ", ("; for (int i=0; i<32; i++) s+=(i==0?"":", ")+delays[i]; s+=")";
-    s += ", ("; for (int i=0; i<32; i++) s+=(i==0?"":", ")+steerVec[i]; s+=")";
-    s += ", ("; for (int i=0; i<32; i++) s+=(i==0?"":", ")+gains[i]; s+=")";
-    s += ", ("; for (int i=0; i<32; i++) s+=(i==0?"":", ")+activeMics[i]; s+=")";
+    s += ", ("; for (int i=0; i<CH_NUM; i++) s+=(i==0?"":", ")+delays[i]; s+=")";
+    s += ", ("; for (int i=0; i<CH_NUM; i++) s+=(i==0?"":", ")+steerVec[i]; s+=")";
+    s += ", ("; for (int i=0; i<CH_NUM; i++) s+=(i==0?"":", ")+gains[i]; s+=")";
+    s += ", ("; for (int i=0; i<CH_NUM; i++) s+=(i==0?"":", ")+activeMics[i]; s+=")";
     s += ", "+numberOfActiveMics;
     return s;
   }

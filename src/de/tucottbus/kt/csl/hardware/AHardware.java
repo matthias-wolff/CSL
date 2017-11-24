@@ -691,7 +691,6 @@ public abstract class AHardware extends Observable
     public void init() 
     {
       super.init();
-      setPanelSelectorList(getHardwareAccessPanelClasses());
       setColorScheme(LCARS.CS_SECONDARY);
       setTitle("LOW-LEVEL HARDWARE ACCESS");
       

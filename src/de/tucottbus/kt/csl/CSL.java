@@ -8,6 +8,7 @@ import javax.vecmath.Point3d;
 
 import de.tucottbus.kt.csl.cognition.BehaviorController;
 import de.tucottbus.kt.csl.hardware.CslHardware;
+import de.tucottbus.kt.csl.hardware.CslHardware.CslHardwarePanel;
 import de.tucottbus.kt.csl.hardware.led.LedControllerCeiling;
 import de.tucottbus.kt.csl.hardware.led.LedControllerViewer;
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayViewer;
@@ -268,7 +269,7 @@ public class CSL
    */
   public static void main(String[] args) 
   {
-    // Instantiate the speech lab
+    // Instantiate CSL
     if (LCARS.getArg(args, "--clientof=") == null) 
     {
       Log.info("Instantiating CSL...");
@@ -277,10 +278,11 @@ public class CSL
 
     // Start LCARS
     Log.info("Starting LCARS");
-//    if (LCARS.getArg(args, "--clientof=") == null)
-//      args = LCARS.setArg(args, "--server", null);
+    if (LCARS.getArg(args,"--nohardware")==null)
+      LCARS.addToPanelSelectorList(CslHardwarePanel.class);
     LCARS.main(args);
     
+    // Shut-down
     if (CSL.instance!=null)
     {
       Log.info("CSL hardware shut-down ...");

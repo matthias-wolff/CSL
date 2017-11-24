@@ -122,15 +122,27 @@ public class ESensitivityPlots extends ElementContributor
     int ew;
     
     // XY-plot
-    eSpxy = new ESensitivityPlot(null,this.x,this.y,-1,-1,ESensitivityPlot.SLICE_XY,this.mas);
+    eSpxy = new ESensitivityPlot(null,0,0,-1,-1,ESensitivityPlot.SLICE_XY,this.mas);
     eSpxy.addEEventListener(plotSelectionListener);
     add(eSpxy);
     
     // - XY-plot: Frame
     ex = -KNOB_SIZE*7/8-KNOB_GAP-1;
     ey = -KNOB_GAP-KNOB_SIZE/2;
-    eValue = new EValue(null, ex, ey, KNOB_SIZE*7/8+KNOB_GAP, KNOB_SIZE/2, LCARS.ES_STATIC|LCARS.ES_SELECTED, null);
+    eValue = new EValue(null, ex, ey, KNOB_SIZE*7/8+KNOB_GAP, KNOB_SIZE/2, LCARS.ES_SELECTED, null);
     eValue.setValueMargin(0); eValue.setValue("XY");
+    eValue.addEEventListener(new EEventListenerAdapter()
+    {
+      @Override
+      public void touchDown(EEvent ee)
+      {
+        Point3d point = getSelection();
+        point.x = CSL.ROOM.DEFAULT_POS.x;
+        point.y = CSL.ROOM.DEFAULT_POS.y;
+        setSelection(point);
+        fireSelectionChanged((listener)->listener.slicePositionsChanged(point));
+      }
+    });
     add(eValue);
     
     // - XY-plot: Cursors, grid and scales    
@@ -144,7 +156,7 @@ public class ESensitivityPlots extends ElementContributor
     // XZ-plot
     ex = 490;
     ey = 0;
-    eSpxz = new ESensitivityPlot(null,this.x+ex,this.y+ey,-1,-1,ESensitivityPlot.SLICE_XZ,this.mas);
+    eSpxz = new ESensitivityPlot(null,ex,ey,-1,-1,ESensitivityPlot.SLICE_XZ,this.mas);
     eSpxz.addEEventListener(plotSelectionListener);
     add(eSpxz);
 
@@ -158,8 +170,20 @@ public class ESensitivityPlots extends ElementContributor
     eElbo.setArmWidths(6,KNOB_SIZE/2);
     add(eElbo);
     ex += eSpxz.getBounds().width;
-    eValue = new EValue(null, ex+3, ey, KNOB_GAP + KNOB_SIZE-2, KNOB_SIZE/2, LCARS.ES_STATIC|LCARS.ES_SELECTED, null);
+    eValue = new EValue(null, ex+3, ey, KNOB_GAP + KNOB_SIZE-2, KNOB_SIZE/2, LCARS.ES_SELECTED, null);
     eValue.setValueMargin(0); eValue.setValue("XZ");
+    eValue.addEEventListener(new EEventListenerAdapter()
+    {
+      @Override
+      public void touchDown(EEvent ee)
+      {
+        Point3d point = getSelection();
+        point.x = CSL.ROOM.DEFAULT_POS.x;
+        point.z = CSL.ROOM.DEFAULT_POS.z;
+        setSelection(point);
+        fireSelectionChanged((listener)->listener.slicePositionsChanged(point));
+      }
+    });
     add(eValue);
     ex += KNOB_GAP + KNOB_SIZE;
     eElbo = new EElbo(null,ex,ey,10,eh,LCARS.ES_STATIC|LCARS.ES_SHAPE_NE,null);
@@ -184,7 +208,7 @@ public class ESensitivityPlots extends ElementContributor
     // YZ-plot
     ex = eSpxz.getBounds().x - this.x;
     ey = 303;
-    eSpyz = new ESensitivityPlot(null,this.x+ex,this.y+ey,-1,-1,ESensitivityPlot.SLICE_YZ,this.mas);
+    eSpyz = new ESensitivityPlot(null,ex,ey,-1,-1,ESensitivityPlot.SLICE_YZ,this.mas);
     eSpyz.addEEventListener(plotSelectionListener);
     add(eSpyz);
 
@@ -209,8 +233,21 @@ public class ESensitivityPlots extends ElementContributor
     add(eElbo);
     ey += 2*eh - KNOB_SIZE/2;
     ex -= KNOB_GAP + KNOB_SIZE;
-    eValue = new EValue(null, ex+3, ey, KNOB_GAP + KNOB_SIZE-2, KNOB_SIZE/2, LCARS.ES_STATIC|LCARS.ES_SELECTED, null);
+    eValue = new EValue(null, ex+3, ey, KNOB_GAP + KNOB_SIZE-2, KNOB_SIZE/2, LCARS.ES_SELECTED, null);
     eValue.setValueMargin(0); eValue.setValue("YZ");
+    eValue.addEEventListener(new EEventListenerAdapter()
+    {
+      @Override
+      public void touchDown(EEvent ee)
+      {
+        Point3d point = getSelection();
+        point.y = CSL.ROOM.DEFAULT_POS.y;
+        point.z = CSL.ROOM.DEFAULT_POS.z;
+        setSelection(point);
+        fireSelectionChanged((listener)->listener.slicePositionsChanged(point));
+      }
+    });
+
     add(eValue);
 
     // - YZ-plot: Cursors, grid and scales    
@@ -229,10 +266,10 @@ public class ESensitivityPlots extends ElementContributor
     eXPos.addEEventListener(new EEventListenerAdapter()
     {
       @Override
-      public void touchUp(EEvent ee)
+      public void touchDown(EEvent ee)
       {
         Point3d point = getSelection();
-        point.x = 0;
+        point.x = CSL.ROOM.DEFAULT_POS.x;
         setSelection(point);
         fireSelectionChanged((listener)->listener.slicePositionsChanged(point));
       }
@@ -243,10 +280,10 @@ public class ESensitivityPlots extends ElementContributor
     eYPos.addEEventListener(new EEventListenerAdapter()
     {
       @Override
-      public void touchUp(EEvent ee)
+      public void touchDown(EEvent ee)
       {
         Point3d point = getSelection();
-        point.y = 0;
+        point.y = CSL.ROOM.DEFAULT_POS.y;
         setSelection(point);
         fireSelectionChanged((listener)->listener.slicePositionsChanged(point));
       }
@@ -257,10 +294,10 @@ public class ESensitivityPlots extends ElementContributor
     eZPos.addEEventListener(new EEventListenerAdapter()
     {
       @Override
-      public void touchUp(EEvent ee)
+      public void touchDown(EEvent ee)
       {
         Point3d point = getSelection();
-        point.z = 160;
+        point.z = CSL.ROOM.DEFAULT_POS.z;
         setSelection(point);
         fireSelectionChanged((listener)->listener.slicePositionsChanged(point));
       }
@@ -381,7 +418,7 @@ public class ESensitivityPlots extends ElementContributor
     // Frequency slider
     ex = eSpxz.getBounds().x + eSpxz.getBounds().width - this.x + 66;
     eh = eSpyz.getBounds().y + eSpyz.getBounds().height - eSpxz.getBounds().y - KNOB_SIZE/2;
-    eFreqSlider = new ESlider(ex,0,2*KNOB_SIZE,eh,ESlider.ES_LOGARITHMIC,10);
+    eFreqSlider = new ESlider(ex,0,KNOB_SIZE*3/2,eh,ESlider.ES_LOGARITHMIC,10);
     eFreqSlider.eKnob.setColorStyle(LCARS.EC_SECONDARY);
     eFreqSlider.setMinMaxValue(10,10000);
     float[] ticks = new float[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
@@ -413,74 +450,63 @@ public class ESensitivityPlots extends ElementContributor
     ex = eFreqSlider.eBack.getBounds().x - this.x;
     ey = -KNOB_SIZE-2*KNOB_GAP;
     ew = eFreqSlider.eBack.getBounds().width - 20;
-    eFreq = new EValue(null, ex-3, ey, ew, KNOB_SIZE/2, LCARS.EF_SMALL|LCARS.ES_SELECTED, null);
-    eFreq.setValueMargin(0); eFreq.setValueWidth(ew);
+    eFreq = new EValue(null, ex-3+10, ey, ew, KNOB_SIZE/2, LCARS.EF_SMALL|LCARS.ES_SELECTED, null);
+    eFreq.setValueMargin(0); eFreq.setValueWidth(ew+10);
     eFreq.setValue("1000");
-    eFreq.addEEventListener(new EEventListenerAdapter()
-    {     
-      @Override
-      public void touchDown(EEvent ee)
-      {
-        try
-        {
-          EElement el = (EElement)ee.el.getData();
-          el.setSelected(!el.isSelected());
-        }
-        catch (Exception e)
-        {
-          e.printStackTrace();
-        }
-        setFrequency(1000);
-      }
-
-      @Override
-      public void touchUp(EEvent ee)
-      {
-        try
-        {
-          EElement el = (EElement)ee.el.getData();
-          el.setSelected(!el.isSelected());
-        }
-        catch (Exception e)
-        {
-          e.printStackTrace();
-        }
-      }
-    });
     add(eFreq);
-    ERect eRect = new ERect(null, ex+ew-4, ey, 24, KNOB_SIZE/2, LCARS.ES_SELECTED|LCARS.ES_LABEL_C|LCARS.EF_SMALL, "Hz");
-    eRect.addEEventListener(new EEventListenerAdapter()
+    ERect eRect = new ERect(null, ex+ew-4+10, ey, 24, KNOB_SIZE/2, LCARS.ES_SELECTED|LCARS.ES_LABEL_C|LCARS.EF_SMALL, "Hz");
+    add(eRect);
+    EEventListenerAdapter frequencyResetListener = new EEventListenerAdapter()
     {     
       @Override
       public void touchDown(EEvent ee)
       {
-        eFreq.setSelected(!eFreq.isSelected());
-        setFrequency(1000);
+        try
+        {
+          EElement el = (EElement)ee.el.getData();
+          el.setSelected(!el.isSelected());
+        }
+        catch (Exception e)
+        {
+          e.printStackTrace();
+        }
+        LCARS.invokeLater(()->
+        {
+          setFrequency(1000);
+        });
       }
 
       @Override
       public void touchUp(EEvent ee)
       {
-        eFreq.setSelected(!eFreq.isSelected());
+        try
+        {
+          EElement el = (EElement)ee.el.getData();
+          el.setSelected(!el.isSelected());
+        }
+        catch (Exception e)
+        {
+          e.printStackTrace();
+        }
       }
-    });
-    eFreq.setData(eRect);
-    add(eRect);
+    };
+    eFreq.setData(eRect); eFreq.addEEventListener(frequencyResetListener);
+    eRect.setData(eFreq); eRect.addEEventListener(frequencyResetListener);
     
     ex = eFreqSlider.eBack.getBounds().x + eFreqSlider.eBack.getBounds().width - this.x + 3;
     ew = eFreqSlider.eBack.getBounds().width/8 + KNOB_GAP + 10;
     eh = eFreqSlider.eBack.getBounds().height/2 - ey;
-    eElbo = new EElbo(null,ex,ey,ew,eh,LCARS.ES_STATIC|LCARS.ES_SHAPE_NE|LCARS.ES_LABEL_NW,null);
+    eElbo = new EElbo(null,ex+10,ey,ew-10,eh,LCARS.ES_STATIC|LCARS.ES_SHAPE_NE|LCARS.ES_LABEL_NW,null);
     eElbo.setArmWidths(6,KNOB_SIZE/2);
     add(eElbo);
     ey += eh;
     eh = eFreqSlider.eBack.getBounds().y - this.y + eFreqSlider.eBack.getBounds().height - ey + KNOB_SIZE + KNOB_GAP;
-    eElbo = new EElbo(null,ex,ey,ew,eh,LCARS.ES_STATIC|LCARS.ES_SHAPE_SE,null);
+    eElbo = new EElbo(null,ex+10,ey,ew-10,eh,LCARS.ES_STATIC|LCARS.ES_SHAPE_SE,null);
     eElbo.setArmWidths(6,KNOB_SIZE/2);
     add(eElbo);
     ex -= eFreqSlider.eKnob.getBounds().width;
     ey += eh - KNOB_SIZE/2;
-    eValue = new EValue(null, ex, ey, eFreqSlider.eKnob.getBounds().width, KNOB_SIZE/2, LCARS.ES_STATIC, null);
+    eValue = new EValue(null, ex+10, ey, eFreqSlider.eKnob.getBounds().width, KNOB_SIZE/2, LCARS.ES_STATIC, null);
     eValue.setValueMargin(0); eValue.setValueWidth(eFreqSlider.eKnob.getBounds().width);
     eValue.setValue("FREQUENCY");
     add(eValue);
@@ -498,9 +524,9 @@ public class ESensitivityPlots extends ElementContributor
     eValue.setValueMargin(0); eValue.setValue("CEILING>FLOOR");
     add(eValue);
     ex += ew+3;
-    ew = eFreqSlider.eBack.getBounds().x - this.x - ex -3; 
+    ew = eFreqSlider.eBack.getBounds().x - this.x - ex -8; 
     eValue = new EValue(null,ex, ey, ew, KNOB_SIZE/2, LCARS.EC_HEADLINE|LCARS.ES_STATIC|LCARS.ES_VALUE_W, null);
-    eValue.setValueMargin(0); eValue.setValue("MICARR SPATIAL SENSITIVITY");
+    eValue.setValueMargin(0); eValue.setValue("2D SPATIAL SENSITIVITY");
     add(eValue);
 
     // Initialization

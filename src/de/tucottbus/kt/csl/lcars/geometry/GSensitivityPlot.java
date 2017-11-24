@@ -60,7 +60,7 @@ public class GSensitivityPlot extends AGeometry implements ISensitivityRendererC
   /**
    * Top-left corner of the geometry, in LCARS panel pixels.
    */
-  private final Point pos;
+  private Point pos;
   
   /**
    * Size of the geometry, in LCARS panel pixels.
@@ -167,6 +167,21 @@ public class GSensitivityPlot extends AGeometry implements ISensitivityRendererC
     default: // SLICE_XY
       return new Dimension(CSL.ROOM.DIM_X,CSL.ROOM.DIM_Y);
     }
+  }
+  
+  /**
+   * Repositions this geometry.
+   * 
+   * @param x
+   *          The new absolute x-coordinate of the top-left corner (in LCARS
+   *          panel pixels).
+   * @param y
+   *          The new absolute y-coordinate of the top-left corner (in LCARS
+   *          panel pixels).
+   */
+  public void setPos(int x, int y)
+  {
+    this.pos = new Point(x,y);
   }
   
   /**

@@ -79,6 +79,13 @@ public class ESensitivityPlot extends EElement implements ISensitivityRendererCo
   }
 
   @Override
+  public void setBounds(Rectangle bounds)
+  {
+    gsp.setPos(bounds.x, bounds.y);
+    super.setBounds(bounds);
+  }
+  
+  @Override
   public Rectangle getBounds()
   {
     return gsp.getBounds();
