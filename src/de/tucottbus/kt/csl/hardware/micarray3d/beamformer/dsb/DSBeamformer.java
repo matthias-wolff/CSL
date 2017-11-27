@@ -80,6 +80,7 @@ public abstract class DSBeamformer extends ACompositeHardware {
     float[] calibrationGains = hammerfallAudioDevice.getCalibrationGains();
     
     // summing the float samples to byte buffer
+    int numberOfActiveMics = state.getNumberOfActiveMics();
     for (int frame = 0, nout = 0; frame < numFrames; frame++) {
       float sample = 0f;
       float deactivatedCount = 0;
@@ -92,7 +93,7 @@ public abstract class DSBeamformer extends ACompositeHardware {
         sample += calibrationGains[channel] * inputBuffer[nin] * state.gains[channel] * state.steerVec[channel];
       }
 
-      sample = 1.5f * (sample / (state.numberOfActiveMics - deactivatedCount));
+      sample = 1.5f * (sample / (numberOfActiveMics - deactivatedCount));
       outFloatBuffer[nout++] = sample * OUT_GAIN;
     }
     

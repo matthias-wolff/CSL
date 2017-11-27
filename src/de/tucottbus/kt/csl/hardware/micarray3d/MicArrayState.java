@@ -29,14 +29,6 @@ import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.dsb.Steering;
  *   <li>{@link #numberOfActiveMics}</li>
  * </ul>
  * 
- * <h3>Remarks:</h3>
- * <ul>
- *   <li>TODO: Review {@link #getCurrent()} method.
- *     </li>
- *   <li>TODO: Implement <code>getNumberOfActiveMics()</code>.
- *     </li>
- * </ul>
- * 
  * @author Martin Birth
  * @author Matthias Wolff
  */
@@ -90,14 +82,6 @@ public class MicArrayState implements Serializable
    */
   public boolean[] activeMics = new boolean[CH_NUM];
   
-  /**
-   * The number of activated microphones.
-   * 
-   * @deprecated
-   */
-  @Deprecated
-  public int numberOfActiveMics = 0;
-  
   @Override
   public boolean equals(Object obj)
   {
@@ -108,7 +92,6 @@ public class MicArrayState implements Serializable
     
     if (!target.equals(other.target)                ) return false;
     if (trolleyPos!=other.trolleyPos                ) return false;
-    if (numberOfActiveMics!=other.numberOfActiveMics) return false;
     
     for (int i=0; i<CH_NUM; i++)
     {
@@ -133,8 +116,19 @@ public class MicArrayState implements Serializable
     s += ", ("; for (int i=0; i<CH_NUM; i++) s+=(i==0?"":", ")+steerVec[i]; s+=")";
     s += ", ("; for (int i=0; i<CH_NUM; i++) s+=(i==0?"":", ")+gains[i]; s+=")";
     s += ", ("; for (int i=0; i<CH_NUM; i++) s+=(i==0?"":", ")+activeMics[i]; s+=")";
-    s += ", "+numberOfActiveMics;
     return s;
+  }
+
+  /**
+   * Returns the number of currently activated microphones.
+   */
+  public int getNumberOfActiveMics()
+  {
+    int numberOfActiveMics = 0;
+    for (int i = 0; i < activeMics.length; i++) 
+      if (activeMics[i]) 
+        numberOfActiveMics++;
+    return numberOfActiveMics;
   }
   
   /**
@@ -172,7 +166,6 @@ public class MicArrayState implements Serializable
     
     // active channels/mics
     Arrays.fill(mas.activeMics,true);
-    mas.numberOfActiveMics = mas.activeMics.length;
     
     return mas;
   }

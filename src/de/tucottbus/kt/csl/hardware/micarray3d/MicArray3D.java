@@ -53,6 +53,8 @@ import de.tucottbus.kt.lcars.util.Objectt;
  *     notifications. Instead it sends {@link #NOTIFY_STEERTARGET}, 
  *     {@link #NOTIFY_TROLLEYPOS}, or {@link #NOTIFY_ACTIVEMICS}. When notified
  *     with one of these hints, invoke {@link #getState()} to get details.</li>
+ *   <li>TODO: Add some configurations in LCarsSubPanel.LCarsSubPanel(...)
+ *     </li>
  *   <li>TODO: Make sum level observable.
  *     </li>
  *   <li>TODO: Provide sum audio stream.
@@ -568,7 +570,7 @@ implements Runnable, Observer
   {
     MicArrayState mas = new MicArrayState();
 
-    // Absolute positions of micrphones and trolley
+    // Absolute positions of microphones and trolley
     Point3d offset = micArrayViewer.getPosition();
     for (int i=0; i<32; i++)
     {
@@ -594,10 +596,6 @@ implements Runnable, Observer
     
     // Microphone activation states
     mas.activeMics = getActiveMics();
-    mas.numberOfActiveMics = 0;
-    for (int i = 0; i < mas.activeMics.length; i++) 
-      if (mas.activeMics[i]) 
-        mas.numberOfActiveMics++;
     
     return mas;
   }
