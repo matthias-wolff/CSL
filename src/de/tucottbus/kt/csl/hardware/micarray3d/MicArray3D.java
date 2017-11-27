@@ -23,6 +23,7 @@ import de.tucottbus.kt.csl.hardware.HardwareException;
 import de.tucottbus.kt.csl.hardware.audio.input.audiodevices.RmeHdspMadi;
 import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.Beamformer3D;
 import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.DoAEstimator;
+import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.dsb.Steering;
 import de.tucottbus.kt.csl.lcars.contributors.ESensitivityPlots;
 import de.tucottbus.kt.csl.lcars.contributors.ETrolleySlider;
 import de.tucottbus.kt.lcars.IScreen;
@@ -37,29 +38,56 @@ import de.tucottbus.kt.lcars.elements.EEventListenerAdapter;
 import de.tucottbus.kt.lcars.elements.ELabel;
 import de.tucottbus.kt.lcars.elements.ERect;
 import de.tucottbus.kt.lcars.elements.EValue;
+import de.tucottbus.kt.lcars.logging.Log;
 import de.tucottbus.kt.lcars.util.Objectt;
 
 /**
  * The 3D microphone array hardware wrapper. The 3D
  * microphone array consists of the {@linkplain MicArrayCeiling ceiling} and
  * {@linkplain MicArrayViewer main viewer} sub-arrays, and of the {@linkplain 
- * Beamformer3D 3D beamformer virtual device}. This is a top-level device.
+ * Beamformer3D 3D beam former virtual device}. This is a top-level device.
  * 
  * <h3>Remarks:</h3>
  * <ul>
- *   <li>TODO: LCARS sub-panel should not directly invoke hardware or MicArrayState instance getters.
- *     </li>
+ *   <li>This wrapper does not send {@link AHardware#NOTIFY_STATE NOTIFY_STATE} 
+ *     notifications. Instead it sends {@link #NOTIFY_STEERTARGET}, 
+ *     {@link #NOTIFY_TROLLEYPOS}, or {@link #NOTIFY_ACTIVEMICS}. When notified
+ *     with one of these hints, invoke {@link #getState()} to get details.</li>
  *   <li>TODO: Make sum level observable.
  *     </li>
  *   <li>TODO: Provide sum audio stream.
  *     </li>
  * </ul>
  * 
- * @author Matthias Wolff
- * @author Martin Birth
+ * @author Matthias Wolff, BTU Cottbus-Senftenberg
+ * @author Martin Birth, BTU Cottbus-Senftenberg
  */
 public final class MicArray3D extends ACompositeHardware 
+implements Runnable, Observer
 {
+  /**
+   * <i>-- For debugging: Verbose level, 0 for silence --</i>
+   */
+  private static final int VERBOSE_LEVEL = 1;
+
+  /**
+   * Hint to {@link #notifyObservers(String)} indicating that the steering
+   * target has changed.
+   */
+  public static final String NOTIFY_STEERTARGET = "NOTIFY_STEERTARGET";
+  
+  /**
+   * Hint to {@link #notifyObservers(String)} indicating that trolley position
+   * has changed.
+   */
+  public static final String NOTIFY_TROLLEYPOS  = "NOTIFY_TROLLEYPOS";
+  
+  /**
+   * Hint to {@link #notifyObservers(String)} indicating that the activation
+   * states of the microphones have changed.
+   */
+  public static final String NOTIFY_ACTIVEMICS  = "NOTIFY_ACTIVEMICS";
+  
   /**
    * No microphone illumination.
    */
@@ -90,15 +118,28 @@ public final class MicArray3D extends ACompositeHardware
   private final MicArrayViewer  micArrayViewer;
   private final Beamformer3D    beamformer3D;
   private final DoAEstimator    doAEstimator;
+
+  /**
+   * The most recent known microphone array stateCache.
+   */
+  private MicArrayState stateCache;
+  
+  // -- Life cycle --
+
+  /**
+   * The singleton instance.
+   */
+  private static volatile MicArray3D singleton = null;
   
   /**
-   * Current microphone array state
+   * The guard thread.
    */
-  private MicArrayState state;
+  private Thread guard;
 
-  // -- Singleton implementation --
-  
-  private static volatile MicArray3D singleton = null;
+  /**
+   * The guard thread's run flag.
+   */
+  private boolean runGuard;
   
   /**
    * Returns the singleton instance. 
@@ -115,12 +156,110 @@ public final class MicArray3D extends ACompositeHardware
    */
   private MicArray3D() 
   {
+    setVerbose(VERBOSE_LEVEL);
+
     micArrayCeiling = MicArrayCeiling.getInstance();
     micArrayViewer  = MicArrayViewer.getInstance();
     beamformer3D    = Beamformer3D.getInstance();
     doAEstimator    = DoAEstimator.getInstance();
+    
+    addObserver(this);
+    
+    guard = new Thread(this,getClass().getSimpleName()+".guard");
+    guard.setDaemon(true);
+    guard.start();
   }
+  
+  @Override
+  public void dispose()
+  {
+    if (guard!=null)
+    {
+      runGuard = false;
+      try 
+      {
+        guard.interrupt();
+        guard.join();
+      } 
+      catch (Exception e) 
+      { 
+        logErr("",e); 
+      }
+    }
+    guard = null;
 
+    super.dispose();
+  }
+  
+  /**
+   * The guard thread's run method.
+   */
+  @Override
+  public void run()
+  {
+    // Initialize
+    log("MicArray3D: Starting guard thread");
+    runGuard = true;
+    final int intervalMillis = 20;
+    int ctr = 0;
+    float elapsedMax = 0f;
+
+    // Run connection
+    while (runGuard) 
+    {
+      long then = System.nanoTime();
+
+      // Update micarray state
+      try
+      {
+        boolean target  = stateCache==null || !stateCache.target.equals(doAEstimator.getTargetSource());
+        boolean trlyPos = stateCache==null || (stateCache.trolleyPos!=micArrayCeiling.getPosition().y);
+        boolean actMics = stateCache==null || !Arrays.equals(stateCache.activeMics,getActiveMics());
+  
+        if (target || trlyPos || actMics)
+        {
+          stateCache = getStateInt();
+          if (target ) { setChanged(); notifyObserversAsync(NOTIFY_STEERTARGET); }
+          if (trlyPos) { setChanged(); notifyObserversAsync(NOTIFY_TROLLEYPOS ); }
+          if (actMics) { setChanged(); notifyObserversAsync(NOTIFY_ACTIVEMICS ); }
+        }
+      }
+      catch (Exception e)
+      {
+        logErr("MicArray3D.guard: Error updating micarray state",e);
+      }
+
+      // Update connection state
+      if (ctr>=1000/intervalMillis)
+        try
+        {
+          ctr = 0;
+          System.err.println("MicArray3D.guard: max. elapsed time "+elapsedMax+" ms");
+          elapsedMax = 0;
+          
+          // TODO: Update connection state and send NOTIFY_CONNECTION on changes
+        }
+        catch (Exception e)
+        {
+          logErr("MicArray3D.guard: Error updating connection state",e);
+        }
+      
+      // Sleep
+      float elapsed = (System.nanoTime()-then)/1000000f;
+      elapsedMax = Math.max(elapsedMax,elapsed);
+      try 
+      { 
+        int sleepMillis = Math.max(0,Math.round(intervalMillis-elapsed));
+        Thread.sleep(sleepMillis); 
+      } 
+      catch (InterruptedException e) {}
+      ctr++;
+    }
+
+    // Shut down
+    log("MicArray3D: End of guard thread");
+  }
+  
   // -- Implementation of ACompositeHardware --
 
   @Override
@@ -146,23 +285,41 @@ public final class MicArray3D extends ACompositeHardware
     return children;
   }
 
+  // -- Implementation of Observer --
+  
+  @Override
+  public void update(Observable o, Object arg)
+  {
+    if (this==o)
+    {
+      // Update illumination
+      if 
+      (
+        NOTIFY_ACTIVEMICS.equals(arg)
+        || NOTIFY_STEERTARGET.equals(arg)
+        || NOTIFY_TROLLEYPOS.equals(arg)
+      )
+      {
+        int illumMode = getIlluminationMode(); 
+        micArrayViewer.illuminate(illumMode);
+        micArrayCeiling.illuminate(illumMode);
+      }
+    }
+  }
+
   // -- Getters and setters --
   
   /**
-   * Returns the current state of the microphone array. The returned object is
+   * Returns the current stateCache of the microphone array. The returned object is
    * a copy of internal data. Modifications will have no effect on the array.
-   * 
-   * <p>TODO: Cache microphone array state (this method may be called 
-   * frequently)!</p>
    */
   public MicArrayState getState()
   {
-    state = MicArrayState.getCurrent();
-    return state;
+    return stateCache;
   }
   
   /**
-   * Sets the array into a new state. This involves
+   * Sets the array into a new stateCache. This involves
    * <ul>
    *   <li>activating/deactivating microphones,</li>
    *   <li>setting a steering vector (delays and gains of microphone signals), 
@@ -171,16 +328,16 @@ public final class MicArray3D extends ACompositeHardware
    * </ul>
    * 
    * @param micArrayState
-   *          The new microphone array state.
+   *          The new microphone array stateCache.
    * @throws HardwareException
-   *           if the new state did not become effective because of hardware or 
+   *           if the new stateCache did not become effective because of hardware or 
    *           communication failures.
    */
   public void setState(MicArrayState micArrayState)
   throws HardwareException
   {
     if(micArrayState!=null)
-      state=micArrayState;
+      stateCache=micArrayState;
   }
   
   /**
@@ -246,7 +403,7 @@ public final class MicArray3D extends ACompositeHardware
    * array means to activate or deactivate <em>both</em> sub-arrays.
    *  
    * @param active
-   *          The new activation state.
+   *          The new activation stateCache.
    * @throws HardwareException
    *          on hardware problems.
    * @see #isActive()
@@ -285,7 +442,7 @@ public final class MicArray3D extends ACompositeHardware
    *          viewer sub-array} or [32...63] for the {@linkplain MicArrayCeiling
    *          ceiling sub-array}.
    * @param active
-   *          The new activation state.
+   *          The new activation stateCache.
    * @throws IllegalArgumentException
    *           if {@code midId} is out of the range [0...63].
    * @throws HardwareException
@@ -385,12 +542,64 @@ public final class MicArray3D extends ACompositeHardware
   
   // -- Auxiliary methods --
   
+  /**
+   * Checks a microphone ID.
+   * 
+   * @param micId
+   *          The ID.
+   *          
+   * @throws IllegalArgumentException If the microphone ID is invalid.
+   */
   protected void checkMicId(int micId)
   throws IllegalArgumentException
   {
     if (micId<0 || micId>63)
       throw new IllegalArgumentException("Invalid micId "+micId
         + " (not in [0,63])");  
+  }
+  
+  /**
+   * Retrieves the current microphone array state from the underlying hardware
+   * wrappers.
+   * 
+   * @return The state.
+   */
+  protected MicArrayState getStateInt()
+  {
+    MicArrayState mas = new MicArrayState();
+
+    // Absolute positions of micrphones and trolley
+    Point3d offset = micArrayViewer.getPosition();
+    for (int i=0; i<32; i++)
+    {
+      mas.positions[i] = new Point3d(micArrayViewer.getMicPosition(i));
+      mas.positions[i].add(offset);
+    }
+    offset = micArrayCeiling.getPosition();
+    mas.trolleyPos = offset.y;
+    for (int i=32; i<64; i++)
+    {
+      mas.positions[i] = new Point3d(micArrayCeiling.getMicPosition(i));
+      mas.positions[i].add(offset);
+    }
+    
+    // Steering info
+    mas.target.set(doAEstimator.getTargetSource());
+    float[] delays   = Steering.getDelays(mas.positions, mas.target);
+    float[] steerVec = Steering.getSteeringVectorFromDelays(delays);
+    float[] gains    = Steering.getGains(mas.positions, mas.target);
+    mas.delays       = Arrays.copyOf(delays, delays.length);
+    mas.steerVec     = Arrays.copyOf(steerVec, steerVec.length);
+    mas.gains        = Arrays.copyOf(gains, gains.length);
+    
+    // Microphone activation states
+    mas.activeMics = getActiveMics();
+    mas.numberOfActiveMics = 0;
+    for (int i = 0; i < mas.activeMics.length; i++) 
+      if (mas.activeMics[i]) 
+        mas.numberOfActiveMics++;
+    
+    return mas;
   }
   
   // -- LCARS --
@@ -410,6 +619,8 @@ public final class MicArray3D extends ACompositeHardware
 
   protected class LcarsSubPanel extends ElementContributor
   {
+    protected final MicArray3D        micarray;
+    
     protected       ESensitivityPlots cSpls;
     protected final ELabel            eSplsInit;
     protected final ETrolleySlider    cTrlySldr;
@@ -440,7 +651,18 @@ public final class MicArray3D extends ACompositeHardware
     public LcarsSubPanel(int x, int y)
     {
       super(x, y);
+      micarray = MicArray3D.getInstance();
       
+      // Micarray observer
+      micarray.addObserver(new Observer()
+      {
+        @Override
+        public void update(Observable o, Object arg)
+        {
+          System.err.println("o="+o+", arg="+arg);
+        }
+      });
+
       // Initialize lists
       // - Steering targets
       hTargets = new LinkedHashMap<String,Point3d>();
@@ -487,11 +709,11 @@ public final class MicArray3D extends ACompositeHardware
         {
           try
           {
-            MicArray3D.getInstance().setCeilingArrayYPosition(value);
+            micarray.setCeilingArrayYPosition(value);
           }
           catch (Exception e)
           {
-            e.printStackTrace();
+            error(e);
           }
         }
       });
@@ -519,17 +741,17 @@ public final class MicArray3D extends ACompositeHardware
           }
           catch (Exception e)
           {
-            e.printStackTrace();
+            error(e);
           }
           if (!cTrlySldr.isLocked())
             try
             {
               cTrlySldr.setValue(0f);
-              MicArray3D.getInstance().setCeilingArrayYPosition(0);
+              micarray.setCeilingArrayYPosition(0);
             }
             catch (Exception e)
             {
-              e.printStackTrace();
+              error(e);
             }
         }
 
@@ -543,7 +765,7 @@ public final class MicArray3D extends ACompositeHardware
           }
           catch (Exception e)
           {
-            e.printStackTrace();
+            error(e);
           }
         }
       };
@@ -577,11 +799,9 @@ public final class MicArray3D extends ACompositeHardware
         {
           try
           {
-            MicArray3D ma = MicArray3D.getInstance();
-            
-            int x = (int)Math.round(ma.getTarget().x);
-            int y = (int)Math.round(ma.getTarget().y);
-            int z = (int)Math.round(ma.getTarget().z);
+            int x = (int)Math.round(micarray.getTarget().x);
+            int y = (int)Math.round(micarray.getTarget().y);
+            int z = (int)Math.round(micarray.getTarget().z);
             
             if      (ee.el==eSteerXDec) x--;
             else if (ee.el==eSteerXInc) x++;
@@ -590,11 +810,11 @@ public final class MicArray3D extends ACompositeHardware
             else if (ee.el==eSteerZDec) z--;
             else if (ee.el==eSteerZInc) z++;
             
-            ma.setTarget(new Point3d(x,y,z));
+            micarray.setTarget(new Point3d(x,y,z));
           } 
           catch (Exception e)
           {
-            e.printStackTrace();
+            error(e);
           }
         }
       };
@@ -630,11 +850,11 @@ public final class MicArray3D extends ACompositeHardware
         {
           try
           {
-            MicArray3D.getInstance().setTarget(CSL.ROOM.DEFAULT_POS);
+            micarray.setTarget(CSL.ROOM.DEFAULT_POS);
           } 
           catch (Exception e)
           {
-            e.printStackTrace();
+            error(e);
           }
         }
       });
@@ -674,11 +894,11 @@ public final class MicArray3D extends ACompositeHardware
         {
           try
           {
-            MicArray3D.getInstance().calibrate();
+            micarray.calibrate();
           }
           catch (Exception e)
           {
-            e.printStackTrace();
+            error(e);
           }
         }
       });
@@ -710,11 +930,11 @@ public final class MicArray3D extends ACompositeHardware
         {
           try
           {
-            MicArray3D.getInstance().setTarget((Point3d)ee.el.getData());
+            micarray.setTarget((Point3d)ee.el.getData());
           }
           catch (Exception e)
           {
-            e.printStackTrace();
+            error(e);
           }
         }
       });
@@ -762,14 +982,13 @@ public final class MicArray3D extends ACompositeHardware
         {
           try
           {
-            MicArray3D ma = MicArray3D.getInstance(); 
             boolean[] act = (boolean[])ee.el.getData();
             for (int i=0; i<act.length; i++)
-              ma.setMicActive(i,act[i]);
+              micarray.setMicActive(i,act[i]);
           } 
           catch (Exception e)
           {
-            e.printStackTrace();
+            error(e);
           }
         }
       });
@@ -804,11 +1023,11 @@ public final class MicArray3D extends ACompositeHardware
         {
           try
           {
-            MicArray3D.getInstance().setIlluminationMode((Integer)ee.el.getData());
+            micarray.setIlluminationMode((Integer)ee.el.getData());
           }
           catch (Exception e)
           {
-            e.printStackTrace();
+            error(e);
           }
         }
       });
@@ -830,11 +1049,11 @@ public final class MicArray3D extends ACompositeHardware
             if (eLinkWPlots.isBlinking())
               try
               {
-                MicArray3D.getInstance().setTarget(point);
+                micarray.setTarget(point);
               } 
               catch (Exception e)
               {
-                e.printStackTrace();
+                error(e);
               }
           }
         });
@@ -847,9 +1066,10 @@ public final class MicArray3D extends ACompositeHardware
     @Override
     protected void fps10()
     {
-      // HACK: Polling for GUI update is not elegant (but safe)
-      MicArrayState mas = MicArrayState.getCurrent();
-      MicArray3D ma = MicArray3D.getInstance();
+      // HACK: Polling the mic. array state is not elegant (but safe)
+      MicArrayState mas = micarray.getState();
+      if (mas==null)
+        return;
       
       // Feed sensitivity plots and trolley slider
       try
@@ -865,7 +1085,7 @@ public final class MicArray3D extends ACompositeHardware
       }
       catch (Exception e)
       {
-        e.printStackTrace();
+        error(e);
       }
       
       // Feed steering group
@@ -880,12 +1100,12 @@ public final class MicArray3D extends ACompositeHardware
         eSteerYInc.setDisabled(mas.target.y>=CSL.ROOM.MAX_Y);
         eSteerZDec.setDisabled(mas.target.z<=CSL.ROOM.MIN_Z);
         eSteerZInc.setDisabled(mas.target.z>=CSL.ROOM.MAX_Z);
-        eCalibrate.setColor(!ma.isCalibrated()?LCARS.getColor(LCARS.CS_REDALERT,LCARS.EC_HEADLINE):null);
-        eCalibrate.setBlinking(!ma.isCalibrated());
+        eCalibrate.setColor(!micarray.isCalibrated()?LCARS.getColor(LCARS.CS_REDALERT,LCARS.EC_HEADLINE):null);
+        eCalibrate.setBlinking(!micarray.isCalibrated());
       }
       catch (Exception e)
       {
-        e.printStackTrace();
+       error(e);
       }
       
       // Feed target array
@@ -900,7 +1120,7 @@ public final class MicArray3D extends ACompositeHardware
         }
         catch (Exception e)
         {
-          e.printStackTrace();
+          error(e);
         }
       
       // Feed config. array
@@ -915,7 +1135,7 @@ public final class MicArray3D extends ACompositeHardware
         }
         catch (Exception e)
         {
-          e.printStackTrace();
+          error(e);
         }
       
       // Feed illum. array
@@ -924,32 +1144,28 @@ public final class MicArray3D extends ACompositeHardware
         {
           if ("".equals(el.getLabel()))
             continue;
-          boolean equal = ((Integer)el.getData()==ma.getIlluminationMode());
+          boolean equal = ((Integer)el.getData()==micarray.getIlluminationMode());
           el.setColorStyle(equal?LCARS.EC_SECONDARY:LCARS.EC_PRIMARY);
           el.setSelected(equal);
         }
         catch (Exception e)
         {
-          e.printStackTrace();
+          error(e);
         }
       
       // Other GUI update
       eElaLock.setBlinking(cTarget.getLock());
-      
-      // TODO: Updating illumination should not be done here
-      try
-      {
-        if (!mas.equals(lastMas))
-        {
-          lastMas = mas;
-          micArrayViewer.illuminate(ma.getIlluminationMode());
-          micArrayCeiling.illuminate(ma.getIlluminationMode());
-        }
-      }
-      catch (Exception e)
-      {
-        e.printStackTrace();
-      }
+    }
+  
+    /**
+     * Logs errors on this sub-panel.
+     * 
+     * @param t
+     *          A throwable.
+     */
+    protected void error(Throwable t)
+    {
+      Log.err("MicArray3D LCARS sub-panel error", t);
     }
   }
   
@@ -1053,3 +1269,5 @@ public final class MicArray3D extends ACompositeHardware
   }
   
 }
+
+// EOF

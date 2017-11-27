@@ -1,7 +1,9 @@
 package de.tucottbus.kt.csl.hardware.micarray3d;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -10,9 +12,7 @@ import java.util.Arrays;
 import javax.vecmath.Point3d;
 
 import de.tucottbus.kt.csl.CSL;
-import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.DoAEstimator;
 import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.dsb.Steering;
-import de.tucottbus.kt.lcars.logging.Log;
 
 /**
  * This class represents a state of the entire microphone array. It can be used
@@ -98,11 +98,6 @@ public class MicArrayState implements Serializable
   @Deprecated
   public int numberOfActiveMics = 0;
   
-  /**
-   * The most recent known actual state.
-   */
-  private static MicArrayState cachedState;
-  
   @Override
   public boolean equals(Object obj)
   {
@@ -143,34 +138,6 @@ public class MicArrayState implements Serializable
   }
   
   /**
-   * Get the current microphone array state.
-   * 
-   * @param target
-   *          The target point, {@code null} for the {@linkplain 
-   *          MicArray3D#DEFAULT_TARGET default target}.
-   * 
-   * @see MicArray3D
-   */
-  public static synchronized MicArrayState getCurrent()
-  {
-    if
-    (
-      cachedState!=null 
-      && cachedState.target.equals(DoAEstimator.getInstance().getTargetSource())
-      && cachedState.trolleyPos==MicArrayCeiling.getInstance().getPosition().y
-      && cachedState.activeMics.equals(MicArray3D.getInstance().getActiveMics())
-    )
-    {
-      return cachedState;
-    } 
-    else 
-    {
-      cachedState=getStateInt();
-      return cachedState;
-    }
-  }
-  
-  /**
    * Returns a dummy microphone array state without accessing the underlying
    * hardware.
    */
@@ -205,7 +172,7 @@ public class MicArrayState implements Serializable
     
     // active channels/mics
     Arrays.fill(mas.activeMics,true);
-    mas.numberOfActiveMics = getNumberOfActiveMics(mas.activeMics);
+    mas.numberOfActiveMics = mas.activeMics.length;
     
     return mas;
   }
@@ -213,99 +180,64 @@ public class MicArrayState implements Serializable
   // --  File operations --
   
   /**
-   * Safe state to file.
+   * Saves a microphone array state to a file.
    * 
-   * @param state MicArrayState
-   * @param filePath String
+   * @param state
+   *          The state.
+   * @param filePath
+   *          The path name.
+   * @throws FileNotFoundException
+   *           if the file exists but is a directory rather than a regular file,
+   *           does not exist but cannot be created, or cannot be opened for any
+   *           other reason.
+   * @throws SecurityException
+   *           if a security manager exists and its <code>checkWrite</code>
+   *           method denies write access to the file.
+   * @throws IOException
+   *           if I/O errors occur.
    */
-  public static void toFile(MicArrayState state, String filePath) {
-    try {
-      FileOutputStream fout = new FileOutputStream(filePath);
-      ObjectOutputStream oos = new ObjectOutputStream(fout);
-      oos.writeObject(state);
-      oos.close();
-    } catch (Exception e) {
-      Log.err(e.getMessage(), e);
-    }
+  public static void toFile(MicArrayState state, String filePath)
+  throws FileNotFoundException, SecurityException, IOException
+  {
+    FileOutputStream fout = new FileOutputStream(filePath);
+    ObjectOutputStream oos = new ObjectOutputStream(fout);
+    oos.writeObject(state);
+    oos.close();
   }
 
   /**
-   * Get MicArrayState from file.
-   * @param filePath String
-   * @return MicArrayState
+   * Loads a microphone array state from a file.
+   * 
+   * @param filePath
+   *          The path name.
+   * @return The state
+   * @throws FileNotFoundException
+   *           if the file does not exist, is a directory rather than a regular
+   *           file, or for some other reason cannot be opened for reading.
+   * @throws SecurityException
+   *           if a security manager exists and its <code>checkRead</code>
+   *           method denies read access to the file.
+   * @throws IOException
+   *           if I/O errors occur.
    */
-  public static MicArrayState fromFile(String filePath) {
-    MicArrayState state = null;
-    try {
+  public static MicArrayState fromFile(String filePath) 
+  throws FileNotFoundException, SecurityException, IOException
+  {
+    try
+    {
       FileInputStream fin = new FileInputStream(filePath);
       ObjectInputStream ois = new ObjectInputStream(fin);
-      state = (MicArrayState) ois.readObject();
+      MicArrayState state = (MicArrayState) ois.readObject();
       ois.close();
-    } catch (Exception e) {
-      Log.err(e.getMessage(), e);
+      return state;
     }
-    return state;
-  }
-
-  // -- Private methods --
-
-  /**
-   * Retrieves the microphone array state from the underlying hardware wrappers.
-   */
-  private static MicArrayState getStateInt()
-  {
-    DoAEstimator doAEstimator = DoAEstimator.getInstance();
-    MicArrayViewer micArrayViewer = MicArrayViewer.getInstance();
-    MicArrayCeiling micArrayCeiling = MicArrayCeiling.getInstance();
-    MicArrayState mas = new MicArrayState();
-
-    // Get absolute positions
-    Point3d offset = micArrayViewer.getPosition();
-    for (int i=0; i<32; i++)
+    catch (ClassNotFoundException e)
     {
-      mas.positions[i] = new Point3d(micArrayViewer.getMicPosition(i));
-      mas.positions[i].add(offset);
+      // This cannot happen actually
+      throw new IOException(e);
     }
-    offset = micArrayCeiling.getPosition();
-    mas.trolleyPos = offset.y;
-    for (int i=32; i<64; i++)
-    {
-      mas.positions[i] = new Point3d(micArrayCeiling.getMicPosition(i));
-      mas.positions[i].add(offset);
-    }
-    
-    // Get steering info
-    mas.target.set(doAEstimator.getTargetSource());
-    float[] tempDelays = Steering.getDelays(mas.positions, mas.target);
-    float[] tempSteerVec = Steering.getSteeringVectorFromDelays(tempDelays);
-    mas.delays = Arrays.copyOf(tempDelays, tempDelays.length);
-    mas.steerVec =  Arrays.copyOf(tempSteerVec, tempSteerVec.length);
-    
-    // gain factors
-    Arrays.fill(mas.gains,1f); // TODO: get real gains
-    
-    // active channels/mics
-    mas.activeMics=MicArray3D.getInstance().getActiveMics();
-    mas.numberOfActiveMics = getNumberOfActiveMics(mas.activeMics);
-    
-    return mas;
   }
-  
-  /**
-   * Counts the active microphones.
-   * 
-   * @deprecated
-   */
-  @Deprecated
-  private static int getNumberOfActiveMics(boolean[] activeMics)
-  {
-    int count = 0;
-    for (int i = 0; i < activeMics.length; i++) 
-      if(activeMics[i]) 
-        count++;
-    return count;
-  }
-  
+
 }
 
 // EOF

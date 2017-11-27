@@ -25,6 +25,12 @@ import de.tucottbus.kt.lcars.swt.ColorMeta;
  * through this class). The 2D sub-arrays further contain an LED controller
  * providing access to the background and single microphone illumination.
  * 
+ * <h3>Remarks:</h3>
+ * <ul>
+ *   <li>TODO: Revise delay color computation.
+ *     </li>
+ * </ul>
+ * 
  * @author Matthias Wolff
  * @author Martin Birth
  */
@@ -404,25 +410,17 @@ extends ACompositeHardware implements Observer
   /**
    * Returns the LED illumination color for a microphone delay.
    * 
+   * @param minDelay
+   *          The minimal delay value in seconds.
+   * @param maxDelay
+   *          The maximal delay value in seconds.
    * @param delay
    *          The delay in seconds.
    * @return The color.
    */
-  protected ColorMeta getDelayColor(float[] delays, int micId)
+  protected ColorMeta getDelayColor(float minDelay, float maxDelay, float delay)
   {
-    // TODO: Revise!
-    float minDelay = Float.MAX_VALUE;
-    float maxDelay = Float.MIN_VALUE;
-    float meanDelay = 0f;
-    for (int i=getMinMicId(); i<=getMaxMicId(); i++)
-    {
-      minDelay = Math.min(minDelay,delays[i]);
-      maxDelay = Math.max(maxDelay,delays[i]);
-      meanDelay += delays[i];
-    }
-    meanDelay /= (getMaxMicId()-getMinMicId()+1);
-    float normDelay = 2*((delays[micId]-minDelay)/(maxDelay-minDelay)-0.5f);
-    System.err.println("normDelay="+normDelay);
+    float normDelay = 2*(delay-minDelay)/(maxDelay-minDelay)-0.5f; // Range: [-1,1]
     
     ColorMeta cL = new ColorMeta(0.25f,0f,0f);
     ColorMeta cM = new ColorMeta(0.25f,0.25f,0.25f);
@@ -446,8 +444,8 @@ extends ACompositeHardware implements Observer
    */
   protected static ColorMeta getGainColor(float delay)
   {
-    // TODO: Implement getGainColor;
-    return new ColorMeta(0.25f,0.25f,0.25f);
+    float rgbVal = Math.max(0,Math.min(1,delay))*0.25f;
+    return new ColorMeta(rgbVal,rgbVal,rgbVal);
   }
   
   /**
@@ -464,6 +462,23 @@ extends ACompositeHardware implements Observer
       public void run() 
       {
         MicArrayState mas = getState();
+
+        float minDelay = 0f;
+        float maxDelay = 0f;
+        //float meanDelay = 0f;
+        if (mode==MicArray3D.ILLUMINATION_DELAY)
+        {
+          minDelay = Float.MAX_VALUE;
+          maxDelay = Float.MIN_VALUE;
+          for (int i=getMinMicId(); i<=getMaxMicId(); i++)
+          {
+            minDelay = Math.min(minDelay,mas.delays[i]);
+            maxDelay = Math.max(maxDelay,mas.delays[i]);
+            //meanDelay += mas.delays[i];
+          }
+          //meanDelay /= (getMaxMicId()-getMinMicId()+1);
+        }
+        
         for (int micId=minMicId; micId<=maxMicId; micId++)
         {
           ColorMeta color = ColorMeta.BLACK;
@@ -476,7 +491,7 @@ extends ACompositeHardware implements Observer
             color = getLevelColor(getMicLevel(micId));
             break;
           case MicArray3D.ILLUMINATION_DELAY:
-            color = getDelayColor(mas.delays,micId);
+            color = getDelayColor(minDelay,maxDelay,mas.delays[micId]);
             break;
           case MicArray3D.ILLUMINATION_GAIN:
             color = getGainColor(mas.gains[micId]);

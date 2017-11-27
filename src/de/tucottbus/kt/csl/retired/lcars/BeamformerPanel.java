@@ -266,7 +266,7 @@ public class BeamformerPanel extends Panel implements IObservable {
       public void touchDown(EEvent ee) {
         ee.el.setSelected(!ee.el.isSelected());
         setChanged();
-        notifyObservers(new NewBeamformerMsg(MicArrayState.getCurrent(), ee.el.isSelected()));
+        notifyObservers(new NewBeamformerMsg(MicArray3D.getInstance().getState(), ee.el.isSelected()));
       }
     });
     add(eRectTarget);
@@ -279,7 +279,7 @@ public class BeamformerPanel extends Panel implements IObservable {
       public void touchDown(EEvent ee) {
         if(DoAEstimator.getInstance().isAutoMode()==false){
           DoAEstimator.getInstance().setTargetSource(DoAEstimator.DEFAULT_TARGET);
-          MicArrayState state = MicArrayState.getCurrent();
+          MicArrayState state = MicArray3D.getInstance().getState();
           setChanged();
           notifyObservers(new NewBeamformerMsg(state, eRectTarget.isSelected()));
           Point3d t = state.target;
@@ -297,7 +297,7 @@ public class BeamformerPanel extends Panel implements IObservable {
       public void touchDown(EEvent ee) {
         ee.el.setSelected(!ee.el.isSelected());
         setChanged();
-        notifyObservers(new NewCeilingMsg(MicArrayState.getCurrent(), ee.el.isSelected()));
+        notifyObservers(new NewCeilingMsg(MicArray3D.getInstance().getState(), ee.el.isSelected()));
       }
     });
     add(eRectCeilArray);
@@ -347,7 +347,7 @@ public class BeamformerPanel extends Panel implements IObservable {
     eRectSlicesReset.addEEventListener(new EEventListenerAdapter() {
       @Override
       public void touchDown(EEvent ee) {
-        MicArrayState state = MicArrayState.getCurrent();
+        MicArrayState state = MicArray3D.getInstance().getState();
         setChanged();
         notifyObservers(new NewSlicePositionMsg(state.target.x,state.target.y,state.target.z, true, true));
       }
@@ -365,7 +365,7 @@ public class BeamformerPanel extends Panel implements IObservable {
         } else {
           ee.el.setLabel("MANUAL SLICE");
         }
-        MicArrayState state = MicArrayState.getCurrent();
+        MicArrayState state = MicArray3D.getInstance().getState();
         setChanged();
         notifyObservers(new NewSlicePositionMsg(state.target.x, state.target.y, state.target.z, true, false));
       }
@@ -570,14 +570,14 @@ public class BeamformerPanel extends Panel implements IObservable {
     int scaleTextStyle = LCARS.EF_SMALL|LCARS.ES_STATIC|LCARS.EC_TEXT|LCARS.ES_LABEL_NE;
     
     // horizontal sensitivity plot with frame and lines
-    sensitivityPlotHo = new ESensitivityPlot(this, this, posX, posY, roomWidth, roomWidth, cube.getSlicePosition().getZ(), MicArrayState.getCurrent(), freq, GSensitivityPlot.ES_XY);
+    sensitivityPlotHo = new ESensitivityPlot(this, this, posX, posY, roomWidth, roomWidth, cube.getSlicePosition().getZ(), MicArray3D.getInstance().getState(), freq, GSensitivityPlot.ES_XY);
     addObserver(sensitivityPlotHo);
     sensitivityPlotHo.setStatic(false);
     sensitivityPlotHo.addEEventListener(new EEventListenerAdapter() {
       @Override
       public void touchDown(EEvent ee) {
         if(!eRectSliceMode.isSelected()){
-          MicArrayState state=MicArrayState.getCurrent();
+          MicArrayState state=MicArray3D.getInstance().getState();
           Point3d target =state.target;
           target.setX(-(roomWidth/2)+ee.pt.getX());
           target.setY(roomWidth-((roomWidth/2)+ee.pt.getY()));
@@ -607,12 +607,12 @@ public class BeamformerPanel extends Panel implements IObservable {
     lineGroup[4]=new ERect(this,lxx,lyy,100,lineThickness,lineStyle,null);
     
     // lateral vertical sensitivity plot with frame and lines
-    sensitivityPlotVertSi = new ESensitivityPlot(this, this, posX+roomWidth+100, posY, roomHeight, roomWidth, cube.getSlicePosition().getX(), MicArrayState.getCurrent(), freq, GSensitivityPlot.ES_YZ);
+    sensitivityPlotVertSi = new ESensitivityPlot(this, this, posX+roomWidth+100, posY, roomHeight, roomWidth, cube.getSlicePosition().getX(), MicArray3D.getInstance().getState(), freq, GSensitivityPlot.ES_YZ);
     sensitivityPlotVertSi.addEEventListener(new EEventListenerAdapter() {
       @Override
       public void touchDown(EEvent ee) {
         if(!eRectSliceMode.isSelected()){
-          MicArrayState state = MicArrayState.getCurrent();
+          MicArrayState state = MicArray3D.getInstance().getState();
           Point3d target = state.target;
           target.setZ(ee.pt.getX());
           target.setY(roomWidth-((roomWidth/2)+ee.pt.getY()));
@@ -668,12 +668,12 @@ public class BeamformerPanel extends Panel implements IObservable {
     
     // vertical front sensitivity plot with frame and lines
     posY+=530;
-    sensitivityPlotVertFr = new ESensitivityPlot(this, this, posX, posY, roomWidth, roomHeight, cube.getSlicePosition().getY(), MicArrayState.getCurrent(), freq, GSensitivityPlot.ES_XZ);
+    sensitivityPlotVertFr = new ESensitivityPlot(this, this, posX, posY, roomWidth, roomHeight, cube.getSlicePosition().getY(), MicArray3D.getInstance().getState(), freq, GSensitivityPlot.ES_XZ);
     sensitivityPlotVertFr.addEEventListener(new EEventListenerAdapter() {
       @Override
       public void touchDown(EEvent ee) {
         if(!eRectSliceMode.isSelected()){
-          MicArrayState state=MicArrayState.getCurrent();
+          MicArrayState state=MicArray3D.getInstance().getState();
           Point3d target = state.target;
           target.setX(-(roomWidth/2)+ee.pt.getX());
           target.setZ(roomHeight-ee.pt.getY());
@@ -734,7 +734,7 @@ public class BeamformerPanel extends Panel implements IObservable {
     
     sBounds = new Rectangle(1520,150,300,183);
     Rectangle2D.Float pBounds2 = new Rectangle2D.Float(-90,-55,180,110);
-    eA1tTopo = new EMicrophoneArraySelector(MicArrayViewer.getInstance(),MicArrayState.getCurrent(),sBounds,pBounds2);
+    eA1tTopo = new EMicrophoneArraySelector(MicArrayViewer.getInstance(),MicArray3D.getInstance().getState(),sBounds,pBounds2);
     pBounds2 = new Rectangle2D.Float(-80,-40,100,50);
     ImageMeta.Resource imr = new ImageMeta.Resource("csl/resources/MicrophoneArray1_small.png");
     eA1tTopo.setMapImage(imr,pBounds2,false);
@@ -744,7 +744,7 @@ public class BeamformerPanel extends Panel implements IObservable {
     
     sBounds = new Rectangle(1520,420,183,183);
     pBounds2 = new Rectangle2D.Float(-105,-105,210,210);
-    eA2tTopo = new EMicrophoneArraySelector(MicArrayCeiling.getInstance(),MicArrayState.getCurrent(),sBounds,pBounds2);
+    eA2tTopo = new EMicrophoneArraySelector(MicArrayCeiling.getInstance(),MicArray3D.getInstance().getState(),sBounds,pBounds2);
     imr = new ImageMeta.Resource("csl/resources/MicrophoneArray2_small.png");
     eA2tTopo.setMapImage(imr,pBounds2,false);
     eA2tTopo.addToPanel(this);
@@ -1002,7 +1002,7 @@ public class BeamformerPanel extends Panel implements IObservable {
   @Override
   protected void fps10() {
     eRectSlicesReset.setDisabled(!eRectSlices.isSelected());
-    MicArrayState state = MicArrayState.getCurrent();
+    MicArrayState state = MicArray3D.getInstance().getState();
     eRectTargetData.setLabel(""+Math.round(state.target.getX())+"  "+Math.round(state.target.getY())+"  "+Math.round(state.target.getZ()));
     
     if(!eRectSliceMode.isSelected()){
@@ -1025,7 +1025,7 @@ public class BeamformerPanel extends Panel implements IObservable {
     p2d.setLocation(p3d.x, p3d.y);
     eA2tPoser.setActualPos(Double.isNaN(p2d.y)?null:p2d);
     setChanged();
-    notifyObservers(new NewCeilingMsg(MicArrayState.getCurrent(),eRectCeilArray.isSelected()));
+    notifyObservers(new NewCeilingMsg(MicArray3D.getInstance().getState(),eRectCeilArray.isSelected()));
     
     Point2D.Float thres = new Point2D.Float();
     thres.setLocation(0, viewer3d.getThreshold());
@@ -1035,7 +1035,7 @@ public class BeamformerPanel extends Panel implements IObservable {
   @Override
   protected void fps1() {
     setChanged();
-    notifyObservers(new NewBeamformerMsg(MicArrayState.getCurrent(),eRectTarget.isSelected()));
+    notifyObservers(new NewBeamformerMsg(MicArray3D.getInstance().getState(),eRectTarget.isSelected()));
     
     String xSlice = String.format(Locale.ENGLISH,"%03.1f",cube.getSlicePosition().getX());
     String ySlice = String.format(Locale.ENGLISH,"%03.1f",cube.getSlicePosition().getY());
@@ -1068,7 +1068,7 @@ public class BeamformerPanel extends Panel implements IObservable {
     updateMicArrayTopo(MicArrayViewer.getInstance(), eA1tTopo);
     updateMicArrayTopo(MicArrayCeiling.getInstance(), eA2tTopo);
     
-    MicArrayState state = MicArrayState.getCurrent();
+    MicArrayState state = MicArray3D.getInstance().getState();
     if(eRectAutoSlicer.isSelected()) {
       setChanged();
       notifyObservers(new NewSlicePositionMsg(state.target.x, state.target.y, state.target.z, eRectSlices.isSelected(), false));

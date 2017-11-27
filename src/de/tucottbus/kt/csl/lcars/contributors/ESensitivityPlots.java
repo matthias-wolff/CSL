@@ -12,6 +12,7 @@ import javax.vecmath.Point3d;
 
 import de.tucottbus.kt.csl.CSL;
 import de.tucottbus.kt.csl.hardware.CslHardware;
+import de.tucottbus.kt.csl.hardware.micarray3d.MicArray3D;
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayState;
 import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.DoAEstimator;
 import de.tucottbus.kt.csl.lcars.elements.ESensitivityPlot;
@@ -973,6 +974,7 @@ public class ESensitivityPlots extends ElementContributor
     private static final String BTN_PLOTS = "SENSITIVITY PLOTS";
     private static final String BTN_TLYSL = "TROLLEY SLIDER";
 
+    private final MicArray3D         micarray;
     private ESensitivityPlots        eSensPlts;
     private ETrolleySlider           eTrolleySlider;
     private HashMap<String,EElement> aeButtons;
@@ -982,6 +984,7 @@ public class ESensitivityPlots extends ElementContributor
     public SensitivityPlotsTestPanel(IScreen iscreen)
     {
       super(iscreen);
+      micarray = MicArray3D.getInstance();
     }
 
     @Override
@@ -1055,7 +1058,7 @@ public class ESensitivityPlots extends ElementContributor
     protected void fps10()
     {
       if (eSensPlts!=null && eSensPlts.isDisplayed() && linkSteering && LCARS.getArg("--nohardware")==null)
-        eSensPlts.setMicArrayState(MicArrayState.getCurrent());
+        eSensPlts.setMicArrayState(micarray.getState());
       
       for (EElement e : aeButtons.values())
       {

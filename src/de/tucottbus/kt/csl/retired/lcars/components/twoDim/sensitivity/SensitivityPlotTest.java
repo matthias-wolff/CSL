@@ -35,7 +35,7 @@ public class SensitivityPlotTest {
   public static void main(String[] args) {
     Runnable r = () -> {
       SensitivityPlot sens = SensitivityPlot.getInstance(CLState.CL_BUFFER);
-      MicArrayState state = MicArrayState.getCurrent();
+      MicArrayState state = MicArray3D.getInstance().getState();
       sens.getHorizontalSensitivityIntArray(state, new Point3d(0, 0, 160),1000f, 440, 440);
       long time = System.currentTimeMillis();
       for (int i = 0; i <= 250; i++) {

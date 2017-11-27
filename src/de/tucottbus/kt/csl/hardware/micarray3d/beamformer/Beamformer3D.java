@@ -88,7 +88,7 @@ public final class Beamformer3D extends DSBeamformer implements Observer, Runnab
     hammerfallAudioDevice = RmeHdspMadi.getInstance();
     hammerfallAudioDevice.addObserver(this);
     
-    // Initialize oudio output device
+    // Initialize audio output device
     mAudioDeviceLine34 = MAudioDeviceLine34.getInstance();
     
     // Initialize arrays

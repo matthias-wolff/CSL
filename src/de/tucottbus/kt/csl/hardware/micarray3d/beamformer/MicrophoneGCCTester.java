@@ -280,7 +280,7 @@ public class MicrophoneGCCTester extends AAtomicHardware implements Runnable{
         System.arraycopy(audioInputData2[i], 0, audioInputData2x[i], AudioInputConstants.FRAME_SIZE, AudioInputConstants.FRAME_SIZE);
       }
       
-      MicArrayState state = MicArrayState.getCurrent();
+      MicArrayState state = MicArray3D.getInstance().getState();
       
       // start array 1 analysis process
       fillAudioDataHashmap(audioInputData2x, hashMapAudioData, state.positions, MicArray.ARRAY1);

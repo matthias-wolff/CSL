@@ -72,7 +72,7 @@ public class TestCube3d implements IObservable, ActionListener {
     addObserver(cube3d);
     initFrame();
     
-    state = MicArrayState.getCurrent();
+    state = MicArray3D.getInstance().getState();
     MicArray3D.getInstance().dispose();
     
     Thread positionThread = new Thread() {

@@ -10,6 +10,7 @@ import javax.swing.JFrame;
 
 import com.nativelibs4java.opencl.JavaCL;
 
+import de.tucottbus.kt.csl.hardware.micarray3d.MicArray3D;
 import de.tucottbus.kt.csl.hardware.micarray3d.MicArrayState;
 import de.tucottbus.kt.csl.retired.lcars.components.twoDim.SensitivityPlot.CLState;
 import de.tucottbus.kt.csl.retired.lcars.components.twoDim.sensitivity.SensitivityEntity;
@@ -96,7 +97,7 @@ public class Viewer3d implements PlugIn {
    * @see SensitivityPlot.getInstance(CLState.CL_BUFFER);
    */
   private ImagePlus generate3dImageData(float frequency) {
-    MicArrayState state = MicArrayState.getCurrent();
+    MicArrayState state = MicArray3D.getInstance().getState();
     if (kernels==null)
     {
       try {
