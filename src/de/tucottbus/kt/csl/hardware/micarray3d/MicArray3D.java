@@ -68,7 +68,7 @@ implements Runnable, Observer
   /**
    * <i>-- For debugging: Verbose level, 0 for silence --</i>
    */
-  private static final int VERBOSE_LEVEL = 1;
+  private static final int VERBOSE_LEVEL = 0;
 
   /**
    * Hint to {@link #notifyObservers(String)} indicating that the steering
@@ -234,7 +234,7 @@ implements Runnable, Observer
         try
         {
           ctr = 0;
-          System.err.println("MicArray3D.guard: max. elapsed time "+elapsedMax+" ms");
+          log("MicArray3D.guard: max. elapsed time "+elapsedMax+" ms");
           elapsedMax = 0;
           
           // TODO: Update connection state and send NOTIFY_CONNECTION on changes
@@ -653,16 +653,6 @@ implements Runnable, Observer
       super(x, y);
       micarray = MicArray3D.getInstance();
       
-      // Micarray observer
-      micarray.addObserver(new Observer()
-      {
-        @Override
-        public void update(Observable o, Object arg)
-        {
-          System.err.println("o="+o+", arg="+arg);
-        }
-      });
-
       // Initialize lists
       // - Steering targets
       hTargets = new LinkedHashMap<String,Point3d>();
