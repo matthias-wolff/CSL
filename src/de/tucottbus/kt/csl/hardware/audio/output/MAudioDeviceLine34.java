@@ -4,11 +4,16 @@ import de.tucottbus.kt.csl.hardware.AHardware;
 import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.Beamformer3D;
 
 /**
- * Concrete implementation of the M-Audio Fast Track 
- * audio device for audio output on line 3/4 (stereo).
+ * Concrete implementation of the M-Audio Fast Track audio device for audio
+ * output on line 3/4 (stereo).
+ * 
+ * <h3>Remark:</h3>
+ * <ul>
+ *   <li>FIXME: Connection tracking does not work.
+ *     </li>
+ * </ul>
  * 
  * @author Peter Gessler
- *
  */
 public class MAudioDeviceLine34 extends AAudioOutputDevice {
 

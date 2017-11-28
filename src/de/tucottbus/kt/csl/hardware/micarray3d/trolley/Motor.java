@@ -1,7 +1,5 @@
 package de.tucottbus.kt.csl.hardware.micarray3d.trolley;
 
-import gnu.io.NRSerialPort;
-
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -11,12 +9,16 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import de.tucottbus.kt.csl.hardware.AAtomicHardware;
 import de.tucottbus.kt.csl.hardware.HardwareException;
 import de.tucottbus.kt.lcars.contributors.ElementContributor;
+import gnu.io.NRSerialPort;
 
 /**
  * Hardware wrapper of {@link Trolley}'s motor.
  * 
- * <p><b style="color:red">DRAFT:</b> This class is to replace {@link 
- * de.tucottbus.kt.csl.zombie.hardware.ceiling.DeprecatedMotor}.</p>
+ * <h3>Remark:</h3>
+ * <ul>
+ *   <li>FIXME: Connection tracking does not work.
+ *     </li>
+ * </ul>
  * 
  * @author Matthias Wolff
  * @author Martin Birth

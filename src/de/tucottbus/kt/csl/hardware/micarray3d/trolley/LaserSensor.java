@@ -18,8 +18,11 @@ import de.tucottbus.kt.lcars.contributors.ElementContributor;
 /**
  * Low-level hardware wrapper of the ceiling trolley's laser distance sensor.
  * 
- * <p><b>Note:</b> This class is not yet in use as its parent ({@link Trolley})
- * is not yet in use.</p>
+ * <h3>Remarks</h3>
+ * <ul>
+ *   <li>FIXME: Connection tracking does not work.
+ *     </li>
+ * </ul>
  * 
  * @author Matthias Wolff
  * @author Felix Hesse
