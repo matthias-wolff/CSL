@@ -59,8 +59,6 @@ extends ACompositeHardware implements Observer
     for (int l=-24/*dB*/; l<=0/*dB*/; l+=2)
       levelColors[l/2+50] 
         = LCARS.interpolateColors(cm2,chi,(l+24f)/24f);
-
-    // TODO: Initialize delay colors
   }
   
   // -- Fields --
