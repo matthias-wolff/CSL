@@ -8,11 +8,18 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.EnumMap;
 
 import javax.vecmath.Point3d;
 
 import de.tucottbus.kt.csl.CSL;
+import de.tucottbus.kt.csl.hardware.AAtomicHardware;
+import de.tucottbus.kt.csl.hardware.audio.input.audiodevices.RmeHdspMadi;
+import de.tucottbus.kt.csl.hardware.audio.output.MAudioDeviceLine34;
+import de.tucottbus.kt.csl.hardware.led.LedControllerCeiling;
+import de.tucottbus.kt.csl.hardware.led.LedControllerViewer;
 import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.dsb.Steering;
+import de.tucottbus.kt.csl.hardware.micarray3d.trolley.Motor;
 
 /**
  * This class represents a state of the entire microphone array. It can be used
@@ -37,6 +44,47 @@ public class MicArrayState implements Serializable
   private static final long serialVersionUID = 1L;
   private static final int  CH_NUM = 64;
 
+  /**
+   * Enumeration of {@linkplain AAtomicHardware atomic sub-devices} of the
+   * {@linkplain MicArray3D microphone array}.
+   * 
+   * @see MicArrayState#connected
+   */
+  public static enum SUBDEV
+  {
+    /**
+     * Identifies the {@linkplain LedControllerViewer main viewer LED 
+     * controller}.
+     */
+    LED_CONTROLLER_VIEWER,
+    
+    /**
+     * Identifies the {@linkplain LedControllerCeiling ceiling LED controller}.
+     */
+    LED_CONTROLLER_CEILING,
+    
+    /**
+     * Identifies the {@linkplain Motor trolley motor controller}.
+     */
+    MOTOR,
+    
+    /**
+     * Identifies the {@linkplain Motor trolley laser sensor}.
+     */
+    LASER_SENSOR,
+    
+    /**
+     * Identifies the {@linkplain RmeHdspMadi RME HDSP MADI} audio device.
+     */
+    RME_HDSP_MADI,
+    
+    /**
+     * Identifies the {@linkplain MAudioDeviceLine34 audio output line 3/4
+     * of the M-Audio Fast Track} audio device.
+     */
+    MAUDIO_LINE34
+  }
+  
   /**
    * The target point of the microphone array beam in the CSL coordinate system
    * (dimensions measured in centimeters).
@@ -82,6 +130,12 @@ public class MicArrayState implements Serializable
    */
   public boolean[] activeMics = new boolean[CH_NUM];
   
+  /**
+   * The connection states of the {@linkplain AAtomicHardware atomic sub-devices}.
+   */
+  public EnumMap<SUBDEV, Boolean> connected 
+    = new EnumMap<SUBDEV, Boolean>(SUBDEV.class);
+  
   @Override
   public boolean equals(Object obj)
   {
@@ -90,8 +144,9 @@ public class MicArrayState implements Serializable
 
     MicArrayState other = (MicArrayState)obj;
     
-    if (!target.equals(other.target)                ) return false;
-    if (trolleyPos!=other.trolleyPos                ) return false;
+    if (!target.equals(other.target)      ) return false;
+    if (trolleyPos!=other.trolleyPos      ) return false;
+    if (!connected.equals(other.connected)) return false;
     
     for (int i=0; i<CH_NUM; i++)
     {
@@ -101,7 +156,7 @@ public class MicArrayState implements Serializable
       if (gains[i]     !=other.gains[i]           ) return false;
       if (activeMics[i]!=other.activeMics[i]      ) return false;
     }
-    
+
     return true;
   }
   
@@ -116,6 +171,10 @@ public class MicArrayState implements Serializable
     s += ", ("; for (int i=0; i<CH_NUM; i++) s+=(i==0?"":", ")+steerVec[i]; s+=")";
     s += ", ("; for (int i=0; i<CH_NUM; i++) s+=(i==0?"":", ")+gains[i]; s+=")";
     s += ", ("; for (int i=0; i<CH_NUM; i++) s+=(i==0?"":", ")+activeMics[i]; s+=")";
+    s += ", ("; String s1 = "";
+    for (SUBDEV dev : SUBDEV.values())
+      s1 += (s1.length()>0?", ":"")+connected.get(dev);
+    s += s1+")";
     return s;
   }
 
@@ -161,12 +220,16 @@ public class MicArrayState implements Serializable
     mas.delays = Arrays.copyOf(tempDelays, tempDelays.length);
     mas.steerVec =  Arrays.copyOf(tempSteerVec, tempSteerVec.length);
     
-    // gain factors
+    // Gain factors
     Arrays.fill(mas.gains,1f);
     
-    // active channels/mics
+    // Active channels/mics
     Arrays.fill(mas.activeMics,true);
     
+    // Connected states
+    for (SUBDEV dev : SUBDEV.values())
+      mas.connected.put(dev,false);
+
     return mas;
   }
   

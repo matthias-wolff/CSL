@@ -21,9 +21,14 @@ import de.tucottbus.kt.csl.hardware.AHardware;
 import de.tucottbus.kt.csl.hardware.CslHardware;
 import de.tucottbus.kt.csl.hardware.HardwareException;
 import de.tucottbus.kt.csl.hardware.audio.input.audiodevices.RmeHdspMadi;
+import de.tucottbus.kt.csl.hardware.audio.output.MAudioDeviceLine34;
+import de.tucottbus.kt.csl.hardware.led.LedControllerCeiling;
+import de.tucottbus.kt.csl.hardware.led.LedControllerViewer;
 import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.Beamformer3D;
 import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.DoAEstimator;
 import de.tucottbus.kt.csl.hardware.micarray3d.beamformer.dsb.Steering;
+import de.tucottbus.kt.csl.hardware.micarray3d.trolley.LaserSensor;
+import de.tucottbus.kt.csl.hardware.micarray3d.trolley.Motor;
 import de.tucottbus.kt.csl.lcars.contributors.ESensitivityPlots;
 import de.tucottbus.kt.csl.lcars.contributors.ETrolleySlider;
 import de.tucottbus.kt.lcars.IScreen;
@@ -53,8 +58,6 @@ import de.tucottbus.kt.lcars.util.Objectt;
  *     notifications. Instead it sends {@link #NOTIFY_STEERTARGET}, 
  *     {@link #NOTIFY_TROLLEYPOS}, or {@link #NOTIFY_ACTIVEMICS}. When notified
  *     with one of these hints, invoke {@link #getState()} to get details.</li>
- *   <li>TODO: Add some configurations in LCarsSubPanel.LCarsSubPanel(...)
- *     </li>
  *   <li>TODO: Make sum level observable.
  *     </li>
  *   <li>TODO: Provide sum audio stream.
@@ -70,7 +73,7 @@ implements Runnable, Observer
   /**
    * <i>-- For debugging: Verbose level, 0 for silence --</i>
    */
-  private static final int VERBOSE_LEVEL = 0;
+  private static final int VERBOSE_LEVEL = 1;
 
   /**
    * Hint to {@link #notifyObservers(String)} indicating that the steering
@@ -214,37 +217,34 @@ implements Runnable, Observer
       // Update micarray state
       try
       {
-        boolean target  = stateCache==null || !stateCache.target.equals(doAEstimator.getTargetSource());
-        boolean trlyPos = stateCache==null || (stateCache.trolleyPos!=micArrayCeiling.getPosition().y);
-        boolean actMics = stateCache==null || !Arrays.equals(stateCache.activeMics,getActiveMics());
-  
-        if (target || trlyPos || actMics)
+        MicArrayState state = getStateInt();
+        if (stateCache==null || !stateCache.equals(state))
         {
-          stateCache = getStateInt();
+          boolean target  = stateCache==null || !stateCache.target.equals(state.target);
+          boolean trlyPos = stateCache==null || (stateCache.trolleyPos!=state.trolleyPos);
+          boolean actMics = stateCache==null || !Arrays.equals(stateCache.activeMics,state.activeMics);
+          boolean connect = stateCache==null || !stateCache.connected.equals(state.connected);
+
           if (target ) { setChanged(); notifyObserversAsync(NOTIFY_STEERTARGET); }
           if (trlyPos) { setChanged(); notifyObserversAsync(NOTIFY_TROLLEYPOS ); }
           if (actMics) { setChanged(); notifyObserversAsync(NOTIFY_ACTIVEMICS ); }
+          if (connect) { setChanged(); notifyObserversAsync(NOTIFY_CONNECTION ); }
+
+          stateCache = state;
         }
       }
       catch (Exception e)
       {
-        logErr("MicArray3D.guard: Error updating micarray state",e);
+        logErr("MicArray3D.guard: Error updating connection state",e);
       }
-
-      // Update connection state
-      if (ctr>=1000/intervalMillis)
-        try
-        {
-          ctr = 0;
-          log("MicArray3D.guard: max. elapsed time "+elapsedMax+" ms");
-          elapsedMax = 0;
-          
-          // TODO: Update connection state and send NOTIFY_CONNECTION on changes
-        }
-        catch (Exception e)
-        {
-          logErr("MicArray3D.guard: Error updating connection state",e);
-        }
+      
+      // Profiling
+      if (verbose>0 && ctr>=1000/intervalMillis)
+      {
+        ctr = 0;
+        log("MicArray3D.guard: max. elapsed time "+elapsedMax+" ms");
+        elapsedMax = 0;
+      }
       
       // Sleep
       float elapsed = (System.nanoTime()-then)/1000000f;
@@ -597,6 +597,30 @@ implements Runnable, Observer
     // Microphone activation states
     mas.activeMics = getActiveMics();
     
+    // Connection states of atomic sub-devices
+    for (MicArrayState.SUBDEV dev : MicArrayState.SUBDEV.values())
+      switch (dev)
+      {
+      case LED_CONTROLLER_VIEWER:
+        mas.connected.put(dev,LedControllerViewer.getInstance().isConnected());
+        break;
+      case LED_CONTROLLER_CEILING:
+        mas.connected.put(dev,LedControllerCeiling.getInstance().isConnected());
+        break;
+      case MOTOR:
+        mas.connected.put(dev,Motor.getInstance().isConnected());
+        break;
+      case LASER_SENSOR:
+        mas.connected.put(dev,LaserSensor.getInstance().isConnected());
+        break;
+      case RME_HDSP_MADI:
+        mas.connected.put(dev,RmeHdspMadi.getInstance().isConnected());
+        break;
+      case MAUDIO_LINE34:
+        mas.connected.put(dev,MAudioDeviceLine34.getInstance().isConnected());
+        break;
+      }
+    
     return mas;
   }
   
@@ -639,6 +663,7 @@ implements Runnable, Observer
     protected final EElementArray     cConfig;
     protected final EElementArray     cIllum;
     protected final ERect             eElaLock;
+    protected final ELabel            eError;
 
     protected final LinkedHashMap<String,Point3d>   hTargets;
     protected final LinkedHashMap<String,boolean[]> hConfig;
@@ -660,9 +685,14 @@ implements Runnable, Observer
 
       // - Configurations
       LinkedHashMap<String,int[]> hConfigInt= new LinkedHashMap<String,int[]>();
-      //                        Mic-ID: 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63
+      //                           Mic-ID: 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63
       hConfigInt.put("ALL OFF", new int[]{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0});
       hConfigInt.put("FULL"   , new int[]{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
+      hConfigInt.put("1/2"    , new int[]{ 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1});
+      hConfigInt.put("1/4"    , new int[]{ 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0});
+      hConfigInt.put("8 HORIZ", new int[]{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0});
+      hConfigInt.put("VIEWER" , new int[]{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0});
+      hConfigInt.put("CEILING", new int[]{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
 
       hConfig = new LinkedHashMap<String,boolean[]>();
       for (Entry<String,int[]> entry : hConfigInt.entrySet())
@@ -1024,6 +1054,13 @@ implements Runnable, Observer
       eNext = add(new ERect(null,ex+7*(ew+3),ey,71,eh,LCARS.EC_PRIMARY|LCARS.ES_LABEL_E,"NEXT"));
       cIllum.setPageControls(ePrev, eNext);
 
+      // The error display
+      ex0 = -12;
+      ey += eh+dh;
+      eError = new ELabel(null,ex0,ey,1210,20,LCARS.EC_ELBOUP|LCARS.ES_LABEL_E|LCARS.ES_STATIC|LCARS.EF_SMALL,null);
+      eError.setColor(COLOR_ERROR);
+      add(eError);
+      
       // Fat initialization
       LCARS.invokeLater(()->
       {
@@ -1069,7 +1106,15 @@ implements Runnable, Observer
             cSpls.setSelection(mas.target);
         }
         cTrlySldr.setActualValue(Math.round(mas.trolleyPos));
-        eTrlyPos.setValue(String.format("% 04.0f",(float)Math.round(mas.trolleyPos)));
+        boolean trlyConnected = mas.connected.get(MicArrayState.SUBDEV.MOTOR);
+        trlyConnected &= mas.connected.get(MicArrayState.SUBDEV.LASER_SENSOR); 
+        cTrlySldr.ePos.setColor(trlyConnected?null:COLOR_ERROR);
+        cTrlySldr.ePosLabel.setColor(trlyConnected?null:COLOR_ERROR);
+        eTrlyLock.setDisabled(!trlyConnected);
+        if (trlyConnected)
+          eTrlyPos.setValue(String.format("% 04.0f",(float)Math.round(mas.trolleyPos)));
+        else
+          eTrlyPos.setValue("N/A");
       }
       catch (Exception e)
       {
@@ -1140,6 +1185,21 @@ implements Runnable, Observer
         {
           error(e);
         }
+      
+      // Feed status indicator
+      if (!micarray.isConnected())
+      {
+        String msg = "";
+        for (MicArrayState.SUBDEV dev : MicArrayState.SUBDEV.values())
+        {
+          if (mas.connected.get(dev))
+            continue;
+          msg += (msg.length()>0?", ":"") + dev.toString().toUpperCase().replace("_"," ");
+        }
+        eError.setLabel("NOT CONNECTED: "+msg);
+      }
+      else
+        eError.setLabel(null);
       
       // Other GUI update
       eElaLock.setBlinking(cTarget.getLock());
