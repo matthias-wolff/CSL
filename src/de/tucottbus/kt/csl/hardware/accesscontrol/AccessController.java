@@ -18,7 +18,41 @@ import de.tucottbus.kt.lcars.elements.EValue;
 import de.tucottbus.kt.lcars.swt.ColorMeta;
 
 /**
- * TODO: Write JavaDoc
+ * <h3><u> Hardware wrapper of the Access Controller </u></h3>
+ * 
+ * 
+ * <p style="padding-left:2em;">This Hardware wrapper continually checks for a new dataset and handles updating automatically.</p>
+ * 
+ * <h3><u> Internal function </u></h3>
+ * 
+ * <p style="padding-left:2em;">By sending "GET_MESSAGE" via UDP to port 5000 on ip 141.43.71.15,</p>
+ * <p style="padding-left:2em;">the access controller responds with the latest dataset as formatted string.</p>
+ * <p style="padding-left:2em;">The response is sendt to port 5050 of the requesting ip adress.</p>
+ * <p style="padding-left:2em;">Hardware interaction is dealt with by this hardware driver.</p>
+ * 
+ * <h3><u> Accessing received data </u></h3>
+ * 
+ * <p style="padding-left:2em;">The following Methods are available to access the received data: </p>
+ * 
+ * <h4> boolean isAbsent(int DeviceID) </h4>
+ * <p style="padding-left:2em;">This method returns true, if Device n is abscent.</p>
+ * <p style="padding-left:2em;">DeviceID &isin; [1,30]; throws IllegalArgumentException if DeviceID is out of range</p>
+ * <p></p>
+ * 
+ * <h4> boolean isNearby(int DeviceID) </h4>
+ * <p style="padding-left:2em;">This method returns true, if Device n is nearby.</p>
+ * <p style="padding-left:2em;">DeviceID &isin; [1,30]; throws IllegalArgumentException if DeviceID is out of range</p>
+ * <p></p>
+ * 
+ * <h4> boolean isPresent(int DeviceID) </h4>
+ * <p style="padding-left:2em;">This method returns true, if Device n is present.</p>
+ * <p style="padding-left:2em;">DeviceID &isin; [1,30]; throws IllegalArgumentException if DeviceID is out of range</p>
+ * <p></p>
+ * 
+ * <h4> boolean isBusOn(int DeviceID) </h4>
+ * <p style="padding-left:2em;">This method returns true, if Receiver n is connected to the bus.</p>
+ * <p style="padding-left:2em;">DeviceID &isin; [1,5]; throws IllegalArgumentException if DeviceID is out of range</p>
+ * <p></p>
  * 
  * @author Friedrich Eckert, BTU Cottbus-Senftenberg
  */
@@ -227,7 +261,7 @@ public class AccessController extends AAtomicHardware implements Runnable
           {
             UDPsocket.receive(ResponsePacket);
             RX_success = true;
-            System.out.println("Receive successful");
+//            System.out.println("Reception successful");
             connectionStatus = true;
           }
           catch (SocketTimeoutException e1)
@@ -242,15 +276,15 @@ public class AccessController extends AAtomicHardware implements Runnable
           
           if (RX_success)
           {
-//            print received data to console
+//TEST:     print received data to console
             
-            String receivedString = new String(rxbuffer);
-            System.out.println(receivedString);
+//            String receivedString = new String(rxbuffer);
+//            System.out.println(receivedString);
 
             // decode received data
             
-//TEST
-            TableLock = false;
+//TEST: override TableLock
+//            TableLock = false;
             
             switch (TableToggle)
             {
@@ -330,8 +364,6 @@ public class AccessController extends AAtomicHardware implements Runnable
                     PresenceTable0[m][IND_TDUR] = temp; // runtime              
                   }
 
-                  System.out.println(rxbuffer[OFS_BS]+" "+rxbuffer[OFS_BS+1]+" "+rxbuffer[OFS_BS+2]);
-                  
                   for (int m = 0; m < 5; m++)
                   {
                     SystemTable0[m][0] = (rxbuffer[OFS_BS + (m * StatPeriode)] - OFS_ASCII); // Bus on/off
@@ -411,41 +443,6 @@ public class AccessController extends AAtomicHardware implements Runnable
     }
   }
 
-/*  
-  @Override
-  public void run()
-  {
-    runGuard = true;
-    
-    // Initialize guard thread
-    System.out.println("BEGIN OF GUARD THREAD");
-//    setChanged(); notifyObservers(NOTIFY_CONNECTION);
-    
-    // Run guard thread
-    // TODO: Dummy! Run TCI/IP connection to RasPi.
-    while (runGuard)
-    {
-      try
-      {
-        setChanged();
-        notifyObservers(NOTIFY_STATE);
-      }
-      catch(Exception e)
-      {
-        System.out.println("ERROR: "+e);
-      }
-      try
-      {
-        Thread.sleep(2000);
-      } 
-      catch (InterruptedException e) {}
-    }
-    
-    // Finish guard thread
-    System.out.println("END OF GUARD THREAD");
-  }
-*/
-  
   @Override
   public void dispose() throws IllegalStateException
   {
@@ -511,6 +508,7 @@ public class AccessController extends AAtomicHardware implements Runnable
     final private ColorMeta COLOR_ERROR = LCARS.getColor(LCARS.CS_REDALERT,LCARS.EC_SECONDARY|LCARS.ES_SELECTED);
     final private ColorMeta COLOR_NORMAL = LCARS.getColor(LCARS.CS_SECONDARY,LCARS.ES_NONE|LCARS.ES_STATIC);
     final private ColorMeta COLOR_ACTIVE = LCARS.getColor(LCARS.CS_SECONDARY,LCARS.ES_SELECTED|LCARS.ES_STATIC);
+    final private ColorMeta COLOR_ABSENT = LCARS.getColor(LCARS.CS_SECONDARY,LCARS.ES_DISABLED|LCARS.ES_STATIC);
     
     // dynamic text fields
     final private EValue[] ePresField = new EValue[30];
@@ -555,7 +553,15 @@ public class AccessController extends AAtomicHardware implements Runnable
       for (int c = 0; c < 15; c++)
       {
         // assemble panel left side
-        eFillPres[c]  = new  ERect(null,0                                     ,c*H_LINE,W_FILL1+OVLP,H_E,LCARS.ES_STATIC|LCARS.ES_LABEL_E|LCARS.ES_RECT_RND_W,"PERSON "+(c+1)+" IS");
+        
+        // correct spacing for single digit IDs
+        if(c<9) {
+          eFillPres[c]  = new  ERect(null,0                                   ,c*H_LINE,W_FILL1+OVLP,H_E,LCARS.ES_STATIC|LCARS.ES_LABEL_E|LCARS.ES_RECT_RND_W,"PERSON  "+(c+1)+" IS");
+        }
+        else{
+          eFillPres[c]  = new  ERect(null,0                                   ,c*H_LINE,W_FILL1+OVLP,H_E,LCARS.ES_STATIC|LCARS.ES_LABEL_E|LCARS.ES_RECT_RND_W,"PERSON "+(c+1)+" IS");
+        }
+        
         ePresField[c] = new EValue(null,W_FILL1                               ,c*H_LINE,W_PRES+OVLP,H_E,LCARS.ES_STATIC, "");
         eFillTime[c]  = new  ERect(null,W_FILL1+W_PRES                        ,c*H_LINE,W_FILL2+OVLP,H_E,LCARS.ES_STATIC|LCARS.ES_LABEL_E," for ");
         eTimeField[c] = new EValue(null,W_FILL1+W_PRES+W_FILL2                ,c*H_LINE,W_TIME+OVLP,H_E,LCARS.ES_STATIC, "");
@@ -645,13 +651,29 @@ public class AccessController extends AAtomicHardware implements Runnable
             {
               case 0:
               {
-                ePresField[c].setValue("ABSENT");
-                ePresField[c].setColor(COLOR_NORMAL);
-                eTimeField[c].setColor(COLOR_NORMAL);
-                eVoltField[c].setColor(COLOR_NORMAL);
-                eFillPres[c].setColor(COLOR_NORMAL);
-                eFillTime[c].setColor(COLOR_NORMAL);
-                eFillVolt[c].setColor(COLOR_NORMAL);
+                if(PresenceTable0[c][IND_VBAT] == 0)
+                {
+                  // Device has no battery installed
+                  ePresField[c].setValue("OFFLINE");
+                  ePresField[c].setColor(COLOR_NORMAL);
+                  eTimeField[c].setColor(COLOR_NORMAL);
+                  eVoltField[c].setColor(COLOR_NORMAL);
+                  eFillPres[c].setColor(COLOR_NORMAL);
+                  eFillTime[c].setColor(COLOR_NORMAL);
+                  eFillVolt[c].setColor(COLOR_NORMAL);
+                }
+                else
+                {
+                  // Device is in use
+                  ePresField[c].setValue("ABSENT");
+                  ePresField[c].setColor(COLOR_ABSENT);
+                  eTimeField[c].setColor(COLOR_ABSENT);
+                  eVoltField[c].setColor(COLOR_ABSENT);
+                  eFillPres[c].setColor(COLOR_ABSENT);
+                  eFillTime[c].setColor(COLOR_ABSENT);
+                  eFillVolt[c].setColor(COLOR_ABSENT);
+                }
+
                 break;
               }
               case 1:
@@ -679,7 +701,7 @@ public class AccessController extends AAtomicHardware implements Runnable
               }
               default:
               {
-                ePresField[c].setValue("UNKNOWN");
+                ePresField[c].setValue("OFFLINE");
                 ePresField[c].setColor(COLOR_NORMAL);
                 eTimeField[c].setColor(COLOR_NORMAL);
                 eVoltField[c].setColor(COLOR_NORMAL);
@@ -690,24 +712,6 @@ public class AccessController extends AAtomicHardware implements Runnable
               }
             }
 
-            
-            /*
-             * display total runtime
-             */
-            /*
-            if((PresenceTable0[c][IND_TTOT] >= 0) && (PresenceTable0[c][IND_TTOT] < 180)) // if < 180min -> display in min
-            {
-              eTimeField[c].setValue(PresenceTable0[c][IND_TTOT]+" MIN");
-            }
-            else if ((PresenceTable0[c][IND_TTOT] >= 180) && (PresenceTable0[c][IND_TTOT] <= 2880)) // if between 3 to 42h -> display in h
-            {
-              eTimeField[c].setValue((PresenceTable0[c][IND_TTOT]/60)+" H");
-            }
-            else// if more than 48h -> display in d
-            {
-              eTimeField[c].setValue((PresenceTable0[c][IND_TTOT]/1440)+" D");
-            }
-            */
             
             if((PresenceTable0[c][IND_TDUR] >= 0) && (PresenceTable0[c][IND_TDUR] < 180)) // if < 180min -> display in min
             {
@@ -758,13 +762,28 @@ public class AccessController extends AAtomicHardware implements Runnable
             {
               case 0:
               {
-                ePresField[c].setValue("ABSENT");
-                ePresField[c].setColor(COLOR_NORMAL);
-                eTimeField[c].setColor(COLOR_NORMAL);
-                eVoltField[c].setColor(COLOR_NORMAL);
-                eFillPres[c].setColor(COLOR_NORMAL);
-                eFillTime[c].setColor(COLOR_NORMAL);
-                eFillVolt[c].setColor(COLOR_NORMAL);
+                if(PresenceTable1[c][IND_VBAT] == 0)
+                {
+                  // Device has no battery installed
+                  ePresField[c].setValue("OFFLINE");
+                  ePresField[c].setColor(COLOR_NORMAL);
+                  eTimeField[c].setColor(COLOR_NORMAL);
+                  eVoltField[c].setColor(COLOR_NORMAL);
+                  eFillPres[c].setColor(COLOR_NORMAL);
+                  eFillTime[c].setColor(COLOR_NORMAL);
+                  eFillVolt[c].setColor(COLOR_NORMAL);
+                }
+                else
+                {
+                  // Device is in use
+                  ePresField[c].setValue("ABSENT");
+                  ePresField[c].setColor(COLOR_ABSENT);
+                  eTimeField[c].setColor(COLOR_ABSENT);
+                  eVoltField[c].setColor(COLOR_ABSENT);
+                  eFillPres[c].setColor(COLOR_ABSENT);
+                  eFillTime[c].setColor(COLOR_ABSENT);
+                  eFillVolt[c].setColor(COLOR_ABSENT);
+                }
                 break;
               }
               case 1:
@@ -792,7 +811,7 @@ public class AccessController extends AAtomicHardware implements Runnable
               }
               default:
               {
-                ePresField[c].setValue("UNKNOWN");
+                ePresField[c].setValue("OFFLINE");
                 ePresField[c].setColor(COLOR_NORMAL);
                 eTimeField[c].setColor(COLOR_NORMAL);
                 eVoltField[c].setColor(COLOR_NORMAL);
@@ -803,27 +822,6 @@ public class AccessController extends AAtomicHardware implements Runnable
               }
             }
 
-            /*
-             * display total runtime
-             */
-            /*
-            if((PresenceTable1[c][IND_TTOT] >= 0) && (PresenceTable1[c][IND_TTOT] < 180)) // if < 180min -> display in min
-            {
-              eTimeField[c].setValue(PresenceTable1[c][IND_TTOT]+" MIN");
-            }
-            else if ((PresenceTable1[c][IND_TTOT] >= 180) && (PresenceTable1[c][IND_TTOT] <= 2880)) // if between 3 to 42h -> display in h
-            {
-              eTimeField[c].setValue((PresenceTable1[c][IND_TTOT]/60)+" H");
-            }
-            else// if more than 48h -> display in d
-            {
-              eTimeField[c].setValue((PresenceTable1[c][IND_TTOT]/1440)+" D");
-            }
-            */
-            
-            /*
-             * display total runtime
-             */
             
             if((PresenceTable1[c][IND_TDUR] >= 0) && (PresenceTable1[c][IND_TDUR] < 180)) // if < 180min -> display in min
             {
@@ -895,6 +893,104 @@ public class AccessController extends AAtomicHardware implements Runnable
 //      System.out.println("update complete");
 
     }
+  }
+  
+  // -- Data access methods --
+  
+  public boolean isPresent(int ID) throws IllegalArgumentException
+  {
+    if ((ID < 1) || (ID > 30)) throw new IllegalArgumentException();
+    
+    switch(TableToggle)
+    {
+        case 0:
+        {
+            if (PresenceTable0[ID][IND_PRES] == 2) return true;
+            else return false;
+        }
+        case 1:
+        {
+            if (PresenceTable1[ID][IND_PRES] == 2) return true;
+            else return false;
+        }
+        default:
+        {
+            break;
+        }
+    }
+    return false;
+  }
+  
+  public boolean isNearby(int ID) throws IllegalArgumentException
+  {
+    if ((ID < 1) || (ID > 30)) throw new IllegalArgumentException();
+    
+    switch(TableToggle)
+    {
+        case 0:
+        {
+            if (PresenceTable0[ID][IND_PRES] == 1) return true;
+            else return false;
+        }
+        case 1:
+        {
+            if (PresenceTable1[ID][IND_PRES] == 1) return true;
+            else return false;
+        }
+        default:
+        {
+            break;
+        }
+    }
+    return false;
+  }
+  
+  public boolean isAbsent(int ID) throws IllegalArgumentException
+  {
+    if ((ID < 1) || (ID > 30)) throw new IllegalArgumentException();
+    
+    switch(TableToggle)
+    {
+        case 0:
+        {
+            if (PresenceTable0[ID][IND_PRES] == 0) return true;
+            else return false;
+        }
+        case 1:
+        {
+            if (PresenceTable1[ID][IND_PRES] == 0) return true;
+            else return false;
+        }
+        default:
+        {
+            break;
+        }
+    }
+    return false;
+  }
+  
+  public boolean isBusOn(int RxID) throws IllegalArgumentException
+  {
+    if ((RxID < 1) || (RxID > 5)) throw new IllegalArgumentException();
+    
+    switch(TableToggle)
+    {
+        case 0:
+        {
+            if (SystemTable0[RxID][0] == 1) return true;
+            else return false;
+        }
+        case 1:
+        {
+            if (SystemTable1[RxID][0] == 1) return true;
+            else return false;
+        }
+        default:
+        {
+            break;
+        }
+    }
+    return false;
   }
   
   // -- LCARS Low-level Hardware Access Panel --
