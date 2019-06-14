@@ -172,7 +172,17 @@ public class CslDemoPanel extends SpeechEnginePanel
       Fvr fvr = Fvr.fromString(result);
       String sHtml = "<!doctype html>\n";
       sHtml += "<html>\n";
-      sHtml += "<body style=\"background-color:#000000; overflow:hidden;\">\n";
+      sHtml += "<body style=\"background-color:#000000; overflow:hidden; transform:scale(0.4); transform-origin: top left;\">\n";
+      /*
+      if(!fvr.getNodeAt(25).isLeaf() || !fvr.getNodeAt(24).isLeaf())
+        sHtml += "<body style=\"background-color:#000000; overflow:hidden; transform:scale(0.4); transform-origin: top left;\">\n";
+      else if(!fvr.getNodeAt(15).isLeaf() || !fvr.getNodeAt(14).isLeaf())
+        sHtml += "<body style=\"background-color:#000000; overflow:hidden; transform:scale(0.5); transform-origin: top left;\">\n";
+      else if (!fvr.getNodeAt(9).isLeaf() || !fvr.getNodeAt(10).isLeaf())
+        sHtml += "<body style=\"background-color:#000000; overflow:hidden; transform:scale(0.7); transform-origin: top left;\">\n";
+      else
+        sHtml += "<body style=\"background-color:#000000; overflow:hidden; transform:scale(1); transform-origin: top left;\">\n";
+      */
       try
       {
         sHtml += fvr.renderSvg();
@@ -217,6 +227,10 @@ public class CslDemoPanel extends SpeechEnginePanel
             cSpeechFvr.setTextViaTmpFile(lastSpeechFvrHtml);
         }
       });
+      break;
+    case 2:
+      cSpeechFvr.removeFromPanel();
+      getCSpeechPostproc().addToPanel(CslDemoPanel.this);
       break;
     default: // mode 0
       cSpeechFvr.setVisible(false);

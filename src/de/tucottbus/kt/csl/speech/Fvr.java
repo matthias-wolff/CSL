@@ -7,6 +7,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -73,7 +75,6 @@ public class Fvr {
       fvr.comment = string;
     return fvr;
   }
-
 
   /**
    * Extracts the comment from a (possibly incomplete) string representation.
@@ -173,12 +174,12 @@ public class Fvr {
 
     Collection<Node> nodeCollection = findNode("");
     Node firstNode = null;
-
+    
     for (Node node : nodeCollection) {
       firstNode = node;
       break;
     }
-
+    
     return firstNode;
   }
 
@@ -194,14 +195,13 @@ public class Fvr {
     return lastNode;
   }
 
-  public Node getNodeAt(int index) {
+  public Node getNodeAt(long index) {
 
     Collection<Node> nodeCollection = findNode("");
     Node nodeAtIndex = null;
-    int cnt = 0;
-
+    long cnt = nodeCollection.stream().findFirst().get().id;  // Start on first ID of actually FVR, ctr of node are static 
+    
     for (Node node : nodeCollection) {
-
       nodeAtIndex = node;
 
       if (cnt == index)
@@ -312,15 +312,28 @@ public class Fvr {
       node.label = matcher.group(1);
       try {
         node.weight = Float.parseFloat(matcher.group(2));
-      } catch (NumberFormatException e) {
+      } 
+      catch (NumberFormatException e) 
+      {
         System.err.print(String.format("\n[FVR: %s]", e.toString()));
         node.label = name;
         node.weight = Float.NaN;
       }
-    } else {
+    } 
+    else 
+    {
       node.label = name;
       node.weight = Float.NaN;
     }
+    
+    // Check: is label a value or feature
+    if (node.label.startsWith("$"))
+    {
+      node.setValue(true);
+      node.label = node.label.substring(1);
+    }
+    else
+      node.setValue(false);
 
     // Weird wire: Cascade equally labeled siblings
     ArrayList<Node> children = new ArrayList<Fvr.Node>(node.children);
@@ -376,8 +389,8 @@ public class Fvr {
       s = String.format(Locale.ENGLISH, "  %d [label=\"%s:%3.2f\"%s]\n",
           node.id, node.label, node.weight, node.isLeaf() ? ", shape=box" : "");
     else
-      s = String.format(Locale.ENGLISH, "  %d [label=\"%s\"%s]\n", node.id,
-          node.label, node.isLeaf() ? ", shape=box" : "");
+      s = String.format(Locale.ENGLISH, "  %d [label=\"%s\"%s, height=\"0.1\"]\n", node.id,
+          node.label, node.isValue() ? ", shape=box" : "");
     os.write(s.getBytes());
     for (Node child : node.children)
       renderNode(child, os);
@@ -386,7 +399,7 @@ public class Fvr {
   private void renderEdge(Node node, OutputStream os) throws IOException {
     if (node.parent != null) {
       String s = String.format(Locale.ENGLISH,
-          "  %d -> %d [label=\"%3.2f\", dir=none]\n", node.parent.id, node.id,
+          "  %d -> %d [label=\"%3.2f\", dir=none, len=1.1]\n", node.parent.id, node.id,
           node.weight);
       os.write(s.getBytes());
     }
@@ -394,15 +407,103 @@ public class Fvr {
       renderEdge(child, os);
   }
 
+  /**
+   * Union of input FVR with expectation FVR. Features of input FVR must be inside 
+   * of expectation FVR. Function should start from expectation FVR. 
+   * @param fvrInp 
+   *          Input FVR 
+   * @param opt 
+   *          Option of handle by double value ("all" takes everything, "not" takes nothing,
+   *          "old" takes previous value and "new" takes new value). Standard is "new"
+   * @return Bool true if union successful
+   */
+  public boolean expUnion(Fvr fvrInp, String opt)
+  {
+    if (opt==null) opt = "new";
+    return featureCompare(null, fvrInp, null, opt);
+  }
+  
+  private boolean featureCompare(Node nodeExp, Fvr fvrInp, Node nodeInp, String opt)
+  {
+    boolean foundValFeat;
+    if (nodeExp == null) 
+      nodeExp = this.root;
+    if (nodeInp == null) 
+      nodeInp = fvrInp.root;
+
+    for (Node elementInp : nodeInp.getChildren())   // Iterate over input FVR
+    {
+      foundValFeat = false;
+      for (Node elementExp : nodeExp.getChildren()) // Control features and values
+      {
+        if (elementExp.label.equals(elementInp.label)) 
+          {
+            foundValFeat = featureCompare(elementExp, fvrInp, elementInp, opt);  // Start search on next node 
+            if (foundValFeat==false)
+              return false;
+            break;  // Features are only once time under same parent node
+          }
+        else if (elementInp.isValue() && elementExp.isValue() && foundValFeat == false)
+        {
+          switch(opt)
+          {
+            case "all":  //Add missing node (Value) 
+              parse(nodeExp, "[$" + elementInp.label + "]");  
+              break;
+            case "not":  // Delete previous value TODO: values!
+              nodeExp.children.remove(elementExp);  
+              break;
+            case "new":  // Delete previous value and add new value TODO: values!
+              nodeExp.children.remove(elementExp);  
+              parse(nodeExp, "[$" + elementInp.label + "]");  
+              break;
+            case "old":  // Do nothing, because Expectation is the result of ExpUnion
+              break;  
+          }
+          foundValFeat = true;
+          break;
+        }
+      }
+      if (foundValFeat == false && elementInp.isValue())
+        parse(nodeExp, "[$" + elementInp.label + "]");  //Add missing node (Value) 
+      else if (foundValFeat == false)  // Result that feature is not available in expectation
+        return false;
+    }
+    return true;
+  }
+  
+  public void printFvr(String dataName) {
+    String htmlText = "";
+    
+    try {
+      htmlText = this.renderSvg();
+    } catch (Exception e) {
+      // TODO * Auto-generated catch block
+      e.printStackTrace();
+    }
+    
+    try {
+      Files.write(Paths.get(dataName + ".html"), htmlText.getBytes());
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+  
+  public int getRank() {
+    // TO DO Rank wit Node.Rank()!
+    return 4;
+  }
+  
   // -- Node class --
 
   public static class Node {
-    private static long ctr = 0;
-    private long id;
-    public String label;
-    public float weight;
-    private Node parent;
-    public List<Node> children;
+    private static  long ctr = 0;
+    private         long id;
+    public          String label;
+    public          float weight;
+    private         Node parent;
+    public          List<Node> children;
+    private         boolean    value; 
 
     Node(Node parent) {
       if (parent != null)
@@ -417,7 +518,7 @@ public class Fvr {
       return parent;
     }
 
-    void setParent(Node parent) {
+    public void setParent(Node parent) {
       if (this.parent != null)
         this.parent.children.remove(this);
       this.parent = parent;
@@ -437,6 +538,16 @@ public class Fvr {
       return id;
     }
 
+    boolean isValue()
+    {
+      return value;
+    }
+    
+    void setValue(final boolean value) 
+    {
+      this.value = value;
+    }
+    
     @Override
     public String toString() {
       String s = "[" + label;
@@ -462,6 +573,13 @@ public class Fvr {
     public float getWeight() {
 
       return weight;
+    }
+  
+    public int getRank() {
+      if (this.getParent() == null)
+        return 0;
+      else
+        return this.getParent().getRank() + 1;
     }
   }
 
@@ -515,7 +633,7 @@ public class Fvr {
   // -- Main method: Debugging only! --
 
   public static void main(String[] args) {
-
+// TODO: Test function union for fvrPool compare
     String s = "";
     if (args.length > 0) {
       s = args[0];
@@ -542,20 +660,28 @@ public class Fvr {
     }
 
     Fvr fvr = Fvr.fromString(s);
-
-    System.out.println("input  : " + s);
+    System.out.println(fvr.getRank());
+    Node nNode;
+    nNode = fvr.findNode("PROG.STEP.FUNC.OFF").stream().findFirst().get();
+    System.out.println(nNode.label);
+    System.out.println(nNode.getRank());
+    
+    fvr.printFvr("TestFvr");
+    
+    
+/*    System.out.println("input  : " + s);
     System.out.println("fvr    : " + fvr.toString()); //
     System.out.println("comment: " + fvr.getComment());
 
     try {
       fvr.render(System.out);
-    } catch (IOException e) {}
-    try {
+    } catch (IOException e) {} */
+    /*try {
       System.out.println(fvr.renderSvg());
     } catch (Exception e) {
       // TODO * Auto-generated catch block
       e.printStackTrace();
-    }
+    }*/
 
   }
 }
