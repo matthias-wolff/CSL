@@ -213,7 +213,7 @@ GRM.1: (LDIM.B)     komma:(komma) ::0:-LDIM.1 :[dec:0:+LDIM.3 (LDIM.A)
 GRM.1: (LDIM.B)     ::0:-LDIM.3 :[dec:0:+LDIM.4 (LDIM.A)
 GRM.1: (LDIM.B)     LDIM.POP134 (LDIM.C)
 GRM.1: LDIM.POP134  ::0:-LDIM.1, ::0:-LDIM.3, ::0:-LDIM.4
-GRM.1: LDIM.DIG     :[DIG[o[ LDIM.DIG2 :]]]
+GRM.1: LDIM.DIG     :[DIG[o[$ LDIM.DIG2 :]]]
 GRM.1: LDIM.DIG2    null:(null)0, eins:(eins)1, ein:(ein)1, zwei:(zwei)2, drei:(drei)3, vier:(vier)4, fuenf:(fuenf)5, sechs:(sechs)6, sieben:(sieben)7, acht:(acht)8, neun:(neun)9
 
 ## Cardinal numbers
@@ -240,27 +240,27 @@ GRM.1: CN3          (CN3.S) ::INF (CN3.F)
 GRM.1: DIG          :[DIG (CN3.DIG) ::INF (CN3.F)
 GRM.1: CN2          :[CN2 (CN3.CN2) ::INF (CN3.F)
 GRM.1: CN3.PHONY    ::1E10 (CN3.S) :[CN3 (CN3.A) CN3.H (CN3.B) CN3.AND (CN3.CN2) CN3.TO :] (CN3.F) ::1E10
-GRM.1: CN3.H        :[h[ CN3.HX-- hundert:(hundert) :]]
+GRM.1: CN3.H        :[h[$ CN3.HX-- hundert:(hundert) :]]
 GRM.1: CN3.AND      und:(und)
 GRM.1: CN3.AND
 GRM.1: CN3.TO       CN3.O CN3.T
-GRM.1: CN3.TO       CN3.O-1X :[t[ zehn:(zehn)1 :]]
-GRM.1: CN3.TO       (CN3.DIG) :[o[ CN3.O-0- :]]
-GRM.1: CN3.TO       :[to[ elf:(elf)11 :]]
-GRM.1: CN3.TO       :[to[ zwoelf:(zwoelf)12 :]]
-GRM.1: CN3.O        :[o[ CN3.O-X- :]] und:(und)
+GRM.1: CN3.TO       CN3.O-1X :[t[$ zehn:(zehn)1 :]]
+GRM.1: CN3.TO       (CN3.DIG) :[o[$ CN3.O-0- :]]
+GRM.1: CN3.TO       :[to[$ elf:(elf)11 :]]
+GRM.1: CN3.TO       :[to[$ zwoelf:(zwoelf)12 :]]
+GRM.1: CN3.O        :[o[$ CN3.O-X- :]] und:(und)
 GRM.1: CN3.O
-GRM.1: CN3.T        :[t[ CN3.T-3- -ssig:(-ssig) :]]
-GRM.1: CN3.T        :[t[ CN3.T-X- -zig:(-zig) :]]
+GRM.1: CN3.T        :[t[$ CN3.T-3- -ssig:(-ssig) :]]
+GRM.1: CN3.T        :[t[$ CN3.T-X- -zig:(-zig) :]]
 GRM.1: CN3.HX--     :1, ein:(ein)1, zwei:(zwei)2, drei:(drei)3, vier:(vier)4, fuenf:(fuenf)5, sechs:(sechs)6, sieben:(sieben)7, acht:(acht)8, neun:(neun)9
 GRM.1: CN3.T-3-     drei:(drei)3
 GRM.1: CN3.T-X-     zwan:(zwan)2, vier/fIr/:(vier)4, fuenf:(fuenf)5, fuenf/fUf/:(fuf)5, sech:(sech)6, sieb:(sieb)7, ach:(ach)8, neun:(neun)9
 GRM.1: CN3.O-0-     eins:(eins)1, ein:(ein)1, zwei:(zwei)2, drei:(drei)3, vier:(vier)4, fuenf:(fuenf)5, sechs:(sechs)6, sieben:(sieben)7, acht:(acht)8, neun:(neun)9
-GRM.1: CN3.O-1X     :[o[ CN3.O-1- :]] 
+GRM.1: CN3.O-1X     :[o[$ CN3.O-1- :]] 
 GRM.1: CN3.O-1X
 GRM.1: CN3.O-1-     drei:(drei)3, vier:(vier)4, vier/fIr/:(vier)4, fuenf:(fuenf)5, fuenf/fUf/:(fuf)5, sech:(sech)6, sieb:(sieb)7, ach:(ach)8, neun:(neun)9
 GRM.1: CN3.O-X-     ein:(ein)1, zwei:(zwei)2, drei:(drei)3, vier:(vier)4, fuenf:(fuenf)5, fuenf/fYm/:(fuenf)5, sechs:(sechs)6, sieben:(sieben)7, acht:(acht)8, neun:(neun)9
-GRM.1: (CN3.A)      :[o[ null:(null)0 :]]] (CN3.F)
+GRM.1: (CN3.A)      :[o[$ null:(null)0 :]]] (CN3.F)
 GRM.1: (CN3.A)      (CN3.CN2)
 GRM.1: (CN3.B)      :] (CN3.F)
 
