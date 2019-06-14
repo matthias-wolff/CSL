@@ -50,8 +50,8 @@ GRM.1: S  LDIM.PHONY
 ## |- thx
 ## '- nop
 
-GRM.1: CMD           :[MACTL MACTLPOS :]
-GRM.1: CMD           :[MACTL MACTLACT :]
+GRM.1: CMD           MACTLPOS
+GRM.1: CMD           MACTLACT
 GRM.1: CMD           THX
 GRM.1: CMD           :[ Computer:(Computer)nop :]
 
